@@ -1,38 +1,110 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:physio_connect/route/route_module.dart';
+import 'package:physio_connect/supabase/firebase_notification.dart';
+import 'package:physio_connect/ui/splash_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+import 'di/dependency_injection.dart';
+
+void main() async{
+  await Get.putAsync(() => GetStorage.init());
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await Firebase.initializeApp();
+  FirebaseNotification().init();
+  FirebaseMessaging.onBackgroundMessage((message) async {
+    await Firebase.initializeApp();
+    if (kDebugMode) {
+      print("Handling a background message: ${message.messageId}");
+      print('Message data: ${message.data}');
+      print('Message notification: ${message.notification?.title}');
+      print('Message notification: ${message.notification?.body}');
+    }
+  });
+
+  await requestPermission();
+  await Supabase.initialize(
+    url: 'https://cjnxrkzrmeetzragwrlm.supabase.co',
+    anonKey:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqbnhya3pybWVldHpyYWd3cmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTc3NjAsImV4cCI6MjA3MDgzMzc2MH0.5lPvv9Hj60NMvPE6IrI6hw6ZhrzqjeV6KUp65tHDJmo',
+  );
+
+  //await FirebaseApi().initNotification();
+  DependencyInjection.init();
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+Future<void> requestPermission() async {
+  final messaging = FirebaseMessaging.instance;
+
+  final settings = await messaging.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
+
+  if (kDebugMode) {
+    print('Permission granted: ${settings.authorizationStatus}');
+  }
+
+  Stream<RemoteMessage> _messageStreamController = Stream.empty();
+
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    FirebaseNotification().createNotification(message?.notification?.title ?? "AA", message.notification?.body ??"BB");
+    if (kDebugMode) {
+      print('Handling a foreground message: ${message.messageId}');
+      print('Message data: ${message.data}');
+      print('Message notification: ${message.notification?.title}');
+      print('Message notification: ${message.notification?.body}');
+    }
+
+    _messageStreamController.listen((event) {
+      print("YES YES ");
+    });
+  });
+
+  const topic = 'recommendation';
+  messaging.subscribeToTopic(topic);
+}
+
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
+  Widget build(BuildContext context) => SimpleBuilder(
+      builder: (_) => GetMaterialApp(
+          key: UniqueKey(),
+          debugShowCheckedModeBanner: false,
+          enableLog: true,
+          // supportedLocales: flc.supportedLocales.map((e) => Locale(e)),
+          // localizationsDelegates: const [
+          //   flc.CountryLocalizations.delegate,
+          // ],
+          initialRoute: AppPage.splashScreen,
+          routes: {AppPage.splashScreen: (context) => const SplashScreen()},
+          getPages: AppPage.routes));
 }
 
 class MyHomePage extends StatefulWidget {
