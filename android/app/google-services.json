@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "606815716910",
+    "project_id": "physio-connect-app",
+    "storage_bucket": "physio-connect-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:606815716910:android:93dd3c1d49f2624a2701bf",
+        "android_client_info": {
+          "package_name": "com.physio.connect.physio_connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4HSvzNhyoo0S5WgeCvQgG0vt_BwVR_ls"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:606815716910:android:59fe8771ecda28962701bf",
+        "android_client_info": {
+          "package_name": "com.physioconnect.physio_connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4HSvzNhyoo0S5WgeCvQgG0vt_BwVR_ls"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
