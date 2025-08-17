@@ -17,4 +17,7 @@ class DatabaseSchema extends GetxController {
   static const String userCityId = "cityId";
   static const String userCityName = "cityName";
 
+  // common string
+  static const String projectName = "PHYSIO CONNECT";
+
 }

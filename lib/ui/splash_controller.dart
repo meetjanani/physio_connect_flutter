@@ -17,10 +17,12 @@ class SplashController extends GetxController with GetSingleTickerProviderStateM
 
   launchPage() async {
     await Future.delayed(const Duration(seconds: 2), () {});
+    Get.offNamed(AppPage.loginScreen);
+    return;
     if (FirebaseAuth.instance.currentUser != null) {
       Get.offNamed(AppPage.dashboardScreen);
     } else {
-      Get.offNamed(AppPage.splashScreen);
+      Get.offNamed(AppPage.loginScreen);
     }
   }
 }
