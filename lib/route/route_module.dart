@@ -1,6 +1,10 @@
 
 import 'package:get/get_navigation/src/routes/get_route.dart';
+import 'package:physio_connect/ui/signUp/signup_binding.dart';
 
+import '../ui/logIn/login_binding.dart';
+import '../ui/logIn/login_screen.dart';
+import '../ui/signUp/signup_screen.dart';
 import '../ui/splash_binding.dart';
 import '../ui/splash_screen.dart';
 
@@ -18,14 +22,18 @@ class AppPage {
         page: () => const SplashScreen(),
         binding: SplashBinding()),
 
-    /*//Auth
+    //Auth
     GetPage(
-        name: AppRoute.login,
+        name: AppPage.loginScreen,
         page: () => const LoginScreen(),
         binding: LoginBinding()),
     GetPage(
-        name: AppRoute.register,
-        page: () => RegisterScreen(),
-        binding: RegisterBinding()),*/
+        name: AppPage.signUpScreen,
+        page: () => SignupScreen(),
+        binding: SignUpBinding()),
+    GetPage(
+        name: AppPage.dashboardScreen,
+        page: () => SignupScreen(),
+        binding: SignUpBinding()),
   ];
 }

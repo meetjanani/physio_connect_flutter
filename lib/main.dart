@@ -1,3 +1,4 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -17,6 +18,13 @@ void main() async{
   await Get.putAsync(() => GetStorage.init());
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp();
+  await FirebaseAppCheck.instance.activate(
+    webProvider: ReCaptchaV3Provider(
+      '6LdG3acrAAAAALq9f54S9uWGrRZPyqVFVQCH0onf',
+      // '6LdG3acrAAAAAH_QL4vEhTZ_zqs2ZZ0vgqNlnLIx'
+    ),
+    androidProvider: AndroidProvider.debug,
+  );
   FirebaseNotification().init();
   FirebaseMessaging.onBackgroundMessage((message) async {
     await Firebase.initializeApp();

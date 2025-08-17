@@ -1,9 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:physio_connect/route/route_module.dart';
+import 'package:physio_connect/utils/view_extension.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../ui/logIn/otp_bottomsheet.dart';
+import '../utils/database_schema.dart';
 import '../utils/get_storage_repository.dart';
 
 class FirebaseAuthController extends GetxController {
@@ -14,7 +17,7 @@ class FirebaseAuthController extends GetxController {
   var isLoginRequest = true;
   var userRegisterData = null;
 
-/*  void fbLogin(String phoneNumber) async {
+  void fbLogin(String phoneNumber) async {
     checkUserIsRegisteredOrNot(phoneNumber).then((isRegister) {
       if (isRegister) {
         signOutUser().then((value) => firebaseAuthCheck(phoneNumber));
@@ -24,7 +27,29 @@ class FirebaseAuthController extends GetxController {
     });
   }
 
-  Future<void> firebaseAuthCheck(String phoneNumber) async {
+  Future<bool> checkUserIsRegisteredOrNot(String phoneNumber) async {
+    try {
+      showProgress();
+      return await Supabase.instance.client
+          .from(DatabaseSchema.usersTable)
+          .select('*')
+          .eq(DatabaseSchema.userMobileNumber, phoneNumber)
+          .range(0, 1)
+          .then((value) {
+        hideProgressBar();
+        return (value.length > 0);
+      });
+    } catch (e) {
+      return await false;
+    }
+  }
+
+  Future<void> signOutUser({navigateUser = false}) async {
+    FirebaseAuth.instance.signOut();
+    if (navigateUser) Get.offNamed(AppPage.loginScreen);
+  }
+
+    Future<void> firebaseAuthCheck(String phoneNumber) async {
     var currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       getStorageRepository.write('fbUser', currentUser);
@@ -99,8 +124,10 @@ class FirebaseAuthController extends GetxController {
       await FirebaseAuth.instance
           .signInWithCredential(credential)
           .then((authResult) async {
-        getStorageRepository.write('UserCredential', authResult.user!.uid);
-        getStorageRepository.write('isAuthSignIn', true); // for use to Auto loading
+            if(authResult != null) {
+              getStorageRepository.write('UserCredential', authResult.user!.uid);
+              getStorageRepository.write('isAuthSignIn', true); // for use to Auto loading
+            }
         await getUserFromPhoneNumber(phoneNumber);
       });
     } catch (e) {
@@ -121,13 +148,13 @@ class FirebaseAuthController extends GetxController {
         .eq(DatabaseSchema.userMobileNumber, phoneNumber)
         .limit(1)
         .then((data) {
-      *//*getStorageRepository.write(
+      /*getStorageRepository.write(
           supabaseUserSessionStorage, UserModelSupabase.fromJson(data[0]).toJson());
       getStorageRepository.write(
-          userIdSessionStorage, UserModelSupabase.fromJson(data[0]).id);*//*
-      setUserModel(UserModelSupabase.fromJson(data[0]));
+          userIdSessionStorage, UserModelSupabase.fromJson(data[0]).id);
+      setUserModel(UserModelSupabase.fromJson(data[0]));*/
       hideProgressBar();
-      Get.offNamed(AppRoute.home);
+      Get.offNamed(AppPage.dashboardScreen);
       Get.showSuccessSnackbar('Login successfully.');
     });
   }
@@ -141,49 +168,27 @@ class FirebaseAuthController extends GetxController {
         fbLogin(mobileNumber);
       } else {
         // insert into Supabase
-        await Supabase.instance.client
+        var result = await Supabase.instance.client
             .from(DatabaseSchema.usersTable)
             .insert([userRegisterData]).select();
         Get.showSuccessSnackbar('New user successfully created.');
         hideProgressBar();
         fbLogin(mobileNumber);
         // insert into Firebase
-        *//*CollectionReference users =
+        /*CollectionReference users =
             FirebaseFirestore.instance.collection(DatabaseSchema.usersTable);
         users.add(userRegisterData).then((value) {
 
         }).catchError(
             (error){
               Get.showSuccessSnackbar('Failed to add user: $error');
-            });*//*
+            });*/
       }
     });
     isLoginRequest = false;
   }
 
-  Future<bool> checkUserIsRegisteredOrNot(String phoneNumber) async {
-    try {
-      showProgress();
-      return await Supabase.instance.client
-          .from(DatabaseSchema.usersTable)
-          .select('*')
-          .eq(DatabaseSchema.userMobileNumber, phoneNumber)
-          .range(0, 1)
-          .then((value) {
-        hideProgressBar();
-        return (value.length > 0);
-      });
-    } catch (e) {
-      return await false;
-    }
-  }
-
-  Future<void> signOutUser({navigateUser = false}) async {
-    FirebaseAuth.instance.signOut();
-    if (navigateUser) Get.offNamed(AppRoute.login);
-  }
-
-  Future<UserModelSupabase> getUserById(int userId) async {
+/* Future<UserModelSupabase> getUserById(int userId) async {
     var response = await Supabase.instance.client
         .from(DatabaseSchema.usersTable)
         .select('*')
