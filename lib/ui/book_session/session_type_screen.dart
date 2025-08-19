@@ -83,9 +83,9 @@ class SessionTypeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image
-              session.image != null
+              session.imageUrl != null
                   ? Image.network(
-                      session.image!,
+                      session.imageUrl!,
                       height: 160,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -136,7 +136,7 @@ class SessionTypeScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '${session.durationMinutes} min',
+                            '${session.duration} min',
                             style: GoogleFonts.inter(
                               textStyle: TextStyle(
                                 fontSize: 14,

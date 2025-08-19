@@ -18,17 +18,23 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   DashboardController controller = DashboardController.to;
 
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    controller.getUpComingBookings();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: commonAppBar("Physio Connect"),
       body: SafeArea(
         child: Center(
-          child: Column(
+          child: Obx(() => Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               SizedBox(height: Get.height * 0.02),
               Expanded(
                 child: Padding(
@@ -53,7 +59,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
-                            child: true
+                            child: controller.upComingBookings.value.isNotEmpty
                                 ? _buildAppointmentView()
                                 : _buildNoAppointmentView(),
                           ),
@@ -86,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ],
-          ),
+          )),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -171,6 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildAppointmentView() {
+    var appointment = controller.upComingBookings.value.first;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

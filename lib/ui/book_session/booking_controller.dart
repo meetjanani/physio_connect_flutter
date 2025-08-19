@@ -34,65 +34,50 @@ class BookingController extends GetxController {
     loadAvailableTimeSlots();
   }
 
-  void loadSessionTypes() {
+  void loadSessionTypes() async {
     isLoading.value = true;
-
-    // supabaseController.getUpComingBookings(1);
-
+    sessionTypes.clear();
+    var response = await supabaseController.getSessionTypeMaster();
+    sessionTypes.addAll(response);
+    isLoading.value = false;
     // Mock data - in real app, fetch from your database
-    Future.delayed(Duration(milliseconds: 800), () {
+    /*Future.delayed(Duration(milliseconds: 800), () {
       sessionTypes.value = [
         SessionTypeModel(
-          sessionTypeId: '1',
-          name: 'General Physiotherapy',
-          description: 'Standard physical therapy session for general mobility and pain management',
-          durationMinutes: 45,
-          price: 1200,
-          image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b',
-        ),
-        SessionTypeModel(
-          sessionTypeId: '2',
-          name: 'Sports Rehabilitation',
-          description: 'Specialized therapy for athletes recovering from sports injuries',
-          durationMinutes: 60,
-          price: 1800,
-          image: 'https://images.unsplash.com/photo-1576678927484-cc907957088c',
-        ),
-        SessionTypeModel(
-          sessionTypeId: '3',
+          id: '3',
           name: 'Neurological Therapy',
           description: 'Therapy focused on neurological conditions like stroke recovery or MS',
           durationMinutes: 60,
           price: 2000,
-          image: 'https://images.unsplash.com/photo-1559599101-f09722fb4948',
+          imageUrl: 'https://images.unsplash.com/photo-1559599101-f09722fb4948',
         ),
         SessionTypeModel(
-          sessionTypeId: '4',
+          id: '4',
           name: 'Geriatric Physiotherapy',
           description: 'Gentle therapy designed for elderly patients with age-related conditions',
           durationMinutes: 45,
           price: 1500,
-          image: 'https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b',
+          imageUrl: 'https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b',
         ),
         SessionTypeModel(
-          sessionTypeId: '5',
+          id: '5',
           name: 'Pediatric Therapy',
           description: 'Specialized therapy for children with developmental or physical challenges',
           durationMinutes: 45,
           price: 1400,
-          image: 'https://images.unsplash.com/photo-1581338834647-b0fb40704e21',
+          imageUrl: 'https://images.unsplash.com/photo-1581338834647-b0fb40704e21',
         ),
         SessionTypeModel(
-          sessionTypeId: '6',
+          id: '6',
           name: 'Fitness and Wellness',
           description: 'Specialized therapy for children with developmental or physical challenges',
           durationMinutes: 45,
           price: 1400,
-          image: 'https://images.unsplash.com/photo-1581338834647-b0fb40704e21',
+          imageUrl: 'https://images.unsplash.com/photo-1581338834647-b0fb40704e21',
         ),
       ];
       isLoading.value = false;
-    });
+    });*/
   }
 
   void loadAvailableTimeSlots() {

@@ -65,7 +65,7 @@ class DateTimeScreen extends StatelessWidget {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              '${controller.selectedSessionType.value?.durationMinutes ?? 0} min • ₹${controller.selectedSessionType.value?.price.toStringAsFixed(0) ?? 0}',
+                              '${controller.selectedSessionType.value?.duration ?? 0} min • ₹${controller.selectedSessionType.value?.price.toStringAsFixed(0) ?? 0}',
                               style: GoogleFonts.inter(
                                 textStyle: TextStyle(
                                   fontSize: 14,

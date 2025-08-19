@@ -1,40 +1,34 @@
-// lib/models/session_type_model.dart
+import 'package:json_annotation/json_annotation.dart';
+part 'session_type_model.g.dart';
+
+@JsonSerializable()
 class SessionTypeModel {
-  final String sessionTypeId;
-  final String name;
-  final String? description;
-  final int durationMinutes;
-  final double price;
-  final String? image;
+  int id = 0;
+  String name = "";
+  String description= "";
+  String duration= "";
+  double price = 0;
+  String imageUrl= "";
 
   SessionTypeModel({
-    required this.sessionTypeId,
+    required this.id,
     required this.name,
-    this.description,
-    required this.durationMinutes,
+    required this.description,
+    required this.duration,
     required this.price,
-    this.image,
+    required this.imageUrl,
   });
 
-  factory SessionTypeModel.fromJson(Map<String, dynamic> json) {
-    return SessionTypeModel(
-      sessionTypeId: json['sessionTypeId'],
-      name: json['name'],
-      description: json['description'],
-      durationMinutes: json['durationMinutes'],
-      price: json['price'],
-      image: json['image'],
-    );
+  static List<SessionTypeModel> fromJsonList(List<dynamic> dataList) {
+    List<SessionTypeModel> record = [];
+    for (var e in dataList) {
+      record.add(_$SessionTypeModelFromJson(e));
+    }
+    return record;
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'sessionTypeId': sessionTypeId,
-      'name': name,
-      'description': description,
-      'durationMinutes': durationMinutes,
-      'price': price,
-      'image': image,
-    };
-  }
+  factory SessionTypeModel.fromJson(Map<String, dynamic> data) =>
+      _$SessionTypeModelFromJson(data);
+
+  Map<String, dynamic> toJson() => _$SessionTypeModelToJson(this);
 }

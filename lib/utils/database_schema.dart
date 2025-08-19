@@ -28,6 +28,17 @@ class DatabaseSchema extends GetxController {
   static const String bookingsCreatedAt = "createdAt";
 
 
+  // Session Types table
+  static const String sessionTypeTable = "session_type";
+  static const String sessionTypeId = "id";
+  static const String sessionTypeName = "name";
+  static const String sessionTypeDescription = "description";
+  static const String sessionTypeDurationMinutes = "duration";
+  static const String sessionTypePrice = "price";
+  static const String sessionTypeImageUrl = "imageUrl";
+  static const String sessionTypeIsActive = "isActive";
+
+
   // common string
   static const String projectName = "PHYSIO CONNECT";
 

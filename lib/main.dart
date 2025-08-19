@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/supabase/firebase_notification.dart';
 import 'package:physio_connect/ui/splash_screen.dart';
@@ -13,6 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'di/dependency_injection.dart';
 
 void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp();
   await FirebaseAppCheck.instance.activate(
@@ -41,9 +43,7 @@ void main() async{
   );
 
   //await FirebaseApi().initNotification();
-  // TODO: Cane be delete
   DependencyInjection.init();
-  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 

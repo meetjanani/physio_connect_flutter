@@ -163,7 +163,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Obx(() => _buildSummaryItem(
                         icon: Icons.timelapse,
                         title: 'Duration',
-                        value: '${controller.selectedSessionType.value?.durationMinutes ?? 0} minutes',
+                        value: '${controller.selectedSessionType.value?.duration ?? 0} minutes',
                       )),
 
                       SizedBox(height: 24),
