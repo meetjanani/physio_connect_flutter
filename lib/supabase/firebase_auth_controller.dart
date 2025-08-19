@@ -5,7 +5,9 @@ import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/utils/view_extension.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../model/user_model_supabase.dart';
 import '../ui/logIn/otp_bottomsheet.dart';
+import '../utils/app_shared_preference.dart';
 import '../utils/database_schema.dart';
 import '../utils/get_storage_repository.dart';
 
@@ -79,7 +81,7 @@ class FirebaseAuthController extends GetxController {
           navigateToOTPScreen(
               verificationId: verificationId, phoneNumber: phoneNumber);
         },
-        codeAutoRetrievalTimeout: (String verificationId) {},
+        codeAutoRetrievalTimeout: (String ConverificationId) {},
       );
     } catch (e) {
       print(e.toString());
@@ -151,8 +153,8 @@ class FirebaseAuthController extends GetxController {
       /*getStorageRepository.write(
           supabaseUserSessionStorage, UserModelSupabase.fromJson(data[0]).toJson());
       getStorageRepository.write(
-          userIdSessionStorage, UserModelSupabase.fromJson(data[0]).id);
-      setUserModel(UserModelSupabase.fromJson(data[0]));*/
+          userIdSessionStorage, UserModelSupabase.fromJson(data[0]).id);*/
+      setUserModel(UserModelSupabase.fromJson(data[0]));
       hideProgressBar();
       Get.offNamed(AppPage.dashboardScreen);
       Get.showSuccessSnackbar('Login successfully.');

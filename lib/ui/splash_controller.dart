@@ -7,7 +7,7 @@ import 'package:physio_connect/route/route_module.dart';
 import '../base_code/base_binding.dart';
 import '../utils/get_storage_repository.dart';
 
-class SplashController extends GetxController with GetSingleTickerProviderStateMixin {
+class SplashController extends GetxController {
   static SplashController get to => Get.find();
   final GetStorageRepository _getStorageRepository;
   SplashController(this._getStorageRepository);
@@ -17,8 +17,6 @@ class SplashController extends GetxController with GetSingleTickerProviderStateM
 
   launchPage() async {
     await Future.delayed(const Duration(seconds: 2), () {});
-    Get.offNamed(AppPage.loginScreen);
-    return;
     if (FirebaseAuth.instance.currentUser != null) {
       Get.offNamed(AppPage.dashboardScreen);
     } else {

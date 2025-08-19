@@ -1,0 +1,263 @@
+// lib/ui/booking/confirmation_screen.dart
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
+import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
+import 'package:physio_connect/utils/theme/app_colors.dart';
+
+import 'booking_controller.dart';
+
+class ConfirmationScreen extends StatelessWidget {
+  final BookingController controller = Get.find<BookingController>();
+
+  ConfirmationScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormatter = DateFormat('EEEE, MMMM d, yyyy');
+
+    return WillPopScope(
+      onWillPop: () async {
+        Get.offAll(() => DashboardScreen());
+        return false;
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        SizedBox(height: 40),
+
+                        // Success animation
+                        Lottie.network(
+                          'https://assets3.lottiefiles.com/packages/lf20_jbrw3hcz.json',
+                          width: 200,
+                          height: 200,
+                          repeat: false,
+                        ),
+
+                        SizedBox(height: 24),
+
+                        // Success text
+                        Text(
+                          'Booking Confirmed!',
+                          style: GoogleFonts.inter(
+                            textStyle: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: 12),
+
+                        Text(
+                          'Your physiotherapy session has been successfully booked.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            textStyle: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: 40),
+
+                        // Booking details
+                        Container(
+                          padding: EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              // Session type
+                              Obx(() => _buildConfirmationItem(
+                                title: 'Session Type',
+                                value: controller.selectedSessionType.value?.name ?? 'N/A',
+                                icon: Icons.spa,
+                              )),
+
+                              SizedBox(height: 16),
+                              Divider(),
+                              SizedBox(height: 16),
+
+                              // Date
+                              Obx(() => _buildConfirmationItem(
+                                title: 'Date',
+                                value: dateFormatter.format(controller.selectedDate.value),
+                                icon: Icons.calendar_today,
+                              )),
+
+                              SizedBox(height: 16),
+                              Divider(),
+                              SizedBox(height: 16),
+
+                              // Time
+                              Obx(() => _buildConfirmationItem(
+                                title: 'Time',
+                                value: controller.selectedTimeSlot.value,
+                                icon: Icons.access_time,
+                              )),
+
+                              SizedBox(height: 16),
+                              Divider(),
+                              SizedBox(height: 16),
+
+                              // Payment
+                              _buildConfirmationItem(
+                                title: 'Payment Status',
+                                value: 'Paid',
+                                valueColor: AppColors.wellnessGreen,
+                                icon: Icons.payment,
+                              ),
+
+                              SizedBox(height: 16),
+                              Divider(),
+                              SizedBox(height: 16),
+
+                              // Reference ID
+                              Obx(() => _buildConfirmationItem(
+                                title: 'Transaction ID',
+                                value: controller.razorpayPaymentId.value.substring(0, 10) + '...',
+                                icon: Icons.receipt_long,
+                              )),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: 32),
+
+                        // Note
+                        Container(
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.wellnessGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: AppColors.wellnessGreen,
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Please arrive 10 minutes before your appointment time',
+                                  style: GoogleFonts.inter(
+                                    textStyle: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Back to home button
+                ElevatedButton(
+                  onPressed: () {
+                    Get.offAll(() => DashboardScreen());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.therapyPurple,
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Back to Home',
+                    style: GoogleFonts.inter(
+                      textStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConfirmationItem({
+    required String title,
+    required String value,
+    required IconData icon,
+    Color? valueColor,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.therapyPurple.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.therapyPurple,
+            size: 20,
+          ),
+        ),
+        SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  textStyle: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                value,
+                style: GoogleFonts.inter(
+                  textStyle: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: valueColor ?? AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

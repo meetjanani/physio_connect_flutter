@@ -1,7 +1,13 @@
 
 import 'package:get/get_navigation/src/routes/get_route.dart';
+import 'package:physio_connect/ui/dashboard/dashboard_binding.dart';
+import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
 import 'package:physio_connect/ui/signUp/signup_binding.dart';
 
+import '../ui/book_session/session_type_screen.dart';
+import '../ui/booking_history/booking_detail_screen.dart';
+import '../ui/booking_history/booking_history_screen.dart';
+import '../ui/dashboard/dashboard_bottom_navigation_screen.dart';
 import '../ui/logIn/login_binding.dart';
 import '../ui/logIn/login_screen.dart';
 import '../ui/signUp/signup_screen.dart';
@@ -15,6 +21,9 @@ class AppPage {
   static const loginScreen = '/login';
   static const signUpScreen = '/register';
   static const dashboardScreen = '/dashboard';
+  static const bookSession = '/bookSession';
+  static const String bookingHistory = '/booking-history';
+  static const String bookingDetail = '/booking-detail';
 
   static final routes = [
     GetPage(
@@ -33,7 +42,19 @@ class AppPage {
         binding: SignUpBinding()),
     GetPage(
         name: AppPage.dashboardScreen,
-        page: () => SignupScreen(),
-        binding: SignUpBinding()),
+        page: () => DashboardBottomNavigationScreen(currentIndex: 0),
+        binding: DashboardBinding()),
+
+    GetPage(
+        name: AppPage.bookSession,
+        page: () => SessionTypeScreen()),
+    GetPage(
+      name: AppPage.bookingHistory,
+      page: () => BookingHistoryScreen(),
+    ),
+    GetPage(
+      name: AppPage.bookingDetail,
+      page: () => BookingDetailScreen(),
+    ),
   ];
 }
