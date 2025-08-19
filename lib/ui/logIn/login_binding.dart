@@ -9,7 +9,7 @@ class LoginBinding extends BaseBinding {
   @override
   void dependencies() {
     super.dependencies();
-    Get.lazyPut(() => LoginController(Get.find()));
-    Get.lazyPut(() => SignUpController(Get.find()));
+    Get.lazyPut(() => LoginController());
+    Get.lazyPut(() => SignUpController());
   }
 }

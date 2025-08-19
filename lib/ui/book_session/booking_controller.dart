@@ -3,9 +3,13 @@ import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../model/session_type_model.dart';
+import '../../supabase/supabase_controller.dart';
 
 class BookingController extends GetxController {
   static BookingController get to => Get.find();
+  BookingController();
+  SupabaseController supabaseController =
+      SupabaseController.to;
 
   final isLoading = false.obs;
   final isLoadingTimeSlots = false.obs;
@@ -32,6 +36,8 @@ class BookingController extends GetxController {
 
   void loadSessionTypes() {
     isLoading.value = true;
+
+    // supabaseController.getUpComingBookings(1);
 
     // Mock data - in real app, fetch from your database
     Future.delayed(Duration(milliseconds: 800), () {
@@ -71,6 +77,14 @@ class BookingController extends GetxController {
         SessionTypeModel(
           sessionTypeId: '5',
           name: 'Pediatric Therapy',
+          description: 'Specialized therapy for children with developmental or physical challenges',
+          durationMinutes: 45,
+          price: 1400,
+          image: 'https://images.unsplash.com/photo-1581338834647-b0fb40704e21',
+        ),
+        SessionTypeModel(
+          sessionTypeId: '6',
+          name: 'Fitness and Wellness',
           description: 'Specialized therapy for children with developmental or physical challenges',
           durationMinutes: 45,
           price: 1400,
@@ -121,7 +135,7 @@ class BookingController extends GetxController {
     final appointmentId = Uuid().v4();
 
     // Example implementation:
-    // final appointment = appointment_model.dart(
+    // final appointment = booking_model.dart(
     //   appointmentId: appointmentId,
     //   userId: 'current-user-id', // Get from auth service
     //   therapistId: 'assigned-therapist-id',

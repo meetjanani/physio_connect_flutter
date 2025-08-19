@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/route/route_module.dart';
+import 'package:physio_connect/utils/secure_storage/secure_storage_repository.dart';
 import 'package:physio_connect/utils/view_extension.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -9,11 +10,8 @@ import '../model/user_model_supabase.dart';
 import '../ui/logIn/otp_bottomsheet.dart';
 import '../utils/app_shared_preference.dart';
 import '../utils/database_schema.dart';
-import '../utils/get_storage_repository.dart';
 
 class FirebaseAuthController extends GetxController {
-  final GetStorageRepository getStorageRepository;
-  FirebaseAuthController(this.getStorageRepository);
   static FirebaseAuthController get to => Get.find();
 
   var isLoginRequest = true;
@@ -54,7 +52,7 @@ class FirebaseAuthController extends GetxController {
     Future<void> firebaseAuthCheck(String phoneNumber) async {
     var currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      getStorageRepository.write('fbUser', currentUser);
+      // SecureStorageRepository.to.writeObject('fbUser', currentUser);
     } else {
       firebasePhoneSignIn(phoneNumber);
     }
@@ -126,10 +124,6 @@ class FirebaseAuthController extends GetxController {
       await FirebaseAuth.instance
           .signInWithCredential(credential)
           .then((authResult) async {
-            if(authResult != null) {
-              getStorageRepository.write('UserCredential', authResult.user!.uid);
-              getStorageRepository.write('isAuthSignIn', true); // for use to Auto loading
-            }
         await getUserFromPhoneNumber(phoneNumber);
       });
     } catch (e) {

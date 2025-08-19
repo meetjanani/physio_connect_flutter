@@ -10,13 +10,11 @@ import 'package:physio_connect/utils/view_extension.dart';
 import '../../base_code/base_binding.dart';
 import '../../model/user_model.dart';
 import '../../supabase/firebase_auth_controller.dart';
-import '../../utils/get_storage_repository.dart';
 
 class SignUpController extends GetxController {
   static SignUpController get to => Get.find();
-  final GetStorageRepository _getStorageRepository;
+  SignUpController();
 
-  SignUpController(this._getStorageRepository);
   // PlanServiceSupabaseController planServiceSupabaseController =
   //     PlanServiceSupabaseController.to;
   FirebaseAuthController firebaseController = FirebaseAuthController.to;

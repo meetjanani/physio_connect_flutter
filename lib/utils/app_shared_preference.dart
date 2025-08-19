@@ -1,57 +1,60 @@
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../model/user_model_supabase.dart';
+import 'secure_storage/secure_storage_repository.dart';
 
-const String userIdSessionStorage = 'userId';
-const String userNameSessionStorage = 'userName';
-const String doctorNameSessionStorage = 'doctorName';
-const String doctorIdSessionStorage = 'doctorId';
-const String userCreatedAtSessionStorage = 'userCreatedAt';
-const String userMobileNumberSessionStorage = 'userMobileNumber';
-const String userIsAdminSessionStorage = 'userIsAdmin';
-const String userProfileFirebaseToken = 'firebaseToken';
+class SecureStorage {
+  SecureStorage._();
+
+  static const String userIdSessionStorage = 'userId';
+  static const String userNameSessionStorage = 'userName';
+  static const String doctorNameSessionStorage = 'doctorName';
+  static const String userTypeSessionStorage = 'userType';
+  static const String doctorIdSessionStorage = 'doctorId';
+  static const String userCreatedAtSessionStorage = 'userCreatedAt';
+  static const String userMobileNumberSessionStorage = 'userMobileNumber';
+  static const String userIsAdminSessionStorage = 'userIsAdmin';
+  static const String userProfileFirebaseToken = 'firebaseToken';
+}
+
+final secureStorageRepository = SecureStorageRepository.to;
 
 Future<UserModelSupabase> getUserModel() async {
-  var sharedPreference = await SharedPreferences.getInstance();
+  var idStr = await secureStorageRepository.read(SecureStorage.userIdSessionStorage);
+  var doctorIdStr = await secureStorageRepository.read(SecureStorage.doctorIdSessionStorage);
   var user = UserModelSupabase(
-    id: sharedPreference.getInt(userIdSessionStorage) ?? 0,
-    name: sharedPreference.getString(userNameSessionStorage) ?? '',
-    doctorName: sharedPreference.getString(doctorNameSessionStorage) ?? '',
-    doctorId: sharedPreference.getInt(doctorIdSessionStorage) ?? 0,
-    mobileNumber: sharedPreference.getString(userMobileNumberSessionStorage) ?? '',
+    id: int.tryParse(idStr ?? '') ?? 0,
+    name: await secureStorageRepository.read(SecureStorage.userNameSessionStorage) ?? '',
+    doctorName: await secureStorageRepository.read(SecureStorage.doctorNameSessionStorage) ?? '',
+    doctorId: int.tryParse(doctorIdStr ?? '') ?? 0,
+    mobileNumber: await secureStorageRepository.read(SecureStorage.userMobileNumberSessionStorage) ?? '',
   );
-  user.createAt = sharedPreference.getString(userCreatedAtSessionStorage) ?? '';
-  user.firebaseToken = sharedPreference.getString(userProfileFirebaseToken) ?? '';
-  return await user;
+  user.createAt = await secureStorageRepository.read(SecureStorage.userCreatedAtSessionStorage) ?? '';
+  user.firebaseToken = await secureStorageRepository.read(SecureStorage.userProfileFirebaseToken) ?? '';
+  return user;
 }
 
 Future<void> setUserModel(UserModelSupabase userModelSupabase) async {
-  var sharedPreference = await SharedPreferences.getInstance();
-  sharedPreference.setInt(userIdSessionStorage, userModelSupabase.id);
-  sharedPreference.setString(userNameSessionStorage, userModelSupabase.name);
-  sharedPreference.setString(doctorNameSessionStorage, userModelSupabase.doctorName);
-  sharedPreference.setInt(doctorIdSessionStorage, userModelSupabase.doctorId);
-  sharedPreference.setString(userCreatedAtSessionStorage, userModelSupabase.createAt);
-  sharedPreference.setString(userMobileNumberSessionStorage, userModelSupabase.mobileNumber);
-  sharedPreference.setString(userProfileFirebaseToken, userModelSupabase.firebaseToken);
+  await secureStorageRepository.write(SecureStorage.userIdSessionStorage, userModelSupabase.id.toString());
+  await secureStorageRepository.write(SecureStorage.userNameSessionStorage, userModelSupabase.name);
+  await secureStorageRepository.write(SecureStorage.userTypeSessionStorage, userModelSupabase.userType);
+  await secureStorageRepository.write(SecureStorage.doctorNameSessionStorage, userModelSupabase.doctorName);
+  await secureStorageRepository.write(SecureStorage.doctorIdSessionStorage, userModelSupabase.doctorId.toString());
+  await secureStorageRepository.write(SecureStorage.userCreatedAtSessionStorage, userModelSupabase.createAt);
+  await secureStorageRepository.write(SecureStorage.userMobileNumberSessionStorage, userModelSupabase.mobileNumber);
+  await secureStorageRepository.write(SecureStorage.userProfileFirebaseToken, userModelSupabase.firebaseToken);
 }
 
 Future<void> updateFirebaseToken(String firebaseToken) async {
-  var sharedPreference = await SharedPreferences.getInstance();
-  sharedPreference.setString(userProfileFirebaseToken, firebaseToken);
+  await secureStorageRepository.write(SecureStorage.userProfileFirebaseToken, firebaseToken);
 }
 
 Future<String> getColabUserName() async {
-  var sharedPreference = await SharedPreferences.getInstance();
-  return sharedPreference.getString('userName') ?? "";
+  return await secureStorageRepository.read('userName') ?? "";
 }
 
 Future<String> getColabKey(String key) async {
-  var sharedPreference = await SharedPreferences.getInstance();
-  return await sharedPreference.getString(key) ?? '';
+  return await secureStorageRepository.read(key) ?? '';
 }
 
 Future<void> setColabKey(String key, String value) async {
-  var sharedPreference = await SharedPreferences.getInstance();
-  sharedPreference.setString(key, value);
+  await secureStorageRepository.write(key, value);
 }

@@ -5,12 +5,10 @@ import 'package:physio_connect/supabase/supabase_controller.dart';
 
 import '../../model/user_model_supabase.dart';
 import '../../utils/app_shared_preference.dart';
-import '../../utils/get_storage_repository.dart';
 
 class DashboardController extends GetxController {
   static DashboardController get to => Get.find();
-  final GetStorageRepository _getStorageRepository;
-  DashboardController(this._getStorageRepository);
+  DashboardController();
 
   SupabaseController supabaseController =
       SupabaseController.to;

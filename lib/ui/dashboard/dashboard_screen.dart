@@ -4,10 +4,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_controller.dart';
 
-import '../../custom_widget/custom_button.dart';
 import '../../route/route_module.dart';
 import '../../utils/common_appbar.dart';
-import '../../utils/database_schema.dart';
 import '../../utils/theme/app_colors.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -55,7 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
-                            child: false
+                            child: true
                                 ? _buildAppointmentView()
                                 : _buildNoAppointmentView(),
                           ),

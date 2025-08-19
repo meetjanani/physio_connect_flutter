@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../supabase/firebase_auth_controller.dart';
-import '../../utils/get_storage_repository.dart';
 
 class LoginController extends GetxController {
   static LoginController get to => Get.find();
-  final GetStorageRepository _getStorageRepository;
-  LoginController(this._getStorageRepository);
+  LoginController();
 
   var formKey = GlobalKey<FormState>();
   TextEditingController mobileNumber = TextEditingController();

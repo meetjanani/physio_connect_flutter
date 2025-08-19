@@ -17,6 +17,17 @@ class DatabaseSchema extends GetxController {
   static const String userCityId = "cityId";
   static const String userCityName = "cityName";
 
+  //  Bookings table
+  static const String bookingsTable = "bookings";
+  static const String bookingsId = "id";
+  static const String bookingsUserId = "userId";
+  static const String bookingsTimeSlotId = "timeSlotId";
+  static const String bookingsDoctorId = "doctorId";
+  static const String bookingsSessionId = "sessionId";
+  static const String bookingsDate = "bookingDate";
+  static const String bookingsCreatedAt = "createdAt";
+
+
   // common string
   static const String projectName = "PHYSIO CONNECT";
 

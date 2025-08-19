@@ -9,6 +9,6 @@ class SignUpBinding extends BaseBinding {
   void dependencies() {
     // TODO: implement dependencies
     super.dependencies();
-    Get.lazyPut(() => SignUpController(Get.find()));
+    Get.lazyPut(() => SignUpController());
   }
 }
