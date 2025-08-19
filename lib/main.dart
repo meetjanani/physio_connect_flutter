@@ -69,7 +69,7 @@ Future<void> requestPermission() async {
   Stream<RemoteMessage> _messageStreamController = Stream.empty();
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    FirebaseNotification().createNotification(message?.notification?.title ?? "AA", message.notification?.body ??"BB");
+    FirebaseNotification().createNotification(message?.notification?.title ?? "Physio Connect", message.notification?.body ??"Physio Connect");
     if (kDebugMode) {
       print('Handling a foreground message: ${message.messageId}');
       print('Message data: ${message.data}');
