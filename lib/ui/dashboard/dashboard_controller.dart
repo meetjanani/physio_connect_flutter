@@ -1,11 +1,15 @@
 
+import 'dart:convert';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
+import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/supabase/supabase_controller.dart';
 
 import '../../model/bookings_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../utils/app_shared_preference.dart';
+import '../../utils/secure_storage/secure_storage_repository.dart';
 
 class DashboardController extends GetxController {
   static DashboardController get to => Get.find();
@@ -20,18 +24,25 @@ class DashboardController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
+    userModelSupabase = await getUserModel();
     await fetchFirebaseToken();
+    await fetchDoctorDetail();
     await getUpComingBookings();
   }
 
   Future<void> fetchFirebaseToken() async {
-    userModelSupabase = await getUserModel();
     final messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
     updateFirebaseToken(token.toString());
     print('Firebase Token=$token');
     await supabaseController.updateFirebaseToken(
         userModelSupabase?.id ?? 0, token.toString());
+  }
+
+  Future<void> fetchDoctorDetail() async {
+    var doctor = await supabaseController.getDoctorById(
+        userModelSupabase?.doctorId ?? 0);
+    doctor?.saveToSecureStorage();
   }
 
   // TODO: Update after every 10 min. or first time app launch based on Bool login.

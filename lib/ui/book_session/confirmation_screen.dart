@@ -113,7 +113,7 @@ class ConfirmationScreen extends StatelessWidget {
                               // Time
                               Obx(() => _buildConfirmationItem(
                                 title: 'Time',
-                                value: controller.selectedTimeSlot.value,
+                                value: controller.selectedTimeSlot.value?.time ?? "",
                                 icon: Icons.access_time,
                               )),
 

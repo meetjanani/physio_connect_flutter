@@ -23,7 +23,7 @@ class DatabaseSchema extends GetxController {
   static const String bookingsUserId = "userId";
   static const String bookingsTimeSlotId = "timeSlotId";
   static const String bookingsDoctorId = "doctorId";
-  static const String bookingsSessionId = "sessionId";
+  static const String bookingsSessionTypeId = "sessionTypeId";
   static const String bookingsDate = "bookingDate";
   static const String bookingsCreatedAt = "createdAt";
 
@@ -37,6 +37,26 @@ class DatabaseSchema extends GetxController {
   static const String sessionTypePrice = "price";
   static const String sessionTypeImageUrl = "imageUrl";
   static const String sessionTypeIsActive = "isActive";
+  static const String sessionTypeOrderBy = "orderBy";
+
+  // Time Slots table
+  static const String timeSlotTable = "time_slot";
+  static const String timeSlotId = "id";
+  static const String timeSlotTime = "time";
+  static const String timeSlotIsBooked = "isBooked";
+  static const String timeSlotOrderBy = "orderBy";
+  static const String timeSlotIsActive = "isActive";
+
+  // Doctors table
+  static const String doctorTable = "doctor";
+  static const String doctorId = "id";
+  static const String doctorName = "name";
+  static const String doctorDegree = "degree";
+  static const String doctorExperience = "experience";
+  static const String doctorDrRegNumber = "drRegNumber";
+  static const String doctorBiodata = "biodata";
+  static const String doctorIsActive = "isActive";
+
 
 
   // common string

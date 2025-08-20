@@ -97,7 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Get.toNamed(AppPage.bookSession);
+          Get.toNamed(AppPage.selectSessionType);
           // Navigate to booking screen
         },
         backgroundColor: AppColors.therapyPurple,

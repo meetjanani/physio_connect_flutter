@@ -2,9 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
 import '../../model/session_type_model.dart';
+import '../../route/route_module.dart';
+import '../../utils/cached_network_image.dart';
 import 'booking_controller.dart';
 import 'date_time_screen.dart';
 
@@ -16,16 +19,7 @@ class SessionTypeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Select Session Type',
-          style: GoogleFonts.inter(
-            textStyle: TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-        backgroundColor: AppColors.therapyPurple,
-        foregroundColor: Colors.white,
-      ),
+      appBar: commonAppBar("Select Session Type", isBackButtonVisible: true),
       body: Obx(() => controller.isLoading.value
           ? Center(child: CircularProgressIndicator())
           : ListView(
@@ -52,7 +46,7 @@ class SessionTypeScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 24),
-                ...controller.sessionTypes.map((session) => _buildSessionCard(session)),
+                ...controller.sessionTypes.map((sessionType) => _buildSessionCard(sessionType)),
               ],
             )),
     );
@@ -62,7 +56,7 @@ class SessionTypeScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         controller.selectedSessionType.value = session;
-        Get.to(() => DateTimeScreen());
+        Get.toNamed(AppPage.selectDateAndTime);
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 16),
@@ -83,31 +77,12 @@ class SessionTypeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image
-              session.imageUrl != null
-                  ? Image.network(
-                      session.imageUrl!,
-                      height: 160,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 160,
-                        color: AppColors.therapyPurple.withOpacity(0.3),
-                        child: Icon(
-                          Icons.healing,
-                          size: 60,
-                          color: AppColors.therapyPurple,
-                        ),
-                      ),
-                    )
-                  : Container(
-                      height: 160,
-                      color: AppColors.therapyPurple.withOpacity(0.3),
-                      child: Icon(
-                        Icons.healing,
-                        size: 60,
-                        color: AppColors.therapyPurple,
-                      ),
-                    ),
+              CatchedImageWidget(
+                imageUrl: session.imageUrl,
+                height: 160,
+                width: double.infinity,
+                boxFit: BoxFit.fill,
+              ),
               // Content
               Padding(
                 padding: EdgeInsets.all(16),
@@ -136,7 +111,7 @@ class SessionTypeScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '${session.duration} min',
+                            session.duration,
                             style: GoogleFonts.inter(
                               textStyle: TextStyle(
                                 fontSize: 14,
@@ -151,7 +126,7 @@ class SessionTypeScreen extends StatelessWidget {
                     SizedBox(height: 8),
                     if (session.description != null)
                       Text(
-                        session.description!,
+                        session.description,
                         style: GoogleFonts.inter(
                           textStyle: TextStyle(
                             fontSize: 14,

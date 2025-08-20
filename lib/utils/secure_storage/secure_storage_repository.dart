@@ -93,3 +93,38 @@ abstract class SecureStorageProvider {
   Future<void> deleteAll();
   Future<Map<String, String>> readAll();
 }
+
+
+class SecureStorageUtil {
+  // Store any model as JSON
+  static Future<void> saveModel<T>(
+    String key,
+    T model,
+    Map<String, dynamic> Function(T) toJson
+  ) async {
+    if (model == null) return;
+
+    final jsonMap = toJson(model);
+    final jsonString = jsonEncode(jsonMap);
+    await SecureStorageRepository.to.write(key, jsonString);
+  }
+
+  // Retrieve and convert JSON back to model
+  static Future<T?> getModel<T>(
+    String key,
+    T Function(Map<String, dynamic>) fromJson
+  ) async {
+    final jsonString = await SecureStorageRepository.to.read(key);
+    if (jsonString == null || jsonString.isEmpty) {
+      return null;
+    }
+
+    try {
+      final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
+      return fromJson(jsonMap);
+    } catch (e) {
+      print('Error retrieving model from key $key: $e');
+      return null;
+    }
+  }
+}

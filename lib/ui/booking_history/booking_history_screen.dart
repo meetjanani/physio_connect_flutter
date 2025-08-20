@@ -235,7 +235,7 @@ class BookingHistoryScreen extends StatelessWidget {
           ),
           SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Get.toNamed(AppPage.bookSession),
+            onPressed: () => Get.toNamed(AppPage.selectSessionType),
             icon: Icon(Icons.add),
             label: Text('Book New Session'),
             style: ElevatedButton.styleFrom(

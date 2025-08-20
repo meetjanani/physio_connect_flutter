@@ -13,6 +13,11 @@ class SecureStorage {
   static const String userMobileNumberSessionStorage = 'userMobileNumber';
   static const String userIsAdminSessionStorage = 'userIsAdmin';
   static const String userProfileFirebaseToken = 'firebaseToken';
+
+
+  static const String doctorJson = 'doctorJson';
+  static const String timeslotJson = 'timeslotJson';
+
 }
 
 final secureStorageRepository = SecureStorageRepository.to;

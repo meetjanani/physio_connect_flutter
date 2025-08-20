@@ -6,16 +6,23 @@ class BookingsModel {
   int id = 0;
   int userId = 0;
   int timeSlotId = 0;
+  String timeSlotJson = "";
   int doctorId = 0;
-  int sessionId = 0;
+  String doctorJson = "";
+  int sessionTypeId = 0;
+  String sessionTypeJson = "";
   String bookingDate = DateTime.now().toString();
   String createdAt = DateTime.now().toString();
 
   BookingsModel({
+    required this.id,
     required this.userId,
     required this.timeSlotId,
+    required this.timeSlotJson,
     required this.doctorId,
-    required this.sessionId,
+    required this.doctorJson,
+    required this.sessionTypeId,
+    required this.sessionTypeJson,
     required this.bookingDate,
     required this.createdAt,
   });

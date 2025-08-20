@@ -1,9 +1,18 @@
 // lib/ui/booking/booking_controller.dart
+import 'dart:convert';
+
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:physio_connect/model/doctor_model.dart';
+import 'package:physio_connect/route/route_module.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../model/bookings_model.dart';
 import '../../model/session_type_model.dart';
+import '../../model/time_slots_model.dart';
+import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
+import '../../utils/app_shared_preference.dart';
 
 class BookingController extends GetxController {
   static BookingController get to => Get.find();
@@ -12,110 +21,70 @@ class BookingController extends GetxController {
       SupabaseController.to;
 
   final isLoading = false.obs;
-  final isLoadingTimeSlots = false.obs;
 
-  // Selected values through the booking flow
+  // Session Type
   final selectedSessionType = Rx<SessionTypeModel?>(null);
+  final sessionTypes = <SessionTypeModel>[].obs;
+  // Time slots data
+  final selectedTimeSlot = Rx<TimeSlotModel?>(null);
+  final timeSlots = <TimeSlotModel>[].obs;
+
   final selectedDate = DateTime.now().obs;
-  final selectedTimeSlot = ''.obs;
+  // TODO Handle.
   final razorpayPaymentId = ''.obs;
 
-  // Time slots data
-  final availableTimeSlots = <String>[].obs;
-  final bookedTimeSlots = <String>[].obs;
-
-  // Mock session types for demo
-  final sessionTypes = <SessionTypeModel>[].obs;
-
+  UserModelSupabase? userModelSupabase;
   @override
-  void onInit() {
+  Future<void> onInit() async {
     super.onInit();
-    loadSessionTypes();
-    loadAvailableTimeSlots();
+    userModelSupabase = await getUserModel();
+    getSessionTypesMaster();
+    getTimeSlotsMaster();
   }
 
-  void loadSessionTypes() async {
+  // Load master data
+  void getSessionTypesMaster() async {
     isLoading.value = true;
     sessionTypes.clear();
     var response = await supabaseController.getSessionTypeMaster();
     sessionTypes.addAll(response);
     isLoading.value = false;
-    // Mock data - in real app, fetch from your database
-    /*Future.delayed(Duration(milliseconds: 800), () {
-      sessionTypes.value = [
-        SessionTypeModel(
-          id: '3',
-          name: 'Neurological Therapy',
-          description: 'Therapy focused on neurological conditions like stroke recovery or MS',
-          durationMinutes: 60,
-          price: 2000,
-          imageUrl: 'https://images.unsplash.com/photo-1559599101-f09722fb4948',
-        ),
-        SessionTypeModel(
-          id: '4',
-          name: 'Geriatric Physiotherapy',
-          description: 'Gentle therapy designed for elderly patients with age-related conditions',
-          durationMinutes: 45,
-          price: 1500,
-          imageUrl: 'https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b',
-        ),
-        SessionTypeModel(
-          id: '5',
-          name: 'Pediatric Therapy',
-          description: 'Specialized therapy for children with developmental or physical challenges',
-          durationMinutes: 45,
-          price: 1400,
-          imageUrl: 'https://images.unsplash.com/photo-1581338834647-b0fb40704e21',
-        ),
-        SessionTypeModel(
-          id: '6',
-          name: 'Fitness and Wellness',
-          description: 'Specialized therapy for children with developmental or physical challenges',
-          durationMinutes: 45,
-          price: 1400,
-          imageUrl: 'https://images.unsplash.com/photo-1581338834647-b0fb40704e21',
-        ),
-      ];
-      isLoading.value = false;
-    });*/
   }
 
-  void loadAvailableTimeSlots() {
-    isLoadingTimeSlots.value = true;
-
-    // Clear previous slots
-    availableTimeSlots.clear();
-    bookedTimeSlots.clear();
-    selectedTimeSlot.value = '';
-
-    // Mock data - in real app, fetch available slots from your database
-    Future.delayed(Duration(milliseconds: 800), () {
-      // Generate time slots from 9 AM to 5 PM
-      final List<String> slots = [];
-      final startHour = 9;
-      final endHour = 17;
-
-      for (int hour = startHour; hour < endHour; hour++) {
-        slots.add('${hour.toString().padLeft(2, '0')}:00');
-        slots.add('${hour.toString().padLeft(2, '0')}:30');
-      }
-
-      availableTimeSlots.value = slots;
-
-      // Mark some random slots as booked (for demo purposes)
-      final bookedCount = 3; // Number of slots to mark as booked
-      final random = DateTime.now().millisecondsSinceEpoch;
-
-      for (int i = 0; i < bookedCount; i++) {
-        final index = (random + i * 7919) % slots.length; // Using prime number for pseudo-randomness
-        bookedTimeSlots.add(slots[index]);
-      }
-
-      isLoadingTimeSlots.value = false;
-    });
+  // Load master data
+  void getTimeSlotsMaster() async {
+    isLoading.value = true;
+    selectedTimeSlot.value = null;
+    timeSlots.clear();
+    var response = await supabaseController.getTimeSlotsMaster();
+    timeSlots.addAll(response);
+    isLoading.value = false;
   }
 
-  void createAppointment() {
+  // TODO: Doctor object need to pass
+  void createAppointment() async {
+    var doctorModel = await DoctorModel.getFromSecureStorage();
+    var doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
+    var timeslotJson = jsonEncode(selectedTimeSlot.value?.toJson() ?? {});
+    var sessionTypeJson = jsonEncode(selectedSessionType.value?.toJson() ?? {});
+
+    isLoading.value = true;
+    var bookingsModel = BookingsModel(
+      id: 0, // This will be auto-generated by the database
+      userId: userModelSupabase?.id ?? 0,
+      timeSlotId: selectedTimeSlot.value?.id ?? -1, // Replace with actual time slot ID
+      timeSlotJson: timeslotJson, // Replace with actual time slot ID
+      doctorId: doctorModel?.id ?? -1, // Replace with actual doctor ID
+      doctorJson: doctorJson, // Replace with actual doctor ID
+      sessionTypeId: selectedSessionType.value?.id ?? -1,
+      sessionTypeJson: sessionTypeJson,
+      bookingDate: DateFormat('yyyy-MM-dd').format(selectedDate.value),
+      createdAt: DateTime.now().toString(),
+    );
+    var response = supabaseController.createNewBooking(bookingsModel);
+    isLoading.value = false;
+    Get.toNamed(AppPage.bookingConfirmation);
+
     // In a real app, this would create the appointment in your database
     final appointmentId = Uuid().v4();
 

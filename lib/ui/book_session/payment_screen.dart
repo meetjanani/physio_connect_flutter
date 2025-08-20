@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
@@ -37,7 +38,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // Store payment data and navigate to confirmation
     controller.razorpayPaymentId.value = response.paymentId!;
     controller.createAppointment();
-    Get.to(() => ConfirmationScreen());
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
@@ -59,7 +59,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _openRazorpayCheckout() {
-    Get.to(() => ConfirmationScreen());
+    controller.createAppointment();
     var options = {
       'key': 'YOUR_RAZORPAY_KEY',
       'amount': controller.selectedSessionType.value!.price * 100, // In paise
@@ -90,16 +90,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final dateFormatter = DateFormat('EEEE, MMMM d, yyyy');
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Payment',
-          style: GoogleFonts.inter(
-            textStyle: TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-        backgroundColor: AppColors.therapyPurple,
-        foregroundColor: Colors.white,
-      ),
+      appBar: commonAppBar('Payment', isBackButtonVisible: true),
       body: Column(
         children: [
           Expanded(
@@ -155,7 +146,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Obx(() => _buildSummaryItem(
                         icon: Icons.access_time,
                         title: 'Time',
-                        value: controller.selectedTimeSlot.value,
+                        value: controller.selectedTimeSlot.value?.time ?? 'N/A',
                       )),
                       SizedBox(height: 16),
 

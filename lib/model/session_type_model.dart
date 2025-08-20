@@ -8,7 +8,7 @@ class SessionTypeModel {
   String description= "";
   String duration= "";
   double price = 0;
-  String imageUrl= "";
+  String? imageUrl= null;
 
   SessionTypeModel({
     required this.id,

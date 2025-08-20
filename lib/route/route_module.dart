@@ -4,6 +4,9 @@ import 'package:physio_connect/ui/dashboard/dashboard_binding.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
 import 'package:physio_connect/ui/signUp/signup_binding.dart';
 
+import '../ui/book_session/confirmation_screen.dart';
+import '../ui/book_session/date_time_screen.dart';
+import '../ui/book_session/payment_screen.dart';
 import '../ui/book_session/session_type_screen.dart';
 import '../ui/booking_history/booking_detail_screen.dart';
 import '../ui/booking_history/booking_history_screen.dart';
@@ -21,7 +24,10 @@ class AppPage {
   static const loginScreen = '/login';
   static const signUpScreen = '/register';
   static const dashboardScreen = '/dashboard';
-  static const bookSession = '/bookSession';
+  static const selectSessionType = '/selectSessionType';
+  static const selectDateAndTime = '/selectDateAndTime';
+  static const performPayment = '/performPayment';
+  static const bookingConfirmation = '/bookingConfirmation';
   static const String bookingHistory = '/booking-history';
   static const String bookingDetail = '/booking-detail';
 
@@ -46,8 +52,17 @@ class AppPage {
         binding: DashboardBinding()),
 
     GetPage(
-        name: AppPage.bookSession,
+        name: AppPage.selectSessionType,
         page: () => SessionTypeScreen()),
+    GetPage(
+        name: AppPage.selectDateAndTime,
+        page: () => DateTimeScreen()),
+    GetPage(
+        name: AppPage.performPayment,
+        page: () => PaymentScreen()),
+    GetPage(
+        name: AppPage.bookingConfirmation,
+        page: () => ConfirmationScreen()),
     GetPage(
       name: AppPage.bookingHistory,
       page: () => BookingHistoryScreen(),
