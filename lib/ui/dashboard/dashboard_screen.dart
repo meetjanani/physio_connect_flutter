@@ -22,7 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    controller.getUpComingBookings();
+    controller.fetchFirebaseToken();
   }
 
   @override

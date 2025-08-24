@@ -5,14 +5,14 @@ part 'user_model_supabase.g.dart';
 @JsonSerializable()
 class UserModelSupabase {
   int id = 0;
-  String name = "";
   String userType = "Patient";
-  String doctorName = "";
-  int doctorId = 0;
+  String name = "";
   String mobileNumber = "";
-  String createAt = DateTime.now().toString();
-  String firebaseToken =
+  String? firebaseToken =
       "https://firebasestorage.googleapis.com/v0/b/colab-sample.appspot.com/o/default_placeholder%2Fuser_default_profile_picture.png?alt=media&token=e00268a3-7e48-4586-b06b-99aa449d3f3e";
+  int doctorId = 0;
+  String doctorName = "";
+  String createAt = DateTime.now().toString();
 
   UserModelSupabase({
     required this.id,

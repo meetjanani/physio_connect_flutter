@@ -45,7 +45,7 @@ Future<void> setUserModel(UserModelSupabase userModelSupabase) async {
   await secureStorageRepository.write(SecureStorage.doctorIdSessionStorage, userModelSupabase.doctorId.toString());
   await secureStorageRepository.write(SecureStorage.userCreatedAtSessionStorage, userModelSupabase.createAt);
   await secureStorageRepository.write(SecureStorage.userMobileNumberSessionStorage, userModelSupabase.mobileNumber);
-  await secureStorageRepository.write(SecureStorage.userProfileFirebaseToken, userModelSupabase.firebaseToken);
+  await secureStorageRepository.write(SecureStorage.userProfileFirebaseToken, userModelSupabase.firebaseToken ?? "");
 }
 
 Future<void> updateFirebaseToken(String firebaseToken) async {

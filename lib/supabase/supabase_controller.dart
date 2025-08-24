@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/model/time_slots_model.dart';
@@ -6,10 +9,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../model/bookings_model.dart';
 import '../model/session_type_model.dart';
+import '../model/user_model_supabase.dart';
 import '../utils/database_schema.dart';
+import '../utils/secure_storage/notification_service.dart';
 
 class SupabaseController {
   static SupabaseController get to => Get.find();
+  final notificationService = NotificationService();
   final SupabaseClient supabaseClient = Supabase.instance.client;
 
   Future<List<BookingsModel>> getUpComingBookings(int userId) async {
@@ -22,11 +28,13 @@ class SupabaseController {
   }
 
   Future<void> updateFirebaseToken(int userId, String firebaseToken) async {
-    await supabaseClient
-        .from(DatabaseSchema.usersTable)
-        .update({DatabaseSchema.userFirebaseToken: firebaseToken})
-        .eq(DatabaseSchema.usersId, userId)
-        .select();
+    if(userId > 0 && firebaseToken.isNotEmpty) {
+      await supabaseClient
+          .from(DatabaseSchema.usersTable)
+          .update({DatabaseSchema.userFirebaseToken: firebaseToken})
+          .eq(DatabaseSchema.usersId, userId)
+          .select();
+    }
   }
 
   // Get Master Data
@@ -51,13 +59,14 @@ class SupabaseController {
     return timeSlotList;
   }
 
-  Future<void> createNewBooking(BookingsModel bookingsModel) async {
+  Future<void> createNewBooking(BookingsModel bookingsModel, int notificationUserId) async {
     var request = bookingsModel.toJson();
     request.remove('id');
     var response = await Supabase.instance.client.from(DatabaseSchema.bookingsTable).upsert([
       request,
     ]).select();
-    // await newBookingNotificationToAdmin();
+
+    await newBookingNotificationToAdmin(notificationUserId);
     Get.back(result: true); // dismiss progress bar
     // Get.back(result: true); // navigate back screen
     Get.showSuccessSnackbar('Your booking has been placed successfully.');
@@ -75,4 +84,40 @@ class SupabaseController {
       return null;
     }
   }
+
+
+  Future<void> newBookingNotificationToAdmin(int doctorId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from(DatabaseSchema.usersTable)
+          .select('*')
+          .eq(DatabaseSchema.usersId, doctorId)
+          .eq(DatabaseSchema.usersUserType, "Doctor");
+
+      var userList = UserModelSupabase.fromJsonList(response);
+
+      // Use a proper async loop
+      for (final adminUser in userList) {
+        try {
+          if (adminUser.firebaseToken != null && adminUser.firebaseToken!.isNotEmpty) {
+            print('Sending notification to token: ${adminUser.firebaseToken}');
+
+
+            await notificationService.sendPushNotification(
+                adminUser.firebaseToken!,
+                "Yippee!!!, New Booking...",
+                "New booking placed successfully.",
+            );
+
+            print('Notification to ${adminUser.name}:');
+          }
+        } catch (e) {
+          print('Error sending to ${adminUser.name}: $e');
+        }
+      }
+    } catch (e) {
+      print('Error in newBookingNotificationToAdmin: $e');
+    }
+  }
+
 }

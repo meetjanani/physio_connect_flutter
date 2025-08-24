@@ -14,6 +14,7 @@ class DoctorModel {
   String experience = "";
   String drRegNumber = "";
   String biodata = "";
+  int userId = 0;
 
   DoctorModel({
     required this.id,
@@ -22,6 +23,7 @@ class DoctorModel {
     required this.experience,
     required this.drRegNumber,
     required this.biodata,
+    required this.userId,
   });
 
   static List<DoctorModel> fromJsonList(List<dynamic> dataList) {

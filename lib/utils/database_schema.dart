@@ -9,9 +9,10 @@ class DatabaseSchema extends GetxController {
   // Document name will be +91{10 digit MobileNumber}
   static const String usersTable = "users";
   static const String usersId = "id";
+  static const String usersDoctorId = "doctorId";
   static const String userName = "name";
   static const String userMobileNumber = "mobileNumber";
-  static const String userIsAdmin = "isAdmin";
+  static const String usersUserType = "userType";
   static const String userFirebaseToken = "firebaseToken";
   static const String userCreateAt = "createAt";
   static const String userCityId = "cityId";

@@ -33,7 +33,7 @@ class FirebaseAuthController extends GetxController {
       return await Supabase.instance.client
           .from(DatabaseSchema.usersTable)
           .select('*')
-          .eq(DatabaseSchema.userMobileNumber, phoneNumber)
+          .eq(DatabaseSchema.userMobileNumber, phoneNumber.trim())
           .range(0, 1)
           .then((value) {
         hideProgressBar();

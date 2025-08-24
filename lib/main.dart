@@ -19,14 +19,13 @@ void main() async{
   await Firebase.initializeApp();
   await FirebaseAppCheck.instance.activate(
     webProvider: ReCaptchaV3Provider(
-      '6LdG3acrAAAAALq9f54S9uWGrRZPyqVFVQCH0onf',
-      // '6LdG3acrAAAAAH_QL4vEhTZ_zqs2ZZ0vgqNlnLIx'
+      // '6LdG3acrAAAAALq9f54S9uWGrRZPyqVFVQCH0onf',
+      '6LdG3acrAAAAAH_QL4vEhTZ_zqs2ZZ0vgqNlnLIx'
     ),
     androidProvider: AndroidProvider.debug,
   );
   FirebaseNotification().init();
   FirebaseMessaging.onBackgroundMessage((message) async {
-    await Firebase.initializeApp();
     if (kDebugMode) {
       print("Handling a background message: ${message.messageId}");
       print('Message data: ${message.data}');

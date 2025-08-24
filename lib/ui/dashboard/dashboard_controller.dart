@@ -24,17 +24,18 @@ class DashboardController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    userModelSupabase = await getUserModel();
     await fetchFirebaseToken();
     await fetchDoctorDetail();
     await getUpComingBookings();
   }
 
   Future<void> fetchFirebaseToken() async {
+    userModelSupabase = await getUserModel();
     final messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
     updateFirebaseToken(token.toString());
     print('Firebase Token=$token');
+
     await supabaseController.updateFirebaseToken(
         userModelSupabase?.id ?? 0, token.toString());
   }

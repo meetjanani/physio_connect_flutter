@@ -15,17 +15,17 @@ UserModelSupabase _$UserModelSupabaseFromJson(Map<String, dynamic> json) =>
         mobileNumber: json['mobileNumber'] as String,
       )
       ..userType = json['userType'] as String
-      ..createAt = json['createAt'] as String
-      ..firebaseToken = json['firebaseToken'] as String;
+      ..firebaseToken = json['firebaseToken'] as String?
+      ..createAt = json['createAt'] as String;
 
 Map<String, dynamic> _$UserModelSupabaseToJson(UserModelSupabase instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'name': instance.name,
       'userType': instance.userType,
-      'doctorName': instance.doctorName,
-      'doctorId': instance.doctorId,
+      'name': instance.name,
       'mobileNumber': instance.mobileNumber,
-      'createAt': instance.createAt,
       'firebaseToken': instance.firebaseToken,
+      'doctorId': instance.doctorId,
+      'doctorName': instance.doctorName,
+      'createAt': instance.createAt,
     };

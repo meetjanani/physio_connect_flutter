@@ -13,6 +13,7 @@ DoctorModel _$DoctorModelFromJson(Map<String, dynamic> json) => DoctorModel(
   experience: json['experience'] as String,
   drRegNumber: json['drRegNumber'] as String,
   biodata: json['biodata'] as String,
+  userId: (json['userId'] as num).toInt(),
 );
 
 Map<String, dynamic> _$DoctorModelToJson(DoctorModel instance) =>
@@ -23,4 +24,5 @@ Map<String, dynamic> _$DoctorModelToJson(DoctorModel instance) =>
       'experience': instance.experience,
       'drRegNumber': instance.drRegNumber,
       'biodata': instance.biodata,
+      'userId': instance.userId,
     };
