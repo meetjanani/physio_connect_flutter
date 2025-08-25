@@ -59,8 +59,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _openRazorpayCheckout() {
-    controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}));
-    return;
     var options = {
       'key': 'rzp_test_R9Cb4IgtUNcVsB',
       'amount': controller.selectedSessionType.value!.price * 100, // In paise
