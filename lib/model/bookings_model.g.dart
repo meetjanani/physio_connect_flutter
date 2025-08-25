@@ -16,6 +16,9 @@ BookingsModel _$BookingsModelFromJson(Map<String, dynamic> json) =>
       doctorJson: json['doctorJson'] as String,
       sessionTypeId: (json['sessionTypeId'] as num).toInt(),
       sessionTypeJson: json['sessionTypeJson'] as String,
+      paymentId: json['paymentId'] as String?,
+      orderId: json['orderId'] as String?,
+      signature: json['signature'] as String?,
       bookingDate: json['bookingDate'] as String,
       createdAt: json['createdAt'] as String,
     );
@@ -30,6 +33,9 @@ Map<String, dynamic> _$BookingsModelToJson(BookingsModel instance) =>
       'doctorJson': instance.doctorJson,
       'sessionTypeId': instance.sessionTypeId,
       'sessionTypeJson': instance.sessionTypeJson,
+      'paymentId': instance.paymentId,
+      'orderId': instance.orderId,
+      'signature': instance.signature,
       'bookingDate': instance.bookingDate,
       'createdAt': instance.createdAt,
     };

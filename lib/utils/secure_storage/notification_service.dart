@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart' as auth;
@@ -7,20 +8,29 @@ import 'package:googleapis_auth/auth_io.dart' as auth;
 class NotificationService {
 
   static String? notificationAccessToken;
+  DateTime? _tokenExpiry;
 
   Future<String> getAccessToken() async {
-    // Load your service account JSON (put in assets for testing ONLY)
-    final serviceAccountJson = await rootBundle.loadString('assets/service_account.json');
-    final credentials = auth.ServiceAccountCredentials.fromJson(serviceAccountJson);
+    // Check if cached token is still valid
+    if (notificationAccessToken != null && _tokenExpiry != null &&
+        _tokenExpiry!.isAfter(DateTime.now().add(Duration(minutes: 5)))) {
+      return notificationAccessToken!;
+    }
 
-    final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+    try {
+      // Call Firebase Function to get token
+      final functions = FirebaseFunctions.instance;
+      final result = await functions.httpsCallable('getFcmToken').call();
 
-    final client = await auth.clientViaServiceAccount(credentials, scopes);
-    final accessToken = client.credentials.accessToken.data;
-    client.close();
+      final data = result.data;
+      notificationAccessToken = data['token'];
+      _tokenExpiry = DateTime.now().add(Duration(seconds: data['expiryTime']));
 
-    notificationAccessToken = accessToken;
-    return accessToken;
+      return notificationAccessToken!;
+    } catch (e) {
+      print('Error getting access token: $e');
+      throw Exception('Failed to get FCM token: $e');
+    }
   }
 
 
@@ -37,10 +47,10 @@ class NotificationService {
           "title": title,
           "body": messageBody
         },
-        /*"data": {
+        "data": {
           "screen": "booking",
           "doctorId": "1234"
-        }*/
+        }
       }
     };
 
@@ -48,7 +58,7 @@ class NotificationService {
       url,
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer $notificationAccessToken",
+        "Authorization": "Bearer ${notificationAccessToken}",
       },
       body: jsonEncode(body),
     );

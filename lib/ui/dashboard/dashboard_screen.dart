@@ -7,6 +7,7 @@ import 'package:physio_connect/ui/dashboard/dashboard_controller.dart';
 import '../../route/route_module.dart';
 import '../../utils/common_appbar.dart';
 import '../../utils/theme/app_colors.dart';
+import '../../utils/units_extensions.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -22,6 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // TODO: Once per app launch
     controller.fetchFirebaseToken();
   }
 
@@ -208,7 +210,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "with Dr. Sarah Johnson",
+                    "with ${appointment.aDoctor().name}",
                     style: GoogleFonts.inter(
                       textStyle: const TextStyle(
                         color: Colors.black,
@@ -236,7 +238,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const Icon(Icons.calendar_today, color: Colors.blue),
                     const SizedBox(height: 8),
                     Text(
-                      "20 Oct 2023",
+                      formatDateToReadable(appointment.bookingDate),
                       style: GoogleFonts.inter(
                         textStyle: const TextStyle(
                           fontWeight: FontWeight.w600,
@@ -245,7 +247,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     Text(
-                      "Friday",
+                      formatDateToWeekday(appointment.bookingDate),
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
                           color: Colors.grey.shade700,
@@ -263,7 +265,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const Icon(Icons.access_time, color: Colors.blue),
                     const SizedBox(height: 8),
                     Text(
-                      "10:00 AM",
+                      appointment.aTimeslot().time,
                       style: GoogleFonts.inter(
                         textStyle: const TextStyle(
                           fontWeight: FontWeight.w600,
@@ -272,7 +274,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     Text(
-                      "45 minutes",
+                      appointment.aSessionType().duration,
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
                           color: Colors.grey.shade700,

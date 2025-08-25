@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/route/route_module.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../model/bookings_model.dart';
@@ -63,7 +64,7 @@ class BookingController extends GetxController {
   }
 
   // TODO: Doctor object need to pass
-  void createAppointment() async {
+  void createAppointment(PaymentSuccessResponse paymentResponse) async {
     var doctorModel = await DoctorModel.getFromSecureStorage();
     var doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
     var timeslotJson = jsonEncode(selectedTimeSlot.value?.toJson() ?? {});
@@ -79,12 +80,14 @@ class BookingController extends GetxController {
       doctorJson: doctorJson, // Replace with actual doctor ID
       sessionTypeId: selectedSessionType.value?.id ?? 1,
       sessionTypeJson: sessionTypeJson,
+      paymentId: paymentResponse.paymentId!,
+      orderId: paymentResponse.orderId,
+      signature: paymentResponse.signature,
       bookingDate: DateFormat('yyyy-MM-dd').format(selectedDate.value),
       createdAt: DateTime.now().toString(),
     );
     var response = await supabaseController.createNewBooking(bookingsModel, doctorModel?.userId ?? 1);
     isLoading.value = false;
-    Get.toNamed(AppPage.bookingConfirmation);
 
     // In a real app, this would create the appointment in your database
     final appointmentId = Uuid().v4();

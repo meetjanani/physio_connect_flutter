@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
@@ -181,7 +182,7 @@ class ConfirmationScreen extends StatelessWidget {
                 // Back to home button
                 ElevatedButton(
                   onPressed: () {
-                    Get.offAll(() => DashboardScreen());
+                    Get.offAndToNamed(AppPage.dashboardScreen);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.therapyPurple,

@@ -37,7 +37,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
     // Store payment data and navigate to confirmation
     controller.razorpayPaymentId.value = response.paymentId!;
-    controller.createAppointment();
+    controller.createAppointment(response);
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
@@ -59,15 +59,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _openRazorpayCheckout() {
-    controller.createAppointment();
+    controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}));
+    return;
     var options = {
-      'key': 'YOUR_RAZORPAY_KEY',
+      'key': 'rzp_test_R9Cb4IgtUNcVsB',
       'amount': controller.selectedSessionType.value!.price * 100, // In paise
       'name': 'PhysioConnect',
       'description': 'Payment for ${controller.selectedSessionType.value!.name}',
       'prefill': {
-        'contact': '9876543210', // Get from user profile
-        'email': 'user@example.com', // Get from user profile
+        'contact': '+911122334455', // Get from user profile
+        'email': 'meetjanani47@gmail.com', // Get from user profile
+      },
+      'external': {
+        'wallets': [] // Empty array disables Google Pay integration
       }
     };
 

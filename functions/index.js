@@ -1,44 +1,21 @@
-const {setGlobalOptions} = require("firebase-functions");
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
 
+// Initialize Firebase Admin SDK
 admin.initializeApp();
-setGlobalOptions({maxInstances: 10});
 
-const app = express();
-app.use(cors({origin: true}));
-app.use(bodyParser.json());
-
-app.post("/", async (req, res) => {
+exports.getFcmToken = functions.https.onCall(async (data, context) => {
   try {
-    console.log("Received request body:", JSON.stringify(req.body));
+    // Generate token with FCM scope
+    const token = await admin.credential.applicationDefault().getAccessToken();
 
-    const {token, title, body} = req.body;
-
-    if (!token || !title || !body) {
-      console.error("Missing parameters:", {token, title, body});
-      return res.status(400).json({error: "Missing required parameters"});
-    }
-
-    const message = {
-      notification: {
-        title,
-        body,
-      },
-      token: token,
+    return {
+      token: token.access_token,
+      expiryTime: token.expires_in,
     };
-
-    console.log("Sending message:", JSON.stringify(message));
-    const response = await admin.messaging().send(message);
-    console.log("FCM response:", response);
-    return res.status(200).json({success: true, messageId: response});
   } catch (error) {
-    console.error("Error sending notification:", error);
-    return res.status(500).json({error: error.message});
+    console.error("Error generating FCM token:", error);
+    throw new functions.https.HttpsError("internal",
+        "Failed to generate token");
   }
 });
-
-exports.sendNotification = functions.https.onRequest(app);

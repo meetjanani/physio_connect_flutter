@@ -1,4 +1,10 @@
+import 'dart:convert';
+
 import 'package:json_annotation/json_annotation.dart';
+import 'package:physio_connect/model/session_type_model.dart';
+import 'package:physio_connect/model/time_slots_model.dart';
+
+import 'doctor_model.dart';
 part 'bookings_model.g.dart';
 
 @JsonSerializable()
@@ -11,6 +17,9 @@ class BookingsModel {
   String doctorJson = "";
   int sessionTypeId = 0;
   String sessionTypeJson = "";
+  String? paymentId = "";
+  String? orderId = "";
+  String? signature = "";
   String bookingDate = DateTime.now().toString();
   String createdAt = DateTime.now().toString();
 
@@ -23,6 +32,9 @@ class BookingsModel {
     required this.doctorJson,
     required this.sessionTypeId,
     required this.sessionTypeJson,
+    required this.paymentId,
+    required this.orderId,
+    required this.signature,
     required this.bookingDate,
     required this.createdAt,
   });
@@ -39,4 +51,8 @@ class BookingsModel {
       _$BookingsModelFromJson(data);
 
   Map<String, dynamic> toJson() => _$BookingsModelToJson(this);
+
+  DoctorModel aDoctor() => DoctorModel.fromJson(jsonDecode(this.doctorJson));
+  TimeSlotModel aTimeslot() => TimeSlotModel.fromJson(jsonDecode(this.timeSlotJson));
+  SessionTypeModel aSessionType() => SessionTypeModel.fromJson(jsonDecode(this.sessionTypeJson));
 }
