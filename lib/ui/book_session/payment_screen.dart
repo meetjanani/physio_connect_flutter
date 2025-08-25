@@ -59,6 +59,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _openRazorpayCheckout() {
+    //TODO: Remove this 2 line to enable Razorpay
     controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}));
     return;
     var options = {
