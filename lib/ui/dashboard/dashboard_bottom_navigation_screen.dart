@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import '../booking_history/booking_history_screen.dart';
-import '../profile/profile_about_screen.dart';
+import '../profile/profile_about_us_screen.dart';
 
 class DashboardBottomNavigationScreen extends StatefulWidget {
   DashboardBottomNavigationScreen({super.key, required this.currentIndex});
@@ -16,7 +16,7 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
   final List<Widget> _buildScreens = [
     DashboardScreen(),
     BookingHistoryScreen(),
-    ProfileAboutScreen(),
+    ProfileAboutUsScreen(),
   ];
 
   void onTapped(int index) {

@@ -12,7 +12,7 @@ import '../ui/booking_history/booking_history_screen.dart';
 import '../ui/dashboard/dashboard_bottom_navigation_screen.dart';
 import '../ui/logIn/login_binding.dart';
 import '../ui/logIn/login_screen.dart';
-import '../ui/profile/profile_about_screen.dart';
+import '../ui/profile/profile_about_us_screen.dart';
 import '../ui/signUp/signup_screen.dart';
 import '../ui/splash_binding.dart';
 import '../ui/splash_screen.dart';
@@ -77,6 +77,6 @@ class AppPage {
     ),
     GetPage(name: AppPage.bookingHistory, page: () => BookingHistoryScreen()),
     GetPage(name: AppPage.bookingDetail, page: () => BookingDetailScreen()),
-    GetPage(name: AppPage.userProfile, page: () => ProfileAboutScreen()),
+    GetPage(name: AppPage.userProfile, page: () => ProfileAboutUsScreen()),
   ];
 }

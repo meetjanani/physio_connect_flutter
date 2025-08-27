@@ -17,6 +17,7 @@ class FirebaseAuthController extends GetxController {
   var userRegisterData = null;
 
   void fbLogin(String phoneNumber) async {
+    await secureStorageRepository.write(SecureStorage.userMobileNumberSessionStorage, phoneNumber);
     checkUserIsRegisteredOrNot(phoneNumber).then((isRegister) {
       if (isRegister) {
         signOutUser().then((value) => firebaseAuthCheck(phoneNumber));
@@ -137,21 +138,22 @@ class FirebaseAuthController extends GetxController {
   }
 
   Future<void> getUserFromPhoneNumber(String phoneNumber) async {
-    await Supabase.instance.client
-        .from(DatabaseSchema.usersTable)
-        .select('*')
-        .eq(DatabaseSchema.userMobileNumber, phoneNumber)
-        .limit(1)
+    fetchUserProfile(phoneNumber)
         .then((data) {
-      /*getStorageRepository.write(
-          supabaseUserSessionStorage, UserModelSupabase.fromJson(data[0]).toJson());
-      getStorageRepository.write(
-          userIdSessionStorage, UserModelSupabase.fromJson(data[0]).id);*/
-      setUserModel(UserModelSupabase.fromJson(data[0]));
+      setUserModel(data);
       hideProgressBar();
       Get.offNamed(AppPage.dashboardScreen);
       Get.showSuccessSnackbar('Login successfully.');
     });
+  }
+
+  Future<UserModelSupabase> fetchUserProfile(String phoneNumber) async {
+    var userProfile = await Supabase.instance.client
+        .from(DatabaseSchema.usersTable)
+        .select('*')
+        .eq(DatabaseSchema.userMobileNumber, phoneNumber)
+        .limit(1);
+    return UserModelSupabase.fromJson(userProfile[0]);
   }
 
   void fbRegister() async {

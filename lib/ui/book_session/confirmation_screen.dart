@@ -21,7 +21,7 @@ class ConfirmationScreen extends StatelessWidget {
 
     return WillPopScope(
       onWillPop: () async {
-        Get.offAll(() => DashboardScreen());
+        Get.offAll(AppPage.dashboardScreen);
         return false;
       },
       child: Scaffold(

@@ -1,4 +1,4 @@
-enum UserType { patient, therapist }
+enum UserType { patient, doctor }
 enum BookingStatus { booked, completed, cancelled, noShow }
 enum PaymentStatus { paid, pending, refunded }
 enum LoadingStatusEnum { initial, loading, success }
