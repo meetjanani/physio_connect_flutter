@@ -11,30 +11,38 @@ part 'bookings_model.g.dart';
 class BookingsModel {
   int id = 0;
   int userId = 0;
+  String bookingStatus = "";
+  int price = 0;
   int timeSlotId = 0;
   String timeSlotJson = "";
   int doctorId = 0;
   String doctorJson = "";
   int sessionTypeId = 0;
   String sessionTypeJson = "";
+  String paymentStatus = "";
   String? paymentId = "";
   String? orderId = "";
   String? signature = "";
+  String? doctorNotes = "";
   String bookingDate = DateTime.now().toString();
   String createdAt = DateTime.now().toString();
 
   BookingsModel({
     required this.id,
     required this.userId,
+    required this.bookingStatus,
+    required this.price,
     required this.timeSlotId,
     required this.timeSlotJson,
     required this.doctorId,
     required this.doctorJson,
     required this.sessionTypeId,
     required this.sessionTypeJson,
+    required this.paymentStatus,
     required this.paymentId,
     required this.orderId,
     required this.signature,
+    required this.doctorNotes,
     required this.bookingDate,
     required this.createdAt,
   });

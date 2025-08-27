@@ -28,6 +28,20 @@ class SupabaseController {
     return bookingList;
   }
 
+  Future<List<BookingsModel>> getFilteredBookings(int userId, DateTime from, DateTime to) async {
+    final String fromDate = from.toIso8601String().split('T')[0];
+    final String toDate = to.toIso8601String().split('T')[0];
+    final response = await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .select('*')
+        .eq(DatabaseSchema.bookingsUserId, userId)
+        .gte(DatabaseSchema.bookingsDate, fromDate)
+        .lte(DatabaseSchema.bookingsDate, toDate)
+        .order(DatabaseSchema.bookingsId, ascending: false);
+    var bookingList = BookingsModel.fromJsonList(response);
+    return bookingList;
+  }
+
   Future<void> updateFirebaseToken(int userId, String firebaseToken) async {
     if (userId > 0 && firebaseToken.isNotEmpty) {
       await supabaseClient
@@ -70,12 +84,9 @@ class SupabaseController {
         .from(DatabaseSchema.bookingsTable)
         .upsert([request])
         .select();
-
-    await newBookingNotificationToAdmin(notificationUserId).then((result) {
-      Get.back(result: true); // dismiss progress bar
-      Get.showSuccessSnackbar('Your booking has been placed successfully.');
-      Get.toNamed(AppPage.bookingConfirmation);
-    });
+    Get.back(result: true); // dismiss progress bar
+    Get.showSuccessSnackbar('Your booking has been placed successfully.');
+    Get.toNamed(AppPage.bookingConfirmation);
   }
 
   Future<DoctorModel?> getDoctorById(int doctorId) async {

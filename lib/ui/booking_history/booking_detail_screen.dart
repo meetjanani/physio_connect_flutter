@@ -3,20 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:physio_connect/model/bookings_model.dart';
+import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
-import '../../model/appointment_model.dart';
 import 'booking_history_controller.dart';
 
 class BookingDetailScreen extends StatelessWidget {
   final BookingHistoryController controller = Get.find<BookingHistoryController>();
-  final String appointmentId = Get.arguments as String;
+  final BookingsModel appointment = Get.arguments as BookingsModel;
 
   BookingDetailScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    controller.loadAppointmentDetails(appointmentId);
 
     return Scaffold(
       appBar: AppBar(
@@ -87,7 +87,7 @@ class BookingDetailScreen extends StatelessWidget {
   Widget _buildDetailsContent(BuildContext context) {
     final appointment = controller.selectedAppointment.value!;
     final dateFormatter = DateFormat('EEEE, MMMM d, yyyy');
-    final dateObj = DateFormat('yyyy-MM-dd').parse(appointment.date);
+    final dateObj = DateFormat('yyyy-MM-dd').parse(appointment.bookingDate);
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
@@ -99,13 +99,13 @@ class BookingDetailScreen extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: _getStatusColor(appointment.status),
+              color: _getStatusColor(appointment.bookingStatus),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 Icon(
-                  _getStatusIcon(appointment.status),
+                  _getStatusIcon(appointment.bookingStatus),
                   color: Colors.white,
                 ),
                 SizedBox(width: 12),
@@ -113,7 +113,7 @@ class BookingDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _getStatusText(appointment.status),
+                      _getStatusText(appointment.bookingStatus),
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
                           color: Colors.white,
@@ -124,7 +124,7 @@ class BookingDetailScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      _getStatusDescription(appointment.status),
+                      _getStatusDescription(appointment.bookingStatus),
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
                           color: Colors.white.withOpacity(0.9),
@@ -155,7 +155,7 @@ class BookingDetailScreen extends StatelessWidget {
           _buildInfoCard([
             _buildInfoRow(
               'Session Type',
-              appointment.sessionTypeName,
+              "${appointment.aSessionType().name}\n${appointment.aSessionType().description}",
               Icons.healing,
             ),
             _buildInfoRow(
@@ -165,12 +165,12 @@ class BookingDetailScreen extends StatelessWidget {
             ),
             _buildInfoRow(
               'Time',
-              '${appointment.startTime} - ${appointment.endTime}',
+              appointment.aTimeslot().time,
               Icons.access_time,
             ),
             _buildInfoRow(
               'Duration',
-              '${appointment.durationMinutes} minutes',
+              appointment.aSessionType().duration,
               Icons.timelapse,
             ),
           ]),
@@ -208,7 +208,7 @@ class BookingDetailScreen extends StatelessWidget {
           _buildInfoCard([
             _buildInfoRow(
               'Amount',
-              '₹${appointment.amount.toStringAsFixed(0)}',
+              '₹${appointment.price.toStringAsFixed(0)}',
               Icons.payments,
               valueColor: AppColors.therapyPurple,
               valueBold: true,
@@ -219,10 +219,10 @@ class BookingDetailScreen extends StatelessWidget {
               Icons.check_circle,
               valueColor: _getPaymentStatusColor(appointment.paymentStatus),
             ),
-            if (appointment.razorpayPaymentId.isNotEmpty)
+            if (appointment.paymentId?.isNotEmpty == true)
               _buildInfoRow(
                 'Transaction ID',
-                appointment.razorpayPaymentId,
+                appointment.paymentId ?? 'N/A',
                 Icons.receipt_long,
                 valueStyle: TextStyle(
                   fontSize: 13,
@@ -235,7 +235,7 @@ class BookingDetailScreen extends StatelessWidget {
           SizedBox(height: 24),
 
           // Notes
-          if (appointment.doctorNotes.isNotEmpty) ...[
+          if (appointment.doctorNotes?.isNotEmpty == true) ...[
             Text(
               'Doctor\'s Notes',
               style: GoogleFonts.inter(
@@ -247,12 +247,12 @@ class BookingDetailScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16),
-            _buildNotesCard(appointment.doctorNotes),
+            _buildNotesCard(appointment.doctorNotes ?? 'No additional notes provided.'),
             SizedBox(height: 24),
           ],
 
           // Actions
-          if (appointment.status == 'booked') ...[
+          if (appointment.bookingStatus == BookingStatus.booked) ...[
             Row(
               children: [
                 Expanded(
@@ -377,7 +377,7 @@ class BookingDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTherapistCard(AppointmentDetails appointment) {
+  Widget _buildTherapistCard(BookingsModel appointment) {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -395,9 +395,9 @@ class BookingDetailScreen extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 30,
-            backgroundImage: NetworkImage(appointment.therapistImage),
+            backgroundImage: NetworkImage(controller.therapistsImage),
             backgroundColor: AppColors.therapyPurple.withOpacity(0.1),
-            child: appointment.therapistImage.isEmpty
+            child: controller.therapistsImage.isEmpty
                 ? Icon(Icons.person, color: AppColors.therapyPurple)
                 : null,
           ),
@@ -407,7 +407,7 @@ class BookingDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  appointment.therapistName,
+                  appointment.aDoctor().name,
                   style: GoogleFonts.inter(
                     textStyle: TextStyle(
                       fontSize: 16,
@@ -418,7 +418,7 @@ class BookingDetailScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Physiotherapist • ${appointment.therapistSpecialization}',
+                  appointment.aDoctor().degree,
                   style: GoogleFonts.inter(
                     textStyle: TextStyle(
                       fontSize: 14,
@@ -426,7 +426,8 @@ class BookingDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 8),
+                // TODO: Rating Row
+                /*SizedBox(height: 8),
                 Row(
                   children: [
                     Icon(
@@ -445,7 +446,7 @@ class BookingDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
+                ),*/
               ],
             ),
           ),
@@ -597,7 +598,7 @@ class BookingDetailScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              controller.cancelAppointment(appointmentId);
+              controller.cancelAppointment(appointment);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red.shade400,

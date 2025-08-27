@@ -3,6 +3,10 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../model/appointment_model.dart';
+import '../../model/bookings_model.dart';
+import '../../model/user_model_supabase.dart';
+import '../../supabase/supabase_controller.dart';
+import '../../utils/app_shared_preference.dart';
 
 class BookingHistoryController extends GetxController {
   static BookingHistoryController get to => Get.put(BookingHistoryController());
@@ -16,16 +20,32 @@ class BookingHistoryController extends GetxController {
 
   // Appointments
   final allAppointments = <AppointmentModel>[].obs;
-  final filteredAppointments = <AppointmentModel>[].obs;
-  final selectedAppointment = Rx<AppointmentDetails?>(null);
+  final selectedAppointment = Rx<BookingsModel?>(null);
+
+  SupabaseController supabaseController =
+      SupabaseController.to;
+  UserModelSupabase? userModelSupabase;
+  RxList<BookingsModel> upComingBookings = RxList();
+  final therapistsImage = "https://randomuser.me/api/portraits/women/44.jpg";
 
   @override
-  void onInit() {
+  Future<void> onInit() async {
     super.onInit();
-    loadAppointments();
+    userModelSupabase = await getUserModel();
+    getUpComingBookings();
   }
 
-  void loadAppointments() {
+  Future<void> getUpComingBookings() async {
+    if (userModelSupabase?.id != null) {
+      isLoading.value = true;
+      upComingBookings.clear();
+      var response = await supabaseController.getFilteredBookings(userModelSupabase?.id ?? 0, fromDate.value, toDate.value);
+      upComingBookings.addAll(response);
+      isLoading.value = false;
+    }
+  }
+
+  /*void loadAppointments() {
     isLoading.value = true;
 
     // In a real app, fetch data from your API or database
@@ -34,25 +54,25 @@ class BookingHistoryController extends GetxController {
       filterAppointments();
       isLoading.value = false;
     });
-  }
+  }*/
 
   void filterAppointments() {
     final fromDateStr = DateFormat('yyyy-MM-dd').format(fromDate.value);
     final toDateStr = DateFormat('yyyy-MM-dd').format(toDate.value);
 
-    filteredAppointments.value = allAppointments
+   /* filteredAppointments.value = allAppointments
         .where((appointment) {
           final appDate = appointment.date;
           return appDate.compareTo(fromDateStr) >= 0 &&
                  appDate.compareTo(toDateStr) <= 0;
         })
-        .toList();
+        .toList();*/
   }
 
   void applyQuickFilter(int days) {
     toDate.value = DateTime.now();
     fromDate.value = DateTime.now().subtract(Duration(days: days));
-    filterAppointments();
+    getUpComingBookings();
   }
 
   void filterCurrentMonth() {
@@ -61,10 +81,10 @@ class BookingHistoryController extends GetxController {
 
     fromDate.value = firstDayOfMonth;
     toDate.value = now;
-    filterAppointments();
+    getUpComingBookings();
   }
 
-  void loadAppointmentDetails(String appointmentId) {
+  /*void loadAppointmentDetails(String appointmentId) {
     isLoadingDetails.value = true;
     selectedAppointment.value = null;
 
@@ -74,9 +94,9 @@ class BookingHistoryController extends GetxController {
       selectedAppointment.value = appointment;
       isLoadingDetails.value = false;
     });
-  }
+  }*/
 
-  void cancelAppointment(String appointmentId) {
+  void cancelAppointment(BookingsModel appointment) {
     // In a real app, call your API to cancel the appointment
     Get.snackbar(
       'Appointment Cancelled',
@@ -84,7 +104,7 @@ class BookingHistoryController extends GetxController {
       snackPosition: SnackPosition.BOTTOM,
     );
 
-    // Update local data
+    /*// Update local data
     final index = allAppointments.indexWhere((a) => a.appointmentId == appointmentId);
     if (index >= 0) {
       allAppointments[index] = allAppointments[index].copyWith(status: 'cancelled');
@@ -94,7 +114,7 @@ class BookingHistoryController extends GetxController {
     // Update selected appointment if viewing details
     if (selectedAppointment.value?.appointmentId == appointmentId) {
       selectedAppointment.value = selectedAppointment.value!.copyWith(status: 'cancelled');
-    }
+    }*/
   }
 
   // Mock data - replace with real data in your app

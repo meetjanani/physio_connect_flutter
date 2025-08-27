@@ -81,7 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       SizedBox(height: 16),
                       SizedBox(
-                        height: 222,
+                        height: 230,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
                           physics: BouncingScrollPhysics(),
@@ -402,7 +402,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Image placeholder - replace with actual images
               CachedNetworkImage(
                 imageUrl: tip['image'],
-                height: 220,
+                height: 240,
                 width: 280,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
@@ -445,16 +445,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 220,
                 width: 280,
               ),*/
-              // Icon backdrop
-              Positioned(
-                right: -20,
-                bottom: -20,
-                child: Icon(
-                  tip['icon'],
-                  size: 120,
-                  color: Colors.white.withOpacity(0.2),
-                ),
-              ),
               // Content
               Padding(
                 padding: EdgeInsets.all(16),
@@ -462,13 +452,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(tip['icon'], color: Colors.white, size: 32),
-                    SizedBox(height: 12),
+                    SizedBox(height: 8),
                     Text(
                       tip['title'],
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
                           color: Colors.black,
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

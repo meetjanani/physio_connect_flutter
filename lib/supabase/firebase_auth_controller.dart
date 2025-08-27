@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/route/route_module.dart';
-import 'package:physio_connect/utils/secure_storage/secure_storage_repository.dart';
 import 'package:physio_connect/utils/view_extension.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -164,7 +163,7 @@ class FirebaseAuthController extends GetxController {
         fbLogin(mobileNumber);
       } else {
         // insert into Supabase
-        var result = await Supabase.instance.client
+        await Supabase.instance.client
             .from(DatabaseSchema.usersTable)
             .insert([userRegisterData]).select();
         Get.showSuccessSnackbar('New user successfully created.');

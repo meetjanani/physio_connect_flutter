@@ -7,7 +7,7 @@ class SessionTypeModel {
   String name = "";
   String description= "";
   String duration= "";
-  double price = 0;
+  int price = 0;
   String? imageUrl= null;
 
   SessionTypeModel({

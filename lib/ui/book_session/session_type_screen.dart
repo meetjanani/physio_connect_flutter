@@ -9,7 +9,6 @@ import '../../model/session_type_model.dart';
 import '../../route/route_module.dart';
 import '../../utils/cached_network_image.dart';
 import 'booking_controller.dart';
-import 'date_time_screen.dart';
 
 class SessionTypeScreen extends StatelessWidget {
   final BookingController controller = Get.put(BookingController());
@@ -20,35 +19,35 @@ class SessionTypeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: commonAppBar("Select Session Type", isBackButtonVisible: true),
-      body: Obx(() => controller.isLoading.value
+      body: SafeArea(child: Obx(() => controller.isLoading.value
           ? Center(child: CircularProgressIndicator())
           : ListView(
-              padding: EdgeInsets.all(16),
-              children: [
-                Text(
-                  'Choose Your Therapy Type',
-                  style: GoogleFonts.inter(
-                    textStyle: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Select the type of session that best fits your needs',
-                  style: GoogleFonts.inter(
-                    textStyle: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 24),
-                ...controller.sessionTypes.map((sessionType) => _buildSessionCard(sessionType)),
-              ],
-            )),
+        padding: EdgeInsets.all(16),
+        children: [
+          Text(
+            'Choose Your Therapy Type',
+            style: GoogleFonts.inter(
+              textStyle: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Select the type of session that best fits your needs',
+            style: GoogleFonts.inter(
+              textStyle: TextStyle(
+                fontSize: 14,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          SizedBox(height: 24),
+          ...controller.sessionTypes.map((sessionType) => _buildSessionCard(sessionType)),
+        ],
+      ))),
     );
   }
 

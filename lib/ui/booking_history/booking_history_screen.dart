@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
 import '../../route/route_module.dart';
 import '../../utils/common_appbar.dart';
+import '../../utils/units_extensions.dart';
 import 'booking_history_controller.dart';
 
 class BookingHistoryScreen extends StatelessWidget {
@@ -24,7 +26,7 @@ class BookingHistoryScreen extends StatelessWidget {
           Expanded(
             child: Obx(() => controller.isLoading.value
               ? Center(child: CircularProgressIndicator())
-              : controller.filteredAppointments.isEmpty
+              : controller.upComingBookings.isEmpty
                 ? _buildEmptyState()
                 : _buildAppointmentsList(),
             ),
@@ -152,6 +154,7 @@ class BookingHistoryScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.therapyPurple.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.therapyPurple)
         ),
         child: Text(
           label,
@@ -197,7 +200,7 @@ class BookingHistoryScreen extends StatelessWidget {
           controller.fromDate.value = picked;
         }
       }
-      controller.filterAppointments();
+      controller.getUpComingBookings();
     }
   }
 
@@ -252,16 +255,19 @@ class BookingHistoryScreen extends StatelessWidget {
   Widget _buildAppointmentsList() {
     return ListView.builder(
       padding: EdgeInsets.all(16),
-      itemCount: controller.filteredAppointments.length,
+      itemCount: controller.upComingBookings.length,
       itemBuilder: (context, index) {
-        final appointment = controller.filteredAppointments[index];
-        final isUpcoming = appointment.status == 'booked';
+        final appointment = controller.upComingBookings[index];
+        final isUpcoming = appointment.paymentStatus == BookingStatus.booked.name;
 
         return GestureDetector(
-          onTap: () => Get.toNamed(
-            AppPage.bookingDetail,
-            arguments: appointment.appointmentId
-          ),
+          onTap: (){
+            controller.selectedAppointment.value = appointment;
+            Get.toNamed(
+                AppPage.bookingDetail,
+                arguments: appointment
+            );
+          },
           child: Container(
             margin: EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
@@ -288,14 +294,14 @@ class BookingHistoryScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(appointment.status),
+                    color: _getStatusColor(appointment.bookingStatus),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(15),
                       topRight: Radius.circular(15),
                     ),
                   ),
                   child: Text(
-                    _getStatusText(appointment.status),
+                    _getStatusText(appointment.bookingStatus),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       textStyle: TextStyle(
@@ -335,7 +341,7 @@ class BookingHistoryScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  appointment.sessionTypeName,
+                                  appointment.aSessionType().name,
                                   style: GoogleFonts.inter(
                                     textStyle: TextStyle(
                                       fontSize: 16,
@@ -346,7 +352,7 @@ class BookingHistoryScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 4),
                                 Text(
-                                  '${appointment.date} • ${appointment.startTime}',
+                                  '${formatDateToReadable(appointment.bookingDate)} • ${appointment.aTimeslot().time}',
                                   style: GoogleFonts.inter(
                                     textStyle: TextStyle(
                                       fontSize: 14,
@@ -369,37 +375,38 @@ class BookingHistoryScreen extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: 20,
-                            backgroundImage: NetworkImage(appointment.therapistImage),
+                            backgroundImage: NetworkImage(controller.therapistsImage),
                             backgroundColor: AppColors.therapyPurple.withOpacity(0.1),
-                            child: appointment.therapistImage.isEmpty
+                            child: controller.therapistsImage.isEmpty
                                 ? Icon(Icons.person, color: AppColors.therapyPurple)
                                 : null,
                           ),
-                          SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                appointment.therapistName,
-                                style: GoogleFonts.inter(
-                                  textStyle: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
+                          SizedBox(width: 10,),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  appointment.aDoctor().name,
+                                  style: GoogleFonts.inter(
+                                    textStyle: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              Text(
-                                'Physiotherapist',
-                                style: GoogleFonts.inter(
-                                  textStyle: TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.textMuted,
+                                Text(
+                                  appointment.aDoctor().degree,
+                                  style: GoogleFonts.inter(
+                                    textStyle: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textMuted,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                          Spacer(),
                           _buildPaymentBadge(appointment.paymentStatus),
                         ],
                       ),

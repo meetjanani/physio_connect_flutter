@@ -17,7 +17,7 @@ class DateTimeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: commonAppBar("Select Date & Time", isBackButtonVisible: true),
-      body: Column(
+      body: SafeArea(child: Column(
         children: [
           Expanded(
             child: ListView(
@@ -31,7 +31,7 @@ class DateTimeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Obx(
-                    () => Row(
+                        () => Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
@@ -86,7 +86,7 @@ class DateTimeScreen extends StatelessWidget {
                   ),
                 ),
                 Obx(
-                  () => TableCalendar(
+                      () => TableCalendar(
                     rowHeight: 48,
                     startingDayOfWeek: StartingDayOfWeek.monday,
                     firstDay: DateTime.now(),
@@ -136,83 +136,83 @@ class DateTimeScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 12),
                 Obx(
-                  () => controller.isLoading.value
+                      () => controller.isLoading.value
                       ? Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24.0),
-                            child: CircularProgressIndicator(),
-                          ),
-                        )
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
                       : controller.timeSlots.isEmpty
                       ? Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24.0),
-                            child: Text(
-                              'No available slots for this date',
-                              style: GoogleFonts.inter(
-                                textStyle: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textMuted,
-                                ),
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Text(
+                        'No available slots for this date',
+                        style: GoogleFonts.inter(
+                          textStyle: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                      : Wrap(
+                    spacing: 8,
+                    runSpacing: 12,
+                    children: controller.timeSlots.map((slot) {
+                      final bool isBooked = slot.isBooked ?? false;
+                      final bool isSelected =
+                          controller.selectedTimeSlot.value == slot;
+
+                      return GestureDetector(
+                        onTap: isBooked
+                            ? null
+                            : () {
+                          controller.selectedTimeSlot.value =
+                              slot;
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isBooked
+                                ? Colors.red.withOpacity(0.1)
+                                : isSelected
+                                ? AppColors.therapyPurple
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isBooked
+                                  ? Colors.red.withOpacity(0.5)
+                                  : isSelected
+                                  ? AppColors.therapyPurple
+                                  : Colors.grey.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Text(
+                            slot.time,
+                            style: GoogleFonts.inter(
+                              textStyle: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isBooked
+                                    ? Colors.red
+                                    : isSelected
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
                               ),
                             ),
                           ),
-                        )
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 12,
-                          children: controller.timeSlots.map((slot) {
-                            final bool isBooked = slot.isBooked ?? false;
-                            final bool isSelected =
-                                controller.selectedTimeSlot.value == slot;
-
-                            return GestureDetector(
-                              onTap: isBooked
-                                  ? null
-                                  : () {
-                                      controller.selectedTimeSlot.value =
-                                          slot;
-                                    },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isBooked
-                                      ? Colors.red.withOpacity(0.1)
-                                      : isSelected
-                                      ? AppColors.therapyPurple
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isBooked
-                                        ? Colors.red.withOpacity(0.5)
-                                        : isSelected
-                                        ? AppColors.therapyPurple
-                                        : Colors.grey.withOpacity(0.3),
-                                  ),
-                                ),
-                                child: Text(
-                                  slot.time,
-                                  style: GoogleFonts.inter(
-                                    textStyle: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      color: isBooked
-                                          ? Colors.red
-                                          : isSelected
-                                          ? Colors.white
-                                          : AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
                         ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ],
             ),
@@ -232,12 +232,12 @@ class DateTimeScreen extends StatelessWidget {
               ],
             ),
             child: Obx(
-              () => ElevatedButton(
+                  () => ElevatedButton(
                 onPressed: controller.selectedTimeSlot.value == null
                     ? null
                     : () {
-                        Get.toNamed(AppPage.performPayment);
-                      },
+                  Get.toNamed(AppPage.performPayment);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.therapyPurple,
                   foregroundColor: Colors.white,
@@ -259,7 +259,7 @@ class DateTimeScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

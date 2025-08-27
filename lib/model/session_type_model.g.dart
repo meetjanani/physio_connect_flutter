@@ -12,7 +12,7 @@ SessionTypeModel _$SessionTypeModelFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String,
       description: json['description'] as String,
       duration: json['duration'] as String,
-      price: (json['price'] as num).toDouble(),
+      price: (json['price'] as num).toInt(),
       imageUrl: json['imageUrl'] as String?,
     );
 

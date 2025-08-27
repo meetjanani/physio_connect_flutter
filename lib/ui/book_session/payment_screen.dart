@@ -7,8 +7,8 @@ import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
+import '../../utils/enum.dart';
 import 'booking_controller.dart';
-import 'confirmation_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   @override
@@ -37,7 +37,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
     // Store payment data and navigate to confirmation
     controller.razorpayPaymentId.value = response.paymentId!;
-    controller.createAppointment(response);
+    controller.createAppointment(response, PaymentStatus.paid);
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
@@ -60,7 +60,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   void _openRazorpayCheckout() {
     //TODO: Remove this 2 line to enable Razorpay
-    controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}));
+    controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}), PaymentStatus.paid);
     return;
     var options = {
       'key': 'rzp_test_R9Cb4IgtUNcVsB',
@@ -96,7 +96,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     return Scaffold(
       appBar: commonAppBar('Payment', isBackButtonVisible: true),
-      body: Column(
+      body: SafeArea(child: Column(
         children: [
           Expanded(
             child: ListView(
@@ -159,7 +159,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Obx(() => _buildSummaryItem(
                         icon: Icons.timelapse,
                         title: 'Duration',
-                        value: '${controller.selectedSessionType.value?.duration ?? 0} minutes',
+                        value: '${controller.selectedSessionType.value?.duration ?? 0}',
                       )),
 
                       SizedBox(height: 24),
@@ -292,7 +292,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ),
               ],
             ),
-            child: ElevatedButton(
+            child: Obx(() =>
+            controller.isLoading.value == true ? Center(
+              child: CircularProgressIndicator(),) : ElevatedButton(
               onPressed: _openRazorpayCheckout,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.therapyPurple,
@@ -311,10 +313,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                 ),
               ),
-            ),
+            )),
           ),
+          SizedBox(height: 4,)
         ],
-      ),
+      )),
     );
   }
 

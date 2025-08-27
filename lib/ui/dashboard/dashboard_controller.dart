@@ -1,15 +1,12 @@
 
-import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
-import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/supabase/supabase_controller.dart';
 
 import '../../model/bookings_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../utils/app_shared_preference.dart';
-import '../../utils/secure_storage/secure_storage_repository.dart';
 
 class DashboardController extends GetxController {
   static DashboardController get to => Get.find();

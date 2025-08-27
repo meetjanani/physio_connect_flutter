@@ -34,18 +34,13 @@ class ConfirmationScreen extends StatelessWidget {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        SizedBox(height: 40),
-
+                        SizedBox(height: 16),
                         // Success animation
                         Lottie.network(
                           'https://assets3.lottiefiles.com/packages/lf20_jbrw3hcz.json',
-                          width: 200,
-                          height: 200,
-                          repeat: false,
+                          repeat: true,
                         ),
-
-                        SizedBox(height: 24),
-
+                        SizedBox(height: 16),
                         // Success text
                         Text(
                           'Booking Confirmed!',
@@ -57,9 +52,7 @@ class ConfirmationScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-
                         SizedBox(height: 12),
-
                         Text(
                           'Your physiotherapy session has been successfully booked.',
                           textAlign: TextAlign.center,
@@ -71,7 +64,7 @@ class ConfirmationScreen extends StatelessWidget {
                           ),
                         ),
 
-                        SizedBox(height: 40),
+                        SizedBox(height: 36),
 
                         // Booking details
                         Container(
@@ -81,7 +74,7 @@ class ConfirmationScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
+                                color: Colors.grey.withOpacity(0.3),
                                 blurRadius: 10,
                                 offset: Offset(0, 4),
                               ),
@@ -125,7 +118,7 @@ class ConfirmationScreen extends StatelessWidget {
                               // Payment
                               _buildConfirmationItem(
                                 title: 'Payment Status',
-                                value: 'Paid',
+                                value: controller.bookingsModel.value?.paymentStatus ?? 'N/A',
                                 valueColor: AppColors.wellnessGreen,
                                 icon: Icons.payment,
                               ),
@@ -133,11 +126,10 @@ class ConfirmationScreen extends StatelessWidget {
                               SizedBox(height: 16),
                               Divider(),
                               SizedBox(height: 16),
-
                               // Reference ID
                               Obx(() => _buildConfirmationItem(
                                 title: 'Transaction ID',
-                                value: controller.razorpayPaymentId.value.substring(0, 10) + '...',
+                                value: controller.bookingsModel.value?.paymentId ?? 'N/A',
                                 icon: Icons.receipt_long,
                               )),
                             ],
