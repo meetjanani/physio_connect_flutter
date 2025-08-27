@@ -12,6 +12,7 @@ import '../ui/booking_history/booking_history_screen.dart';
 import '../ui/dashboard/dashboard_bottom_navigation_screen.dart';
 import '../ui/logIn/login_binding.dart';
 import '../ui/logIn/login_screen.dart';
+import '../ui/profile/profile_about_screen.dart';
 import '../ui/signUp/signup_screen.dart';
 import '../ui/splash_binding.dart';
 import '../ui/splash_screen.dart';
@@ -29,6 +30,7 @@ class AppPage {
   static const bookingConfirmation = '/bookingConfirmation';
   static const String bookingHistory = '/booking-history';
   static const String bookingDetail = '/booking-detail';
+  static const String userProfile = '/user-profile';
 
   static final routes = [
     GetPage(
@@ -75,5 +77,6 @@ class AppPage {
     ),
     GetPage(name: AppPage.bookingHistory, page: () => BookingHistoryScreen()),
     GetPage(name: AppPage.bookingDetail, page: () => BookingDetailScreen()),
+    GetPage(name: AppPage.userProfile, page: () => ProfileAboutScreen()),
   ];
 }
