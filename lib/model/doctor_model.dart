@@ -8,13 +8,13 @@ part 'doctor_model.g.dart';
 
 @JsonSerializable()
 class DoctorModel {
-  int id = 0;
-  String name = "";
-  String degree = "";
-  String experience = "";
-  String drRegNumber = "";
-  String biodata = "";
-  int userId = 0;
+  int? id = 0;
+  String? name = "";
+  String? degree = "";
+  String? experience = "";
+  String? drRegNumber = "";
+  String? biodata = "";
+  int? userId = 0;
 
   DoctorModel({
     required this.id,

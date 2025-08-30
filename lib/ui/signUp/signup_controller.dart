@@ -49,7 +49,7 @@ class SignUpController extends GetxController {
     firebaseController.userRegisterData = UserModel(
         name: nameController.text.toString(),
         mobileNumber: mobileNumber,
-        doctorName: "Dr. PD",
+        doctorName: "Dr. Parul Desai",
         doctorId: 1
     ).toJson();
     firebaseController.fbRegister();

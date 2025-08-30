@@ -25,6 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.didChangeDependencies();
     // TODO: Once per app launch
     controller.fetchFirebaseToken();
+    controller.getUpComingBookings();
   }
 
   @override

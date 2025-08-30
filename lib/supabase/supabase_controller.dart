@@ -103,12 +103,12 @@ class SupabaseController {
     }
   }
 
-  Future<void> newBookingNotificationToAdmin(int doctorId) async {
+  Future<void> newBookingNotificationToAdmin(int userIdOfDoctor) async {
     try {
       final response = await Supabase.instance.client
           .from(DatabaseSchema.usersTable)
           .select('*')
-          .eq(DatabaseSchema.usersId, doctorId)
+          .eq(DatabaseSchema.usersId, userIdOfDoctor)
           .eq(DatabaseSchema.usersUserType, "Doctor");
 
       var userList = (UserModelSupabase.fromJsonList(response)).where((it) =>

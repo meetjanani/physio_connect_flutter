@@ -387,7 +387,7 @@ class BookingHistoryScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  appointment.aDoctor().name,
+                                  appointment.aDoctor().name ?? '',
                                   style: GoogleFonts.inter(
                                     textStyle: TextStyle(
                                       fontSize: 15,
@@ -396,7 +396,7 @@ class BookingHistoryScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  appointment.aDoctor().degree,
+                                  appointment.aDoctor().degree ?? '',
                                   style: GoogleFonts.inter(
                                     textStyle: TextStyle(
                                       fontSize: 13,

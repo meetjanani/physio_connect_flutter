@@ -33,120 +33,121 @@ class _SignupScreenState extends State<SignupScreen> {
       onWillPop: () async {
         return false;
       },
-      child: SafeArea(
-          child: Scaffold(
-            backgroundColor: Colors.white,
-            body: SingleChildScrollView(
-              child: Column(
-                children: [
-                  Container(
-                    height: Get.height * 0.3,
-                    width: Get.width,
-                    decoration: BoxDecoration(
-                       /* image: DecorationImage(
-                            image: AssetImage(bg), fit: BoxFit.fill),*/
-                        borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(20),
-                            bottomRight: Radius.circular(20)),
-                        gradient: LinearGradient(colors: AppColors.primaryGradientColors)),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                  height: Get.height * 0.3,
+                  width: Get.width,
+                  decoration: BoxDecoration(
+                     /* image: DecorationImage(
+                          image: AssetImage(bg), fit: BoxFit.fill),*/
+                      borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(20),
+                          bottomRight: Radius.circular(20)),
+                      gradient: LinearGradient(colors: AppColors.primaryGradientColors)),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 24,
+                      ),
+                      Text(
+                        DatabaseSchema.projectName,
+                        style: GoogleFonts.fugazOne(
+                          textStyle: TextStyle(
+                            color: Colors.white,
+                            fontSize: 40,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 24,
+                      ),
+                      Text(
+                        'Welcome Back',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      // myText(title: 'Welcome', textColor:  Colors.white,fontWeight:  FontWeight.w800, titleSize: 24),
+                      SizedBox(
+                        height: 24,
+                      ),
+                      myText(title: 'Glad to see you !', textColor:  Colors.white,fontWeight:  FontWeight.w500, titleSize: 14),
+                      SizedBox(
+                        height: 8,
+                      ),
+                      myText(title: 'Sign in to continue your physiotherapy journey', textColor:  Colors.white,fontWeight:  FontWeight.w500, titleSize: 14),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Form(
+                    key: controller.formKey,
                     child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        CustomTextField(
+                          controller: controller.nameController,
+                          labelText: 'Name',
+                          hintText: 'Enter your Full name',
+                          keyboardType: TextInputType.name,
+                          prefixIcon: Icons.person_outline,
+                          validator: (value) {
+                            return value?.validateEmpty();
+                          },
+                        ),
                         SizedBox(
                           height: 24,
                         ),
-                        Text(
-                          DatabaseSchema.projectName,
-                          style: GoogleFonts.fugazOne(
-                            textStyle: TextStyle(
-                              color: Colors.white,
-                              fontSize: 40,
-                              fontWeight: FontWeight.w400,
-                            ),
+                        CustomTextField(
+                          controller: controller.mobileNumberController,
+                          labelText: 'Mobile Number',
+                          hintText: 'Enter your mobile number',
+                          keyboardType: TextInputType.phone,
+                          prefixIcon: Icons.phone_android_outlined,
+                          validator: (value) {
+                            return value?.validateMobile();
+                          },
+                        ),
+                        SizedBox(
+                          height: 24,
+                        ),
+                        Obx(() => _buildIAgreeAndTermsAndConditions()),
+                        SizedBox(
+                          height: 24,
+                        ),
+                        CustomButton(
+                          text: 'Sign Up',
+                          onPressed: () {
+                            controller.registerUser();
+                          },
+                          isLoading: false,
+                          gradient: const LinearGradient(
+                            colors: AppColors.primaryGradientColors,
                           ),
                         ),
                         SizedBox(
-                          height: 24,
+                          height: 16,
                         ),
-                        Text(
-                          'Welcome Back',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        // myText(title: 'Welcome', textColor:  Colors.white,fontWeight:  FontWeight.w800, titleSize: 24),
-                        SizedBox(
-                          height: 24,
-                        ),
-                        myText(title: 'Glad to see you !', textColor:  Colors.white,fontWeight:  FontWeight.w500, titleSize: 14),
-                        SizedBox(
-                          height: 8,
-                        ),
-                        myText(title: 'Sign in to continue your physiotherapy journey', textColor:  Colors.white,fontWeight:  FontWeight.w500, titleSize: 14),
+                        _buildSignInLink()
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Form(
-                      key: controller.formKey,
-                      child: Column(
-                        children: [
-                          CustomTextField(
-                            controller: controller.nameController,
-                            labelText: 'Name',
-                            hintText: 'Enter your Full name',
-                            keyboardType: TextInputType.phone,
-                            prefixIcon: Icons.phone_android_outlined,
-                            validator: (value) {
-                              return value?.validateEmpty();
-                            },
-                          ),
-                          SizedBox(
-                            height: 24,
-                          ),
-                          CustomTextField(
-                            controller: controller.mobileNumberController,
-                            labelText: 'Mobile Number',
-                            hintText: 'Enter your mobile number',
-                            keyboardType: TextInputType.phone,
-                            prefixIcon: Icons.phone_android_outlined,
-                            validator: (value) {
-                              return value?.validateMobile();
-                            },
-                          ),
-                          SizedBox(
-                            height: 24,
-                          ),
-                          Obx(() => _buildIAgreeAndTermsAndConditions()),
-                          SizedBox(
-                            height: 24,
-                          ),
-                          CustomButton(
-                            text: 'Sign Up',
-                            onPressed: () {
-                              controller.registerUser();
-                            },
-                            isLoading: false,
-                            gradient: const LinearGradient(
-                              colors: AppColors.primaryGradientColors,
-                            ),
-                          ),
-                          SizedBox(
-                            height: 16,
-                          ),
-                          _buildSignInLink()
-                        ],
-                      ),
-                    ),
-                  )
-                ],
-              ),
+                )
+              ],
             ),
-          )),
+          ),
+        ),
+      ),
     );
   }
 

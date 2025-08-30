@@ -59,20 +59,45 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _openRazorpayCheckout() {
-    //TODO: Remove this 2 line to enable Razorpay
+    // For testing purposes, directly call success handler
+    // In production, uncomment the Razorpay integration code below
+    controller.razorpayPaymentId.value = "razor_pay_test_payment_id"!;
     controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}), PaymentStatus.paid);
     return;
+
+
+    // rzp_live_RAnbKgZCZa6RZZ
+    // rzp_test_R9Cb4IgtUNcVsB
     var options = {
       'key': 'rzp_test_R9Cb4IgtUNcVsB',
       'amount': controller.selectedSessionType.value!.price * 100, // In paise
       'name': 'PhysioConnect',
       'description': 'Payment for ${controller.selectedSessionType.value!.name}',
       'prefill': {
-        'contact': '+911122334455', // Get from user profile
-        'email': 'meetjanani47@gmail.com', // Get from user profile
+        'contact': controller.userModelSupabase?.mobileNumber ?? '',
+        // 'email': controller.userModelSupabase?.email ?? '',  // Recommended to include email
       },
       'external': {
-        'wallets': [] // Empty array disables Google Pay integration
+        'wallets': ['googlePay']  // Enable Google Pay
+      },
+      'method': {
+        'netbanking': false,
+        'wallet': false,
+        'upi': false,
+        'paylater': false,
+        'emi': false,
+        'card': true  // Only enable card payments
+      },
+      'config': {
+        'display': {
+          'hide': [
+            {'method': 'netbanking'},
+            {'method': 'wallet', 'except': ['googlePay']},  // Hide all wallets except Google Pay
+            {'method': 'upi', 'flows': ['collect']},  // Hide UPI collect
+            {'method': 'paylater'},
+            {'method': 'emi'}
+          ]
+        }
       }
     };
 

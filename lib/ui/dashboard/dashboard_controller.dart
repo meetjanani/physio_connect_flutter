@@ -21,7 +21,6 @@ class DashboardController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    await fetchFirebaseToken();
     await fetchDoctorDetail();
     await getUpComingBookings();
   }
@@ -30,9 +29,10 @@ class DashboardController extends GetxController {
     userModelSupabase = await getUserModel();
     final messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
-    updateFirebaseToken(token.toString());
-    print('Firebase Token=$token');
-
+    if(token != null && ((userModelSupabase?.id ?? 0) > 0) && userModelSupabase?.firebaseToken != token) {
+      updateFirebaseToken(token.toString());
+      print('Firebase Token=$token');
+    }
     await supabaseController.updateFirebaseToken(
         userModelSupabase?.id ?? 0, token.toString());
   }

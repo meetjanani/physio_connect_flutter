@@ -407,7 +407,7 @@ class BookingDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  appointment.aDoctor().name,
+                  appointment.aDoctor().name ?? '',
                   style: GoogleFonts.inter(
                     textStyle: TextStyle(
                       fontSize: 16,
@@ -418,7 +418,7 @@ class BookingDetailScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  appointment.aDoctor().degree,
+                  appointment.aDoctor().degree ?? '',
                   style: GoogleFonts.inter(
                     textStyle: TextStyle(
                       fontSize: 14,
