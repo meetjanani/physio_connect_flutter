@@ -28,44 +28,58 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       body: _buildScreens[widget.currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home,color: AppColors.therapyPurple,),
-              activeIcon: Icon(Icons.home,color: AppColors.wellnessGreen,),
-              label: "Home"
-          ),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.history,color: AppColors.therapyPurple,),
-              activeIcon: Icon(Icons.history,color: AppColors.wellnessGreen,),
-              label: "Bookings"
-          ),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.settings,color: AppColors.therapyPurple,),
-              activeIcon: Icon(Icons.settings,color: AppColors.wellnessGreen,),
-              label: "About-Us"
-          ),
-          /*BottomNavigationBarItem(
-            icon: Icon(
-              Icons.photo_camera_back,
-              color: tabShadowColor,
-              size: 40,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowLight,
+              blurRadius: 10,
+              offset: Offset(0, -2),
             ),
-            activeIcon: Icon(
-              Icons.photo_camera_back,
-              color: colabColorPrimary,
-              size: 40,
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          child: BottomNavigationBar(
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home, color: AppColors.medicalBlue),
+                activeIcon: Icon(Icons.home, color: AppColors.wellnessGreen),
+                label: "Home"
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.history, color: AppColors.medicalBlue),
+                activeIcon: Icon(Icons.history, color: AppColors.wellnessGreen),
+                label: "Bookings"
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings, color: AppColors.medicalBlue),
+                activeIcon: Icon(Icons.settings, color: AppColors.wellnessGreen),
+                label: "About-Us"
+              ),
+            ],
+            currentIndex: widget.currentIndex,
+            onTap: onTapped,
+            selectedItemColor: AppColors.wellnessGreen,
+            unselectedItemColor: AppColors.textMuted,
+            selectedLabelStyle: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
             ),
-            label: "Gallery",
-          ),*/
-        ],
-        currentIndex: widget.currentIndex, //New
-        onTap: onTapped,
-        selectedItemColor: AppColors.wellnessGreen,
-        unselectedItemColor: AppColors.backgroundLight,
-        showUnselectedLabels: true,
+            unselectedLabelStyle: TextStyle(
+              fontSize: 12,
+            ),
+            showUnselectedLabels: true,
+            backgroundColor: AppColors.surface,
+            elevation: 0, // No elevation here since we're using a custom shadow
+            type: BottomNavigationBarType.fixed,
+          ),
+        ),
       ),
     );
   }

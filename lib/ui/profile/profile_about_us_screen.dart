@@ -49,8 +49,8 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                             decoration: const BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.therapyPurple,
-                                  AppColors.medicalBlue
+                                  AppColors.medicalBlue,
+                                  AppColors.wellnessGreen
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -94,7 +94,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: AppColors.therapyPurpleLight,
+                                          color: AppColors.medicalBlueLight,
                                           width: 3,
                                         ),
                                       ),
@@ -235,8 +235,8 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                             decoration: const BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.therapyPurple,
-                                  AppColors.medicalBlue
+                                  AppColors.medicalBlue,
+                                  AppColors.wellnessGreen
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -320,7 +320,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                                 .textTheme
                                                 .bodyMedium
                                                 ?.copyWith(
-                                              color: AppColors.therapyPurple,
+                                              color: AppColors.medicalBlue,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
@@ -404,7 +404,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                         children: [
                                           const Icon(
                                             Icons.format_quote,
-                                            color: AppColors.therapyPurple,
+                                            color: AppColors.medicalBlue,
                                             size: 24,
                                           ),
                                           const SizedBox(width: 8),
@@ -476,7 +476,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                           padding: const EdgeInsets.all(16),
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [AppColors.therapyPurple, AppColors.medicalBlue],
+                              colors: [AppColors.medicalBlue, AppColors.wellnessGreen],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -510,12 +510,12 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                 width: 80,
                                 height: 80,
                                 decoration: const BoxDecoration(
-                                  color: AppColors.therapyPurpleLight,
+                                  color: AppColors.medicalBlueLight,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   Icons.healing,
-                                  color: AppColors.therapyPurple,
+                                  color: AppColors.medicalBlue,
                                   size: 40,
                                 ),
                               ),
@@ -526,7 +526,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                 "Physio Connect",
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.therapyPurpleDark,
+                                  color: AppColors.medicalBlueDark,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -550,7 +550,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.email, size: 20, color: AppColors.therapyPurple),
+                                        const Icon(Icons.email, size: 20, color: AppColors.medicalBlue),
                                         const SizedBox(width: 12),
                                         Text(
                                           "physioconnect.app@gmail.com",
@@ -563,7 +563,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                     const SizedBox(height: 12),
                                     Row(
                                       children: [
-                                        const Icon(Icons.language, size: 20, color: AppColors.therapyPurple),
+                                        const Icon(Icons.language, size: 20, color: AppColors.medicalBlue),
                                         const SizedBox(width: 12),
                                         Text(
                                           "www.physioconnect.app",
@@ -645,7 +645,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
           value,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            color: AppColors.therapyPurpleDark,
+            color: AppColors.medicalBlueDark,
           ),
         ),
         const SizedBox(height: 4),

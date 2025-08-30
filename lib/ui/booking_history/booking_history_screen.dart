@@ -25,7 +25,9 @@ class BookingHistoryScreen extends StatelessWidget {
           _buildDateFilter(context),
           Expanded(
             child: Obx(() => controller.isLoading.value
-              ? Center(child: CircularProgressIndicator())
+              ? Center(child: CircularProgressIndicator(
+                  color: AppColors.medicalBlue,
+                ))
               : controller.upComingBookings.isEmpty
                 ? _buildEmptyState()
                 : _buildAppointmentsList(),
@@ -40,10 +42,10 @@ class BookingHistoryScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.shadowLight,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -138,7 +140,7 @@ class BookingHistoryScreen extends StatelessWidget {
               ],
             ),
             Spacer(),
-            Icon(Icons.calendar_today, size: 16, color: AppColors.therapyPurple),
+            Icon(Icons.calendar_today, size: 16, color: AppColors.medicalBlue),
           ],
         ),
       ),
@@ -152,9 +154,9 @@ class BookingHistoryScreen extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.therapyPurple.withOpacity(0.1),
+          color: AppColors.medicalBlueLight,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.therapyPurple)
+          border: Border.all(color: AppColors.medicalBlue)
         ),
         child: Text(
           label,
@@ -162,7 +164,7 @@ class BookingHistoryScreen extends StatelessWidget {
             textStyle: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: AppColors.therapyPurple,
+              color: AppColors.medicalBlueDark,
             ),
           ),
         ),
@@ -180,7 +182,7 @@ class BookingHistoryScreen extends StatelessWidget {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: AppColors.therapyPurple,
+              primary: AppColors.medicalBlue,
             ),
           ),
           child: child!,
@@ -212,7 +214,7 @@ class BookingHistoryScreen extends StatelessWidget {
           Icon(
             Icons.event_busy,
             size: 80,
-            color: AppColors.textMuted.withOpacity(0.5),
+            color: AppColors.medicalBlueLight,
           ),
           SizedBox(height: 16),
           Text(
@@ -242,8 +244,8 @@ class BookingHistoryScreen extends StatelessWidget {
             icon: Icon(Icons.add),
             label: Text('Book New Session'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.therapyPurple,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.medicalBlue,
+              foregroundColor: AppColors.textOnDark,
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
           ),
@@ -271,11 +273,11 @@ class BookingHistoryScreen extends StatelessWidget {
           child: Container(
             margin: EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: AppColors.shadowLight,
                   blurRadius: 8,
                   offset: Offset(0, 2),
                 ),
@@ -305,7 +307,7 @@ class BookingHistoryScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       textStyle: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textOnDark,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
@@ -326,12 +328,12 @@ class BookingHistoryScreen extends StatelessWidget {
                           Container(
                             padding: EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.therapyPurple.withOpacity(0.1),
+                              color: AppColors.medicalBlueLight,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.healing,
-                              color: AppColors.therapyPurple,
+                              color: AppColors.medicalBlueDark,
                               size: 24,
                             ),
                           ),
@@ -376,9 +378,9 @@ class BookingHistoryScreen extends StatelessWidget {
                           CircleAvatar(
                             radius: 20,
                             backgroundImage: NetworkImage(controller.therapistsImage),
-                            backgroundColor: AppColors.therapyPurple.withOpacity(0.1),
+                            backgroundColor: AppColors.medicalBlueLight,
                             child: controller.therapistsImage.isEmpty
-                                ? Icon(Icons.person, color: AppColors.therapyPurple)
+                                ? Icon(Icons.person, color: AppColors.medicalBlueDark)
                                 : null,
                           ),
                           SizedBox(width: 10,),
@@ -419,7 +421,7 @@ class BookingHistoryScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: AppColors.medicalBlueLight.withOpacity(0.5),
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(15),
                       bottomRight: Radius.circular(15),
@@ -430,7 +432,7 @@ class BookingHistoryScreen extends StatelessWidget {
                       'View Details',
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
-                          color: AppColors.therapyPurple,
+                          color: AppColors.medicalBlueDark,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
@@ -452,20 +454,20 @@ class BookingHistoryScreen extends StatelessWidget {
 
     switch (status.toLowerCase()) {
       case 'paid':
-        bgColor = AppColors.wellnessGreen.withOpacity(0.15);
-        textColor = AppColors.wellnessGreen;
+        bgColor = AppColors.wellnessGreenLight;
+        textColor = AppColors.wellnessGreenDark;
         break;
       case 'pending':
-        bgColor = Colors.orange.withOpacity(0.15);
-        textColor = Colors.orange.shade800;
+        bgColor = AppColors.warningLight;
+        textColor = AppColors.warningDark;
         break;
       case 'failed':
-        bgColor = Colors.red.withOpacity(0.15);
-        textColor = Colors.red.shade800;
+        bgColor = AppColors.errorLight;
+        textColor = AppColors.errorDark;
         break;
       default:
-        bgColor = Colors.grey.withOpacity(0.15);
-        textColor = Colors.grey.shade800;
+        bgColor = AppColors.textMuted.withOpacity(0.15);
+        textColor = AppColors.textMuted;
     }
 
     return Container(
@@ -492,13 +494,13 @@ class BookingHistoryScreen extends StatelessWidget {
       case 'booked':
         return AppColors.wellnessGreen;
       case 'completed':
-        return AppColors.therapyPurple;
+        return AppColors.medicalBlue;
       case 'cancelled':
-        return Colors.red.shade400;
+        return AppColors.error;
       case 'no-show':
-        return Colors.orange.shade700;
+        return AppColors.warning;
       default:
-        return Colors.grey;
+        return AppColors.textMuted;
     }
   }
 

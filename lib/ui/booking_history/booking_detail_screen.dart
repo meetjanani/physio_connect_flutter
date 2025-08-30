@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:physio_connect/model/bookings_model.dart';
+import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
@@ -19,18 +20,9 @@ class BookingDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Appointment Details',
-          style: GoogleFonts.inter(
-            textStyle: TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-        backgroundColor: AppColors.therapyPurple,
-        foregroundColor: Colors.white,
-      ),
+      appBar: commonAppBar("Appointment Details", isBackButtonVisible: true),
       body: Obx(() => controller.isLoadingDetails.value
-        ? Center(child: CircularProgressIndicator())
+        ? Center(child: CircularProgressIndicator(color: AppColors.medicalBlue))
         : controller.selectedAppointment.value == null
           ? _buildErrorState()
           : _buildDetailsContent(context),
@@ -46,7 +38,7 @@ class BookingDetailScreen extends StatelessWidget {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: Colors.red.shade300,
+            color: AppColors.error.withOpacity(0.7),
           ),
           SizedBox(height: 16),
           Text(
@@ -74,8 +66,8 @@ class BookingDetailScreen extends StatelessWidget {
             onPressed: () => Get.back(),
             child: Text('Go Back'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.therapyPurple,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.medicalBlue,
+              foregroundColor: AppColors.textOnDark,
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
@@ -106,7 +98,7 @@ class BookingDetailScreen extends StatelessWidget {
               children: [
                 Icon(
                   _getStatusIcon(appointment.bookingStatus),
-                  color: Colors.white,
+                  color: AppColors.textOnDark,
                 ),
                 SizedBox(width: 12),
                 Column(
@@ -116,7 +108,7 @@ class BookingDetailScreen extends StatelessWidget {
                       _getStatusText(appointment.bookingStatus),
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textOnDark,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -127,7 +119,7 @@ class BookingDetailScreen extends StatelessWidget {
                       _getStatusDescription(appointment.bookingStatus),
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: AppColors.textOnDark.withOpacity(0.9),
                           fontSize: 12,
                         ),
                       ),
@@ -210,7 +202,7 @@ class BookingDetailScreen extends StatelessWidget {
               'Amount',
               '₹${appointment.price.toStringAsFixed(0)}',
               Icons.payments,
-              valueColor: AppColors.therapyPurple,
+              valueColor: AppColors.medicalBlueDark,
               valueBold: true,
             ),
             _buildInfoRow(
@@ -264,8 +256,8 @@ class BookingDetailScreen extends StatelessWidget {
                     label: Text('Reschedule'),
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: AppColors.therapyPurple),
-                      foregroundColor: AppColors.therapyPurple,
+                      side: BorderSide(color: AppColors.medicalBlue),
+                      foregroundColor: AppColors.medicalBlue,
                     ),
                   ),
                 ),
@@ -279,8 +271,8 @@ class BookingDetailScreen extends StatelessWidget {
                     label: Text('Cancel'),
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: Colors.red.shade400),
-                      foregroundColor: Colors.red.shade400,
+                      side: BorderSide(color: AppColors.error),
+                      foregroundColor: AppColors.error,
                     ),
                   ),
                 ),
@@ -298,11 +290,11 @@ class BookingDetailScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.shadowLight,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -336,12 +328,12 @@ class BookingDetailScreen extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.therapyPurple.withOpacity(0.1),
+            color: AppColors.medicalBlueLight,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
-            color: AppColors.therapyPurple,
+            color: AppColors.medicalBlueDark,
             size: 16,
           ),
         ),
@@ -381,11 +373,11 @@ class BookingDetailScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.shadowLight,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -396,9 +388,9 @@ class BookingDetailScreen extends StatelessWidget {
           CircleAvatar(
             radius: 30,
             backgroundImage: NetworkImage(controller.therapistsImage),
-            backgroundColor: AppColors.therapyPurple.withOpacity(0.1),
+            backgroundColor: AppColors.medicalBlueLight,
             child: controller.therapistsImage.isEmpty
-                ? Icon(Icons.person, color: AppColors.therapyPurple)
+                ? Icon(Icons.person, color: AppColors.medicalBlueDark)
                 : null,
           ),
           SizedBox(width: 16),
@@ -426,27 +418,6 @@ class BookingDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // TODO: Rating Row
-                /*SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 16,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      '${appointment.therapistRating} • ${appointment.therapistExperience} years experience',
-                      style: GoogleFonts.inter(
-                        textStyle: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),*/
               ],
             ),
           ),
@@ -458,7 +429,7 @@ class BookingDetailScreen extends StatelessWidget {
             label: Text('Call'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.wellnessGreen,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.textOnDark,
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               minimumSize: Size(80, 36),
             ),
@@ -473,17 +444,17 @@ class BookingDetailScreen extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.shadowLight,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
         ],
         border: Border.all(
-          color: AppColors.therapyPurple.withOpacity(0.3),
+          color: AppColors.medicalBlue.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -495,7 +466,7 @@ class BookingDetailScreen extends StatelessWidget {
             children: [
               Icon(
                 Icons.sticky_note_2_outlined,
-                color: AppColors.therapyPurple,
+                color: AppColors.medicalBlue,
                 size: 20,
               ),
               SizedBox(width: 12),
@@ -506,7 +477,7 @@ class BookingDetailScreen extends StatelessWidget {
                     textStyle: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.therapyPurple,
+                      color: AppColors.medicalBlue,
                     ),
                   ),
                 ),
@@ -553,17 +524,17 @@ class BookingDetailScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: AppColors.warningLight,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Colors.orange.withOpacity(0.3),
+                  color: AppColors.warning.withOpacity(0.3),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: Colors.orange,
+                    color: AppColors.warningDark,
                     size: 20,
                   ),
                   SizedBox(width: 8),
@@ -573,7 +544,7 @@ class BookingDetailScreen extends StatelessWidget {
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
                           fontSize: 12,
-                          color: Colors.orange.shade800,
+                          color: AppColors.warningDark,
                         ),
                       ),
                     ),
@@ -601,8 +572,8 @@ class BookingDetailScreen extends StatelessWidget {
               controller.cancelAppointment(appointment);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.textOnDark,
             ),
             child: Text(
               'Cancel Appointment',
@@ -619,13 +590,13 @@ class BookingDetailScreen extends StatelessWidget {
       case 'booked':
         return AppColors.wellnessGreen;
       case 'completed':
-        return AppColors.therapyPurple;
+        return AppColors.medicalBlue;
       case 'cancelled':
-        return Colors.red.shade400;
+        return AppColors.error;
       case 'no-show':
-        return Colors.orange.shade700;
+        return AppColors.warning;
       default:
-        return Colors.grey;
+        return AppColors.textMuted;
     }
   }
 
@@ -679,11 +650,11 @@ class BookingDetailScreen extends StatelessWidget {
       case 'paid':
         return AppColors.wellnessGreen;
       case 'pending':
-        return Colors.orange.shade700;
+        return AppColors.warning;
       case 'failed':
-        return Colors.red.shade400;
+        return AppColors.error;
       default:
-        return Colors.grey;
+        return AppColors.textMuted;
     }
   }
 }

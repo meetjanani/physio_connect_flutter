@@ -53,7 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: AppColors.textMuted,
+                              color: AppColors.border,
                               width: 2,
                             ),
                             gradient: LinearGradient(
@@ -103,8 +103,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Get.toNamed(AppPage.selectSessionType);
           // Navigate to booking screen
         },
-        backgroundColor: AppColors.therapyPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.medicalBlue,
+        foregroundColor: AppColors.textOnDark,
         elevation: 4,
         icon: Icon(Icons.add),
         label: Text(
@@ -122,14 +122,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.event_busy, size: 60, color: Colors.black.withOpacity(0.7)),
+        Icon(Icons.event_busy, size: 60, color: AppColors.medicalBlueDark.withOpacity(0.7)),
         const SizedBox(height: 16),
         Text(
           "No upcoming appointments",
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
-            textStyle: const TextStyle(
-              color: Colors.black,
+            textStyle: TextStyle(
+              color: AppColors.textPrimary,
               fontSize: 24,
               fontWeight: FontWeight.w600,
             ),
@@ -141,7 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             textStyle: TextStyle(
-              color: Colors.black.withOpacity(0.7),
+              color: AppColors.textSecondary,
               fontSize: 16,
             ),
           ),
@@ -149,10 +149,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 16),
         FloatingActionButton.extended(
           onPressed: () {
+            Get.toNamed(AppPage.selectSessionType);
             // Navigate to booking screen
           },
-          backgroundColor: AppColors.therapyPurple,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.medicalBlue,
+          foregroundColor: AppColors.textOnDark,
           elevation: 4,
           icon: Icon(Icons.add),
           label: Text(
@@ -162,19 +163,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
-       /* CustomButton(
-          text: 'Book Appointment',
-          onPressed: () {
-            // Navigate to booking screen
-          },
-          isLoading: controller.isLoading.value,
-          size: ButtonSize.small,
-          gradient: const LinearGradient(
-            colors: [AppColors.wellnessGreenDark, AppColors.wellnessGreen],
-          ),
-          borderRadius: BorderRadius.circular(30),
-          width: Get.width * 0.5,
-        ),*/
       ],
     );
   }
@@ -189,10 +177,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.blue.shade100,
+                color: AppColors.medicalBlueLight,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.event_note, color: Colors.blue.shade700),
+              child: Icon(Icons.event_note, color: AppColors.medicalBlueDark),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -203,7 +191,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     "Your Next Appointment",
                     style: GoogleFonts.inter(
                       textStyle: TextStyle(
-                        color: Colors.blue.shade900,
+                        color: AppColors.medicalBlueDark,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -213,8 +201,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     "with ${appointment.aDoctor().name}",
                     style: GoogleFonts.inter(
-                      textStyle: const TextStyle(
-                        color: Colors.black,
+                      textStyle: TextStyle(
+                        color: AppColors.textPrimary,
                         fontSize: 14,
                       ),
                     ),
@@ -228,7 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.7),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -236,14 +224,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: Column(
                   children: [
-                    const Icon(Icons.calendar_today, color: Colors.blue),
+                    Icon(Icons.calendar_today, color: AppColors.medicalBlue),
                     const SizedBox(height: 8),
                     Text(
                       formatDateToReadable(appointment.bookingDate),
                       style: GoogleFonts.inter(
-                        textStyle: const TextStyle(
+                        textStyle: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -251,7 +240,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       formatDateToWeekday(appointment.bookingDate),
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
-                          color: Colors.grey.shade700,
+                          color: AppColors.textSecondary,
                           fontSize: 14,
                         ),
                       ),
@@ -259,18 +248,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
-              Container(width: 1, height: 60, color: Colors.grey.shade300),
+              Container(width: 1, height: 60, color: AppColors.border),
               Expanded(
                 child: Column(
                   children: [
-                    const Icon(Icons.access_time, color: Colors.blue),
+                    Icon(Icons.access_time, color: AppColors.medicalBlue),
                     const SizedBox(height: 8),
                     Text(
                       appointment.aTimeslot().time,
                       style: GoogleFonts.inter(
-                        textStyle: const TextStyle(
+                        textStyle: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -278,7 +268,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       appointment.aSessionType().duration,
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
-                          color: Colors.grey.shade700,
+                          color: AppColors.textSecondary,
                           fontSize: 14,
                         ),
                       ),
@@ -297,21 +287,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onPressed: () {
                 // Handle reschedule
               },
-              icon: const Icon(Icons.edit_calendar),
-              label: const Text("Reschedule"),
+              icon: Icon(Icons.edit_calendar, color: AppColors.medicalBlueDark),
+              label: Text("Reschedule", style: TextStyle(color: AppColors.medicalBlueDark)),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.blue.shade700),
+                side: BorderSide(color: AppColors.medicalBlueDark),
               ),
             ),
             ElevatedButton.icon(
               onPressed: () {
                 // Handle view details
               },
-              icon: const Icon(Icons.visibility),
-              label: const Text("View Details"),
+              icon: Icon(Icons.visibility, color: AppColors.textOnDark),
+              label: Text("View Details"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade700,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.medicalBlueDark,
+                foregroundColor: AppColors.textOnDark,
               ),
             ),
           ],
@@ -329,7 +319,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'color': AppColors.therapyPurple,
         'icon': Icons.accessibility_new,
         'image': 'https://images.unsplash.com/photo-1559599101-f09722fb4948',
-        // Add these images to your assets
       },
       {
         'title': 'Daily Stretching',
@@ -343,10 +332,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'title': 'Ice vs. Heat',
         'description':
             'Use ice for acute injuries (first 48 hours) and heat for chronic pain and muscle stiffness.',
-        'color': AppColors.inProgress,
+        'color': AppColors.medicalBlueDark,
         'icon': Icons.ac_unit,
-        'image':
-            ' https://images.unsplash.com/photo-1563456020159-b74d547b3973',
+        'image': 'https://images.unsplash.com/photo-1563456020159-b74d547b3973',
       },
       {
         'title': 'Ergonomic Workspace',
@@ -400,7 +388,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(16),
           child: Stack(
             children: [
-              // Image placeholder - replace with actual images
               CachedNetworkImage(
                 imageUrl: tip['image'],
                 height: 240,
@@ -429,36 +416,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
-                  child: Icon(Icons.error, color: Colors.white),
+                  child: Icon(Icons.error, color: AppColors.textOnDark),
                 ),
               ),
-              /*Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      tip['color'].withOpacity(0.8),
-                      tip['color'].withOpacity(0.6),
-                    ],
-                  ),
-                ),
-                height: 220,
-                width: 280,
-              ),*/
-              // Content
               Padding(
                 padding: EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(tip['icon'], color: Colors.white, size: 32),
+                    Icon(tip['icon'], color: AppColors.textOnDark, size: 32),
                     SizedBox(height: 8),
                     Text(
                       tip['title'],
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
-                          color: Colors.black,
+                          color: AppColors.textOnDark,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -468,7 +440,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Text(
                       tip['description'],
                       style: GoogleFonts.inter(
-                        textStyle: TextStyle(color: Colors.black, fontSize: 14),
+                        textStyle: TextStyle(color: AppColors.textOnDark, fontSize: 14),
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
@@ -482,13 +454,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         },
                         icon: Icon(
                           Icons.arrow_forward,
-                          color: Colors.black,
+                          color: AppColors.textOnDark,
                           size: 16,
                         ),
                         label: Text(
                           "Learn More",
                           style: TextStyle(
-                            color: Colors.black,
+                            color: AppColors.textOnDark,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

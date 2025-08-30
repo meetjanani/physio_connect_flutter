@@ -27,16 +27,20 @@ class DateTimeScreen extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.therapyPurple.withOpacity(0.1),
+                    color: AppColors.medicalBlueLight,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.medicalBlue.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
                   child: Obx(
-                        () => Row(
+                    () => Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
                           Icons.spa,
-                          color: AppColors.therapyPurple,
+                          color: AppColors.medicalBlueDark,
                           size: 24,
                         ),
                         SizedBox(width: 12),
@@ -61,7 +65,7 @@ class DateTimeScreen extends StatelessWidget {
                                 style: GoogleFonts.inter(
                                   textStyle: TextStyle(
                                     fontSize: 14,
-                                    color: AppColors.textMuted,
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ),
@@ -86,7 +90,7 @@ class DateTimeScreen extends StatelessWidget {
                   ),
                 ),
                 Obx(
-                      () => TableCalendar(
+                  () => TableCalendar(
                     rowHeight: 48,
                     startingDayOfWeek: StartingDayOfWeek.monday,
                     firstDay: DateTime.now(),
@@ -101,12 +105,29 @@ class DateTimeScreen extends StatelessWidget {
                     },
                     calendarStyle: CalendarStyle(
                       selectedDecoration: BoxDecoration(
-                        color: AppColors.therapyPurple,
+                        color: AppColors.medicalBlue,
                         shape: BoxShape.circle,
                       ),
                       todayDecoration: BoxDecoration(
-                        color: AppColors.therapyPurple.withOpacity(0.5),
+                        color: AppColors.medicalBlueLight,
+                        border: Border.all(
+                          color: AppColors.medicalBlue,
+                          width: 1.5,
+                        ),
                         shape: BoxShape.circle,
+                      ),
+                      todayTextStyle: TextStyle(
+                        color: AppColors.medicalBlueDark,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      defaultTextStyle: TextStyle(
+                        color: AppColors.textPrimary,
+                      ),
+                      weekendTextStyle: TextStyle(
+                        color: AppColors.textSecondary,
+                      ),
+                      outsideTextStyle: TextStyle(
+                        color: AppColors.textMuted,
                       ),
                     ),
                     headerStyle: HeaderStyle(
@@ -116,7 +137,16 @@ class DateTimeScreen extends StatelessWidget {
                         textStyle: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
+                      ),
+                      leftChevronIcon: Icon(
+                        Icons.chevron_left,
+                        color: AppColors.medicalBlue,
+                      ),
+                      rightChevronIcon: Icon(
+                        Icons.chevron_right,
+                        color: AppColors.medicalBlue,
                       ),
                     ),
                   ),
@@ -136,83 +166,103 @@ class DateTimeScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 12),
                 Obx(
-                      () => controller.isLoading.value
-                      ? Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                      : controller.timeSlots.isEmpty
-                      ? Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Text(
-                        'No available slots for this date',
-                        style: GoogleFonts.inter(
-                          textStyle: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textMuted,
+                  () => controller.isLoading.value
+                    ? Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: CircularProgressIndicator(
+                            color: AppColors.medicalBlue,
                           ),
                         ),
-                      ),
-                    ),
-                  )
+                      )
+                    : controller.timeSlots.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24.0),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.event_busy,
+                                  size: 48,
+                                  color: AppColors.medicalBlueLight,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'No available slots for this date',
+                                  style: GoogleFonts.inter(
+                                    textStyle: TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                       : Wrap(
-                    spacing: 8,
-                    runSpacing: 12,
-                    children: controller.timeSlots.map((slot) {
-                      final bool isBooked = slot.isBooked ?? false;
-                      final bool isSelected =
-                          controller.selectedTimeSlot.value == slot;
+                          spacing: 8,
+                          runSpacing: 12,
+                          children: controller.timeSlots.map((slot) {
+                            final bool isBooked = slot.isBooked ?? false;
+                            final bool isSelected =
+                                controller.selectedTimeSlot.value == slot;
 
-                      return GestureDetector(
-                        onTap: isBooked
-                            ? null
-                            : () {
-                          controller.selectedTimeSlot.value =
-                              slot;
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isBooked
-                                ? Colors.red.withOpacity(0.1)
-                                : isSelected
-                                ? AppColors.therapyPurple
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isBooked
-                                  ? Colors.red.withOpacity(0.5)
-                                  : isSelected
-                                  ? AppColors.therapyPurple
-                                  : Colors.grey.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Text(
-                            slot.time,
-                            style: GoogleFonts.inter(
-                              textStyle: TextStyle(
-                                fontSize: 14,
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                color: isBooked
-                                    ? Colors.red
-                                    : isSelected
-                                    ? Colors.white
-                                    : AppColors.textPrimary,
+                            return GestureDetector(
+                              onTap: isBooked
+                                  ? null
+                                  : () {
+                                      controller.selectedTimeSlot.value = slot;
+                                    },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isBooked
+                                      ? AppColors.errorLight
+                                      : isSelected
+                                          ? AppColors.medicalBlue
+                                          : AppColors.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    if (isSelected)
+                                      BoxShadow(
+                                        color: AppColors.medicalBlue.withOpacity(0.3),
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                  ],
+                                  border: Border.all(
+                                    color: isBooked
+                                        ? AppColors.error
+                                        : isSelected
+                                            ? AppColors.medicalBlue
+                                            : AppColors.border,
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  slot.time,
+                                  style: GoogleFonts.inter(
+                                    textStyle: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isBooked
+                                          ? AppColors.error
+                                          : isSelected
+                                              ? AppColors.textOnDark
+                                              : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          }).toList(),
                         ),
-                      );
-                    }).toList(),
-                  ),
                 ),
               ],
             ),
@@ -222,26 +272,31 @@ class DateTimeScreen extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: AppColors.shadowLight,
                   blurRadius: 10,
                   offset: Offset(0, -5),
                 ),
               ],
             ),
             child: Obx(
-                  () => ElevatedButton(
+              () => ElevatedButton(
                 onPressed: controller.selectedTimeSlot.value == null
                     ? null
                     : () {
-                  Get.toNamed(AppPage.performPayment);
-                },
+                        Get.toNamed(AppPage.performPayment);
+                      },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.therapyPurple,
-                  foregroundColor: Colors.white,
+                  backgroundColor: controller.selectedTimeSlot.value == null
+                      ? AppColors.textMuted
+                      : AppColors.medicalBlue,
+                  foregroundColor: AppColors.textOnDark,
+                  disabledBackgroundColor: AppColors.border,
+                  disabledForegroundColor: AppColors.textMuted,
                   minimumSize: Size(double.infinity, 50),
+                  elevation: 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

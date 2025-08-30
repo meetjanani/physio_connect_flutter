@@ -19,35 +19,44 @@ class SessionTypeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: commonAppBar("Select Session Type", isBackButtonVisible: true),
-      body: SafeArea(child: Obx(() => controller.isLoading.value
-          ? Center(child: CircularProgressIndicator())
-          : ListView(
-        padding: EdgeInsets.all(16),
-        children: [
-          Text(
-            'Choose Your Therapy Type',
-            style: GoogleFonts.inter(
-              textStyle: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Select the type of session that best fits your needs',
-            style: GoogleFonts.inter(
-              textStyle: TextStyle(
-                fontSize: 14,
-                color: AppColors.textMuted,
-              ),
-            ),
-          ),
-          SizedBox(height: 24),
-          ...controller.sessionTypes.map((sessionType) => _buildSessionCard(sessionType)),
-        ],
-      ))),
+      body: SafeArea(
+        child: Obx(
+          () => controller.isLoading.value
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.medicalBlue,
+                  ),
+                )
+              : ListView(
+                  padding: EdgeInsets.all(16),
+                  children: [
+                    Text(
+                      'Choose Your Therapy Type',
+                      style: GoogleFonts.inter(
+                        textStyle: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Select the type of session that best fits your needs',
+                      style: GoogleFonts.inter(
+                        textStyle: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    ...controller.sessionTypes
+                        .map((sessionType) => _buildSessionCard(sessionType)),
+                  ],
+                ),
+        ),
+      ),
     );
   }
 
@@ -63,12 +72,16 @@ class SessionTypeScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
+              color: AppColors.shadowLight,
               blurRadius: 8,
               offset: Offset(0, 4),
             ),
           ],
-          color: Colors.white,
+          color: AppColors.surface,
+          border: Border.all(
+            color: AppColors.border,
+            width: 1,
+          ),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -76,11 +89,28 @@ class SessionTypeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image
-              CatchedImageWidget(
-                imageUrl: session.imageUrl,
-                height: 160,
-                width: double.infinity,
-                boxFit: BoxFit.fill,
+              Stack(
+                children: [
+                  CatchedImageWidget(
+                    imageUrl: session.imageUrl,
+                    height: 160,
+                    width: double.infinity,
+                    boxFit: BoxFit.cover,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 4,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: AppColors.primaryGradientColors,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               // Content
               Padding(
@@ -104,10 +134,15 @@ class SessionTypeScreen extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.wellnessGreen.withOpacity(0.2),
+                            color: AppColors.medicalBlueLight,
                             borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppColors.medicalBlue.withOpacity(0.3),
+                              width: 1,
+                            ),
                           ),
                           child: Text(
                             session.duration,
@@ -115,7 +150,7 @@ class SessionTypeScreen extends StatelessWidget {
                               textStyle: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.wellnessGreen,
+                                color: AppColors.medicalBlueDark,
                               ),
                             ),
                           ),
@@ -129,7 +164,7 @@ class SessionTypeScreen extends StatelessWidget {
                         style: GoogleFonts.inter(
                           textStyle: TextStyle(
                             fontSize: 14,
-                            color: AppColors.textMuted,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                         maxLines: 3,
@@ -139,19 +174,37 @@ class SessionTypeScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '₹${session.price.toStringAsFixed(0)}',
-                          style: GoogleFonts.inter(
-                            textStyle: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.therapyPurple,
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.monetization_on_outlined,
+                              size: 20,
+                              color: AppColors.medicalBlue,
                             ),
-                          ),
+                            SizedBox(width: 4),
+                            Text(
+                              '₹${session.price.toStringAsFixed(0)}',
+                              style: GoogleFonts.inter(
+                                textStyle: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.medicalBlueDark,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          color: AppColors.therapyPurple,
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.medicalBlueLight,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(
+                            Icons.arrow_forward_rounded,
+                            color: AppColors.medicalBlueDark,
+                            size: 20,
+                          ),
                         ),
                       ],
                     ),

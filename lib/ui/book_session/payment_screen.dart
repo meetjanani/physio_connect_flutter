@@ -45,8 +45,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       'Payment Failed',
       'Error: ${response.message}',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
+      backgroundColor: AppColors.error,
+      colorText: AppColors.textOnDark,
     );
   }
 
@@ -55,6 +55,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       'External Wallet',
       'Payment with ${response.walletName}',
       snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: AppColors.medicalBlueLight,
+      colorText: AppColors.medicalBlueDark,
     );
   }
 
@@ -64,7 +66,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     controller.razorpayPaymentId.value = "razor_pay_test_payment_id"!;
     controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}), PaymentStatus.paid);
     return;
-
 
     // rzp_live_RAnbKgZCZa6RZZ
     // rzp_test_R9Cb4IgtUNcVsB
@@ -109,8 +110,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'Error',
         'Unable to start payment process',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: AppColors.error,
+        colorText: AppColors.textOnDark,
       );
     }
   }
@@ -131,11 +132,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 Container(
                   padding: EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: AppColors.shadowLight,
                         blurRadius: 10,
                         offset: Offset(0, 4),
                       ),
@@ -211,7 +212,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               textStyle: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.therapyPurple,
+                                color: AppColors.medicalBlueDark,
                               ),
                             ),
                           )),
@@ -240,10 +241,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 Container(
                   padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.therapyPurple,
+                      color: AppColors.medicalBlue,
                       width: 2,
                     ),
                   ),
@@ -252,7 +253,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Container(
                         padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
+                          color: AppColors.medicalBlueLight,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Image.network(
@@ -261,7 +262,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           width: 24,
                           errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.payment,
-                            color: Colors.blue.shade700,
+                            color: AppColors.medicalBlueDark,
                           ),
                         ),
                       ),
@@ -295,7 +296,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                       Icon(
                         Icons.check_circle,
-                        color: AppColors.therapyPurple,
+                        color: AppColors.medicalBlue,
                       ),
                     ],
                   ),
@@ -308,10 +309,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
           Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: AppColors.shadowLight,
                   blurRadius: 10,
                   offset: Offset(0, -5),
                 ),
@@ -319,15 +320,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             child: Obx(() =>
             controller.isLoading.value == true ? Center(
-              child: CircularProgressIndicator(),) : ElevatedButton(
+              child: CircularProgressIndicator(
+                color: AppColors.medicalBlue,
+              ),
+            ) : ElevatedButton(
               onPressed: _openRazorpayCheckout,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.therapyPurple,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.medicalBlue,
+                foregroundColor: AppColors.textOnDark,
                 minimumSize: Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 2,
               ),
               child: Text(
                 'Pay Now',
@@ -356,12 +361,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
         Container(
           padding: EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.therapyPurple.withOpacity(0.1),
+            color: AppColors.medicalBlueLight,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
-            color: AppColors.therapyPurple,
+            color: AppColors.medicalBlueDark,
             size: 20,
           ),
         ),

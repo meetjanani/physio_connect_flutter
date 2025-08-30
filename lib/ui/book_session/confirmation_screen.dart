@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:physio_connect/route/route_module.dart';
-import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
 import 'booking_controller.dart';
@@ -70,11 +69,11 @@ class ConfirmationScreen extends StatelessWidget {
                         Container(
                           padding: EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.3),
+                                color: AppColors.shadowLight,
                                 blurRadius: 10,
                                 offset: Offset(0, 4),
                               ),
@@ -121,6 +120,8 @@ class ConfirmationScreen extends StatelessWidget {
                                 value: controller.bookingsModel.value?.paymentStatus ?? 'N/A',
                                 valueColor: AppColors.wellnessGreen,
                                 icon: Icons.payment,
+                                iconBgColor: AppColors.wellnessGreenLight,
+                                iconColor: AppColors.wellnessGreenDark,
                               ),
 
                               SizedBox(height: 16),
@@ -142,14 +143,18 @@ class ConfirmationScreen extends StatelessWidget {
                         Container(
                           padding: EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.wellnessGreen.withOpacity(0.1),
+                            color: AppColors.wellnessGreenLight,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.wellnessGreen.withOpacity(0.3),
+                              width: 1,
+                            ),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.info_outline,
-                                color: AppColors.wellnessGreen,
+                                color: AppColors.wellnessGreenDark,
                               ),
                               SizedBox(width: 12),
                               Expanded(
@@ -177,12 +182,13 @@ class ConfirmationScreen extends StatelessWidget {
                     Get.offAndToNamed(AppPage.dashboardScreen);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.therapyPurple,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.medicalBlue,
+                    foregroundColor: AppColors.textOnDark,
                     minimumSize: Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: 2,
                   ),
                   child: Text(
                     'Back to Home',
@@ -207,18 +213,20 @@ class ConfirmationScreen extends StatelessWidget {
     required String value,
     required IconData icon,
     Color? valueColor,
+    Color? iconBgColor,
+    Color? iconColor,
   }) {
     return Row(
       children: [
         Container(
           padding: EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.therapyPurple.withOpacity(0.1),
+            color: iconBgColor ?? AppColors.medicalBlueLight,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             icon,
-            color: AppColors.therapyPurple,
+            color: iconColor ?? AppColors.medicalBlueDark,
             size: 20,
           ),
         ),
