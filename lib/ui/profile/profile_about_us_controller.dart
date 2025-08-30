@@ -25,7 +25,7 @@ class ProfileAboutUsController extends GetxController {
 
   void fetchUserProfile() async {
     var mobileNumber = await secureStorageRepository.read(SecureStorage.userMobileNumberSessionStorage) ?? '';
-    userModelSupabase.value = await getUserModel();
+    userModelSupabase.value = await UserModelSupabase.getFromSecureStorage();
     if (userModelSupabase.value?.id == null && mobileNumber.isNotEmpty) {
       userModelSupabase.value = await authController.fetchUserProfile(mobileNumber);
     }

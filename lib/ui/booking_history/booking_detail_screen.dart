@@ -1,5 +1,6 @@
 // lib/ui/booking/history/booking_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -485,15 +486,11 @@ class BookingDetailScreen extends StatelessWidget {
             ],
           ),
           SizedBox(height: 12),
-          Text(
-            notes,
-            style: GoogleFonts.inter(
-              textStyle: TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
-                height: 1.5,
-              ),
-            ),
+          Html(
+            data: notes,
+            style: {
+              "body": Style(margin: Margins.zero,),
+            },
           ),
         ],
       ),

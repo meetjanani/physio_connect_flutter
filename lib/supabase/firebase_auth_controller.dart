@@ -140,7 +140,7 @@ class FirebaseAuthController extends GetxController {
   Future<void> getUserFromPhoneNumber(String phoneNumber) async {
     fetchUserProfile(phoneNumber)
         .then((data) {
-      setUserModel(data);
+      data.saveToSecureStorage();
       hideProgressBar();
       Get.offNamed(AppPage.dashboardScreen);
       Get.showSuccessSnackbar('Login successfully.');

@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:json_annotation/json_annotation.dart';
+
+import '../utils/app_shared_preference.dart';
+import '../utils/secure_storage/secure_storage_repository.dart';
 
 part 'user_model_supabase.g.dart';
 
@@ -34,4 +39,25 @@ class UserModelSupabase {
       _$UserModelSupabaseFromJson(data);
 
   Map<String, dynamic> toJson() => _$UserModelSupabaseToJson(this);
+
+  Future<void> saveToSecureStorage() async {
+    final jsonMap = this.toJson();
+    final jsonString = jsonEncode(jsonMap);
+    await SecureStorageRepository.to.write(SecureStorage.patientJson, jsonString);
+  }
+
+  // Static method to retrieve model from secure storage
+  static Future<UserModelSupabase?> getFromSecureStorage() async {
+    final jsonString = await SecureStorageRepository.to.read(SecureStorage.patientJson);
+    if (jsonString == null || jsonString.isEmpty) {
+      return null;
+    }
+    try {
+      final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
+      return UserModelSupabase.fromJson(jsonMap);
+    } catch (e) {
+      print('Error retrieving DoctorModel: $e');
+      return null;
+    }
+  }
 }

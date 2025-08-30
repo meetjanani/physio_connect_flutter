@@ -9,6 +9,7 @@ import 'package:physio_connect/utils/theme/app_colors.dart';
 import '../../route/route_module.dart';
 import '../../utils/common_appbar.dart';
 import '../../utils/units_extensions.dart';
+import '../../utils/view_extension.dart';
 import 'booking_history_controller.dart';
 
 class BookingHistoryScreen extends StatelessWidget {
@@ -68,7 +69,7 @@ class BookingHistoryScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Obx(() => _buildDatePickerButton(
+                child: Obx(() => buildDatePickerButton(
                   label: 'From',
                   date: controller.fromDate.value,
                   onTap: () => _selectDate(context, true),
@@ -76,7 +77,7 @@ class BookingHistoryScreen extends StatelessWidget {
               ),
               SizedBox(width: 16),
               Expanded(
-                child: Obx(() => _buildDatePickerButton(
+                child: Obx(() => buildDatePickerButton(
                   label: 'To',
                   date: controller.toDate.value,
                   onTap: () => _selectDate(context, false),
@@ -95,54 +96,6 @@ class BookingHistoryScreen extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDatePickerButton({
-    required String label,
-    required DateTime date,
-    required VoidCallback onTap
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.textMuted.withOpacity(0.3)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    textStyle: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  DateFormat('dd MMM yyyy').format(date),
-                  style: GoogleFonts.inter(
-                    textStyle: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Spacer(),
-            Icon(Icons.calendar_today, size: 16, color: AppColors.medicalBlue),
-          ],
-        ),
       ),
     );
   }
@@ -202,7 +155,7 @@ class BookingHistoryScreen extends StatelessWidget {
           controller.fromDate.value = picked;
         }
       }
-      controller.getUpComingBookings();
+      controller.getFilteredBookings();
     }
   }
 

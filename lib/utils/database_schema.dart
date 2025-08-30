@@ -21,11 +21,15 @@ class DatabaseSchema extends GetxController {
   //  Bookings table
   static const String bookingsTable = "bookings";
   static const String bookingsId = "id";
+  static const String bookingsPaymentStatus = "paymentStatus";
+  static const String bookingsPrice = "price";
   static const String bookingsUserId = "userId";
   static const String bookingsTimeSlotId = "timeSlotId";
   static const String bookingsDoctorId = "doctorId";
   static const String bookingsSessionTypeId = "sessionTypeId";
   static const String bookingsDate = "bookingDate";
+  static const String bookingsStatus = "bookingStatus";
+  static const String bookingsDoctorNotes = "doctorNotes";
   static const String bookingsCreatedAt = "createdAt";
 
 

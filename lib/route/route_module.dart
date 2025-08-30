@@ -1,5 +1,6 @@
 import 'package:get/get_navigation/src/routes/get_route.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_binding.dart';
+import 'package:physio_connect/ui/dashboard/doctor_dashboard_screen.dart';
 import 'package:physio_connect/ui/signUp/signup_binding.dart';
 
 import '../ui/book_session/booking_session_bindings.dart';
@@ -24,6 +25,7 @@ class AppPage {
   static const loginScreen = '/login';
   static const signUpScreen = '/register';
   static const dashboardScreen = '/dashboard';
+  static const doctorDashboardScreen = '/doctorDashboard';
   static const selectSessionType = '/selectSessionType';
   static const selectDateAndTime = '/selectDateAndTime';
   static const performPayment = '/performPayment';
@@ -53,6 +55,11 @@ class AppPage {
     GetPage(
       name: AppPage.dashboardScreen,
       page: () => DashboardBottomNavigationScreen(currentIndex: 0),
+      binding: DashboardBinding(),
+    ),
+    GetPage(
+      name: AppPage.doctorDashboardScreen,
+      page: () => DoctorDashboardScreen(),
       binding: DashboardBinding(),
     ),
 

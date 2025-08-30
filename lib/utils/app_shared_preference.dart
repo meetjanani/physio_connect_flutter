@@ -16,6 +16,7 @@ class SecureStorage {
 
 
   static const String doctorJson = 'doctorJson';
+  static const String patientJson = 'patientJson';
   static const String timeslotJson = 'timeslotJson';
 
 }

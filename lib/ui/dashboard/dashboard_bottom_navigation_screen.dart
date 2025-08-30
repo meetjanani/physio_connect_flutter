@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:physio_connect/ui/dashboard/dashboard_controller.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
+import 'package:physio_connect/ui/dashboard/doctor_dashboard_screen.dart';
+import 'package:physio_connect/utils/app_shared_preference.dart';
+import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
+import '../../model/user_model_supabase.dart';
 import '../booking_history/booking_history_screen.dart';
 import '../profile/profile_about_us_screen.dart';
 
@@ -13,11 +19,32 @@ class DashboardBottomNavigationScreen extends StatefulWidget {
 }
 
 class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigationScreen> {
-  final List<Widget> _buildScreens = [
-    DashboardScreen(),
-    BookingHistoryScreen(),
-    ProfileAboutUsScreen(),
-  ];
+  final DashboardController controller = DashboardController.to;
+
+  late List<Widget> _buildScreens = [];
+
+  @override
+  void initState() {
+    super.initState();
+    UserModelSupabase.getFromSecureStorage().then((value) {
+      setState(() {
+        controller.userModelSupabase = value;
+        _initializeScreens();
+      });
+    });
+  }
+
+  void _initializeScreens() {
+    final isDoctor = controller.userModelSupabase?.userType.toLowerCase() == UserType.doctor;
+
+    _buildScreens = [
+      // isDoctor == false ? DoctorDashboardScreen() : DashboardScreen(),
+      DashboardScreen(),
+      DoctorDashboardScreen(),
+      BookingHistoryScreen(),
+      ProfileAboutUsScreen(),
+    ];
+  }
 
   void onTapped(int index) {
     setState(() {
@@ -29,7 +56,9 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: _buildScreens[widget.currentIndex],
+      body: (_buildScreens != null && _buildScreens.length > 0)
+          ? _buildScreens[widget.currentIndex]
+          : Center(child: CircularProgressIndicator()),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -47,6 +76,11 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
           ),
           child: BottomNavigationBar(
             items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home, color: AppColors.medicalBlue),
+                activeIcon: Icon(Icons.home, color: AppColors.wellnessGreen),
+                label: "Home"
+              ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.home, color: AppColors.medicalBlue),
                 activeIcon: Icon(Icons.home, color: AppColors.wellnessGreen),

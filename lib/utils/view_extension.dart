@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:physio_connect/utils/theme/app_colors.dart';
 
 extension ViewExtensions on void {
   showProgress() {
@@ -91,3 +93,52 @@ myText({ required String title,
       style: TextStyle(
           color: textColor, fontSize: titleSize, fontWeight: fontWeight),
     );
+
+
+Widget buildDatePickerButton({
+  required String label,
+  required DateTime date,
+  required VoidCallback onTap
+}) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(8),
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.textMuted.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                DateFormat('dd MMM yyyy').format(date),
+                style: GoogleFonts.inter(
+                  textStyle: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Spacer(),
+          Icon(Icons.calendar_today, size: 16, color: AppColors.medicalBlue),
+        ],
+      ),
+    ),
+  );
+}

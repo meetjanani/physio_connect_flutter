@@ -41,7 +41,7 @@ class BookingController extends GetxController {
   Future<void> onInit() async {
     super.onInit();
     isLoading.value = true;
-    userModelSupabase = await getUserModel();
+    userModelSupabase = await UserModelSupabase.getFromSecureStorage();
     await getSessionTypesMaster();
     await getTimeSlotsMaster();
     isLoading.value = false;
@@ -69,6 +69,7 @@ class BookingController extends GetxController {
     var doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
     var timeslotJson = jsonEncode(selectedTimeSlot.value?.toJson() ?? {});
     var sessionTypeJson = jsonEncode(selectedSessionType.value?.toJson() ?? {});
+    var patientJson = jsonEncode(userModelSupabase?.toJson() ?? {});
     // Via Notification Notify doctor about new booking
     await supabaseController.newBookingNotificationToAdmin(doctorModel?.userId ?? 1);
     bookingsModel.value = BookingsModel(
@@ -82,6 +83,7 @@ class BookingController extends GetxController {
       sessionTypeId: selectedSessionType.value?.id ?? 1,
       price: selectedSessionType.value?.price ?? 1,
       sessionTypeJson: sessionTypeJson,
+      patientJson: patientJson,
       paymentStatus: paymentStatus.name,
       paymentId: paymentResponse.paymentId!,
       orderId: paymentResponse.orderId,

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:physio_connect/model/session_type_model.dart';
 import 'package:physio_connect/model/time_slots_model.dart';
+import 'package:physio_connect/model/user_model_supabase.dart';
 
 import 'doctor_model.dart';
 part 'bookings_model.g.dart';
@@ -19,6 +20,7 @@ class BookingsModel {
   String doctorJson = "";
   int sessionTypeId = 0;
   String sessionTypeJson = "";
+  String patientJson = "";
   String paymentStatus = "";
   String? paymentId = "";
   String? orderId = "";
@@ -38,6 +40,7 @@ class BookingsModel {
     required this.doctorJson,
     required this.sessionTypeId,
     required this.sessionTypeJson,
+    required this.patientJson,
     required this.paymentStatus,
     required this.paymentId,
     required this.orderId,
@@ -61,6 +64,7 @@ class BookingsModel {
   Map<String, dynamic> toJson() => _$BookingsModelToJson(this);
 
   DoctorModel aDoctor() => DoctorModel.fromJson(jsonDecode(this.doctorJson));
+  UserModelSupabase aPatient() => UserModelSupabase.fromJson(jsonDecode(this.patientJson));
   TimeSlotModel aTimeslot() => TimeSlotModel.fromJson(jsonDecode(this.timeSlotJson));
   SessionTypeModel aSessionType() => SessionTypeModel.fromJson(jsonDecode(this.sessionTypeJson));
 }

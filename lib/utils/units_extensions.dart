@@ -14,3 +14,10 @@ String formatDateToWeekday(String dateStr) {
   final DateFormat formatter = DateFormat('EEEE');
   return formatter.format(date);
 }
+
+// Convert "2025-08-26" to "20 Oct 2023"
+String formatDateAndMonth(String dateStr) {
+  final DateTime date = DateTime.parse(dateStr);
+  final DateFormat formatter = DateFormat('d MMM');
+  return formatter.format(date);
+}

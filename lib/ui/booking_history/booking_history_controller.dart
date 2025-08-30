@@ -31,16 +31,24 @@ class BookingHistoryController extends GetxController {
   @override
   Future<void> onInit() async {
     super.onInit();
-    userModelSupabase = await getUserModel();
-    getUpComingBookings();
+    userModelSupabase = await UserModelSupabase.getFromSecureStorage();
+    getFilteredBookings();
   }
 
-  Future<void> getUpComingBookings() async {
+  Future<void> getFilteredBookings() async {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
       upComingBookings.clear();
       var response = await supabaseController.getFilteredBookings(userModelSupabase?.id ?? 0, fromDate.value, toDate.value);
       upComingBookings.addAll(response);
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> updateDoctorNote(BookingsModel doctorNotes) async {
+    if (userModelSupabase?.id != null) {
+      isLoading.value = true;
+      var response = await supabaseController.updateBookings(doctorNotes?.id ?? 0, doctorNotes);
       isLoading.value = false;
     }
   }
@@ -72,7 +80,7 @@ class BookingHistoryController extends GetxController {
   void applyQuickFilter(int days) {
     toDate.value = DateTime.now();
     fromDate.value = DateTime.now().subtract(Duration(days: days));
-    getUpComingBookings();
+    getFilteredBookings();
   }
 
   void filterCurrentMonth() {
@@ -81,7 +89,7 @@ class BookingHistoryController extends GetxController {
 
     fromDate.value = firstDayOfMonth;
     toDate.value = now;
-    getUpComingBookings();
+    getFilteredBookings();
   }
 
   /*void loadAppointmentDetails(String appointmentId) {
