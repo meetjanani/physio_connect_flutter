@@ -3,19 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:physio_connect/ui/booking_history/session_booking_card.dart';
+import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_note.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../model/bookings_model.dart';
 import '../../route/route_module.dart';
 import '../../utils/common_appbar.dart';
 import '../../utils/units_extensions.dart';
 import '../../utils/view_extension.dart';
 import 'booking_history_controller.dart';
 
-class BookingHistoryScreen extends StatelessWidget {
-  final BookingHistoryController controller = Get.put(BookingHistoryController());
+class BookingHistoryScreen extends StatefulWidget {
 
   BookingHistoryScreen({super.key});
+
+  @override
+  State<BookingHistoryScreen> createState() => _BookingHistoryScreenState();
+}
+
+class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
+  final BookingHistoryController controller = Get.put(BookingHistoryController());
 
   @override
   Widget build(BuildContext context) {
@@ -214,189 +224,7 @@ class BookingHistoryScreen extends StatelessWidget {
       itemBuilder: (context, index) {
         final appointment = controller.upComingBookings[index];
         final isUpcoming = appointment.paymentStatus == BookingStatus.booked.name;
-
-        return GestureDetector(
-          onTap: (){
-            controller.selectedAppointment.value = appointment;
-            Get.toNamed(
-                AppPage.bookingDetail,
-                arguments: appointment
-            );
-          },
-          child: Container(
-            margin: EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadowLight,
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-              border: Border.all(
-                color: isUpcoming
-                  ? AppColors.wellnessGreen.withOpacity(0.3)
-                  : Colors.transparent,
-                width: isUpcoming ? 2 : 0,
-              ),
-            ),
-            child: Column(
-              children: [
-                // Status banner
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(appointment.bookingStatus),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(15),
-                      topRight: Radius.circular(15),
-                    ),
-                  ),
-                  child: Text(
-                    _getStatusText(appointment.bookingStatus),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      textStyle: TextStyle(
-                        color: AppColors.textOnDark,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Appointment details
-                Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Session type and date
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.medicalBlueLight,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.healing,
-                              color: AppColors.medicalBlueDark,
-                              size: 24,
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  appointment.aSessionType().name,
-                                  style: GoogleFonts.inter(
-                                    textStyle: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  '${formatDateToReadable(appointment.bookingDate)} • ${appointment.aTimeslot().time}',
-                                  style: GoogleFonts.inter(
-                                    textStyle: TextStyle(
-                                      fontSize: 14,
-                                      color: AppColors.textMuted,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: 16),
-                      Divider(),
-                      SizedBox(height: 16),
-
-                      // Doctor info
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundImage: NetworkImage(controller.therapistsImage),
-                            backgroundColor: AppColors.medicalBlueLight,
-                            child: controller.therapistsImage.isEmpty
-                                ? Icon(Icons.person, color: AppColors.medicalBlueDark)
-                                : null,
-                          ),
-                          SizedBox(width: 10,),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  appointment.aDoctor().name ?? '',
-                                  style: GoogleFonts.inter(
-                                    textStyle: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  appointment.aDoctor().degree ?? '',
-                                  style: GoogleFonts.inter(
-                                    textStyle: TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.textMuted,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _buildPaymentBadge(appointment.paymentStatus),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // View details button
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.medicalBlueLight.withOpacity(0.5),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(15),
-                      bottomRight: Radius.circular(15),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'View Details',
-                      style: GoogleFonts.inter(
-                        textStyle: TextStyle(
-                          color: AppColors.medicalBlueDark,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        return SessionBookingCard(appointment);
       },
     );
   }

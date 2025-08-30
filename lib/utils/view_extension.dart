@@ -142,3 +142,37 @@ Widget buildDatePickerButton({
     ),
   );
 }
+
+Widget buildActionButton({
+  required String label,
+  required IconData icon,
+  required Color color,
+  required VoidCallback onTap,
+  required VoidCallback onLongPress,
+}) {
+  return InkWell(
+    onTap: onTap,
+    onLongPress: onLongPress,
+    borderRadius: BorderRadius.circular(8),
+    child: Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 20),
+          SizedBox(height: 4),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              textStyle: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
