@@ -9,6 +9,7 @@ import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
+import '../../services/invoice_service.dart';
 import 'booking_history_controller.dart';
 
 class BookingDetailScreen extends StatelessWidget {
@@ -244,8 +245,28 @@ class BookingDetailScreen extends StatelessWidget {
             SizedBox(height: 24),
           ],
 
+          // Invoice Button
+          if (appointment.paymentStatus.toLowerCase() == 'paid') ...[
+            SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _generateInvoice(context, appointment),
+              icon: Icon(Icons.receipt_long),
+              label: Text('Generate Invoice'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.medicalBlue,
+                foregroundColor: AppColors.textOnDark,
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+            ),
+          ],
+
           // Actions
           if (appointment.bookingStatus == BookingStatus.booked) ...[
+            SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
@@ -654,4 +675,63 @@ class BookingDetailScreen extends StatelessWidget {
         return AppColors.textMuted;
     }
   }
+
+  // Add this new method for invoice generation
+  void _generateInvoice(BuildContext context, BookingsModel appointment) async {
+    // Show loading indicator
+    Get.dialog(
+      Center(
+        child: Container(
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadowMedium,
+                blurRadius: 16,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: AppColors.medicalBlue),
+              SizedBox(height: 16),
+              Text(
+                'Generating Invoice...',
+                style: GoogleFonts.inter(
+                  textStyle: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+
+    try {
+      // Generate invoice
+      final pdfFile = await InvoiceService.generateInvoice(appointment);
+      Get.back(); // Close loading dialog
+
+      // Show and open PDF
+      await InvoiceService.openPdf(pdfFile);
+    } catch (e) {
+      Get.back(); // Close loading dialog
+      Get.snackbar(
+        'Error',
+        'Failed to generate invoice: ${e.toString()}',
+        backgroundColor: AppColors.errorLight,
+        colorText: AppColors.error,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
 }
+
