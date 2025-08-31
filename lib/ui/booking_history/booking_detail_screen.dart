@@ -10,6 +10,7 @@ import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_no
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
+import 'package:physio_connect/utils/view_extension.dart';
 
 import '../../services/invoice_service.dart';
 import 'booking_history_controller.dart';
@@ -175,6 +176,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               'Duration',
               appointment.aSessionType().duration,
               Icons.timelapse,
+            ),
+            _buildInfoRow(
+              'Duration',
+              appointment.address ?? 'N/A',
+              Icons.location_pin,
             ),
           ]),
 
@@ -455,7 +461,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ),
           ElevatedButton.icon(
             onPressed: () {
-              // Call therapist action
+              showSuccessSnackbar(
+                  "Request for call has been initiated\n"
+                      "Doctor may call you back within 8 hours");
             },
             icon: Icon(Icons.call, size: 16),
             label: Text('Call'),
@@ -474,15 +482,16 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Widget _buildNotesCard(String notes) {
     return InkWell(
       onTap: () {
-      showHtmlEditorForDoctorNote(
-        context: Get.context!,
-        initialHtml: appointment.doctorNotes ?? "",
-        onSave: (String updatedHtml) async {
-          appointment.doctorNotes = updatedHtml;
-          await controller.updateDoctorNote(appointment);
-        },
-        title: "Edit Doctor's Note",
-      );
+        if (appointment.aPatient().userType.toLowerCase() == UserType.doctor.name)
+          showHtmlEditorForDoctorNote(
+            context: Get.context!,
+            initialHtml: appointment.doctorNotes ?? "",
+            onSave: (String updatedHtml) async {
+              appointment.doctorNotes = updatedHtml;
+              await controller.updateDoctorNote(appointment);
+            },
+            title: "Edit Doctor's Note",
+          );
     },
       child: Container(
         width: double.infinity,

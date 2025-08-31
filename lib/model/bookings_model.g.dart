@@ -24,6 +24,7 @@ BookingsModel _$BookingsModelFromJson(Map<String, dynamic> json) =>
       orderId: json['orderId'] as String?,
       signature: json['signature'] as String?,
       doctorNotes: json['doctorNotes'] as String?,
+      address: json['address'] as String?,
       bookingDate: json['bookingDate'] as String,
       createdAt: json['createdAt'] as String,
     );
@@ -46,6 +47,7 @@ Map<String, dynamic> _$BookingsModelToJson(BookingsModel instance) =>
       'orderId': instance.orderId,
       'signature': instance.signature,
       'doctorNotes': instance.doctorNotes,
+      'address': instance.address,
       'bookingDate': instance.bookingDate,
       'createdAt': instance.createdAt,
     };

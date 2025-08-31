@@ -76,8 +76,7 @@ class DateTimeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 24),
-
+                SizedBox(height: 12),
                 // Calendar
                 Text(
                   'Select Date',
@@ -91,7 +90,7 @@ class DateTimeScreen extends StatelessWidget {
                 ),
                 Obx(
                   () => TableCalendar(
-                    rowHeight: 48,
+                    rowHeight: 40,
                     startingDayOfWeek: StartingDayOfWeek.monday,
                     firstDay: DateTime.now(),
                     lastDay: DateTime.now().add(Duration(days: 60)),
@@ -151,7 +150,7 @@ class DateTimeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 24),
+                SizedBox(height: 12),
 
                 // Time slots
                 Text(
@@ -164,7 +163,7 @@ class DateTimeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 12),
+                SizedBox(height: 10),
                 Obx(
                   () => controller.isLoading.value
                     ? Center(
@@ -264,13 +263,59 @@ class DateTimeScreen extends StatelessWidget {
                           }).toList(),
                         ),
                 ),
+                SizedBox(height: 12),
+
+                // Time slots
+                Text(
+                  'Enter Address',
+                  style: GoogleFonts.inter(
+                    textStyle: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                // Address multiline text field with location icon
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller.addressController,
+                        maxLines: 3,
+                        minLines: 2,
+                        decoration: InputDecoration(
+                          labelText: 'Address',
+                          hintText: 'Enter your address',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                   /* SizedBox(width: 8),
+                    IconButton(
+                      icon: Icon(Icons.my_location, color: AppColors.medicalBlue),
+                      tooltip: 'Use current location',
+                      onPressed: () async {
+                        // TODO: Implement GPS logic to fetch and set address
+                        // Example:
+                        // String address = await controller.getCurrentLocationAddress();
+                        // addressController.text = address;
+                      },
+                    ),*/
+                  ],
+                ),
+                SizedBox(height: 12),
               ],
             ),
           ),
 
           // Bottom button
           Container(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: AppColors.surface,
               boxShadow: [

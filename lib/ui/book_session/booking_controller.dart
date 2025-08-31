@@ -1,6 +1,7 @@
 // lib/ui/booking/booking_controller.dart
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:physio_connect/model/doctor_model.dart';
@@ -19,6 +20,8 @@ class BookingController extends GetxController {
   static BookingController get to => Get.find();
 
   BookingController();
+  // Add a TextEditingController for address if not present in controller
+  final TextEditingController addressController = TextEditingController();
   SupabaseController supabaseController =
       SupabaseController.to;
 
@@ -89,6 +92,7 @@ class BookingController extends GetxController {
       orderId: paymentResponse.orderId,
       signature: paymentResponse.signature,
       doctorNotes: "No additional notes provided.",
+      address: addressController.text,
       bookingDate: DateFormat('yyyy-MM-dd').format(selectedDate.value),
       createdAt: DateTime.now().toString(),
     );

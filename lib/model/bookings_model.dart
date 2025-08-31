@@ -26,6 +26,7 @@ class BookingsModel {
   String? orderId = "";
   String? signature = "";
   String? doctorNotes = "";
+  String? address = "";
   String bookingDate = DateTime.now().toString();
   String createdAt = DateTime.now().toString();
 
@@ -46,6 +47,7 @@ class BookingsModel {
     required this.orderId,
     required this.signature,
     required this.doctorNotes,
+    required this.address,
     required this.bookingDate,
     required this.createdAt,
   });

@@ -64,7 +64,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // For testing purposes, directly call success handler
     // In production, uncomment the Razorpay integration code below
     // controller.razorpayPaymentId.value = "razor_pay_test_payment_id"!;
-    // controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}), PaymentStatus.paid);
+    // controller.createAppointment(PaymentSuccessResponse("razor_pay_test_payment_id", "order_id", "signature", {}), PaymentStatus.paid);
     // return;
 
     // rzp_live_RAnbKgZCZa6RZZ

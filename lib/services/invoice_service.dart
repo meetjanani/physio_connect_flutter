@@ -188,7 +188,7 @@ class InvoiceService {
                       ),
                       pw.SizedBox(height: 4),
                       // TODO: patient.address
-                      pw.Text('Address not available'),
+                      pw.Text(appointment.address ?? 'Address not available'),
                       if (patient.mobileNumber?.isNotEmpty == true)
                         pw.Text('Phone: ${patient.mobileNumber}'),
                      /* if (patient.email?.isNotEmpty == true)
