@@ -262,6 +262,7 @@ class BookingDetailScreen extends StatelessWidget {
                 elevation: 2,
               ),
             ),
+            SizedBox(height: 16),
           ],
 
           // Actions
