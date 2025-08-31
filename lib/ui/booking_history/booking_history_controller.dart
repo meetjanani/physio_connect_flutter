@@ -16,7 +16,7 @@ class BookingHistoryController extends GetxController {
 
   // Date filter
   final fromDate = DateTime.now().subtract(Duration(days: 7)).obs;
-  final toDate = DateTime.now().obs;
+  final toDate = DateTime.now().add(Duration(days: 7)).obs;
 
   // Appointments
   final allAppointments = <AppointmentModel>[].obs;

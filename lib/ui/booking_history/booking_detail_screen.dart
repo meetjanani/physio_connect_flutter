@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:html_editor_enhanced/utils/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:physio_connect/model/bookings_model.dart';
+import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_note.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
@@ -12,11 +14,18 @@ import 'package:physio_connect/utils/theme/app_colors.dart';
 import '../../services/invoice_service.dart';
 import 'booking_history_controller.dart';
 
-class BookingDetailScreen extends StatelessWidget {
-  final BookingHistoryController controller = Get.find<BookingHistoryController>();
-  final BookingsModel appointment = Get.arguments as BookingsModel;
+class BookingDetailScreen extends StatefulWidget {
 
   BookingDetailScreen({Key? key}) : super(key: key);
+
+  @override
+  State<BookingDetailScreen> createState() => _BookingDetailScreenState();
+}
+
+class _BookingDetailScreenState extends State<BookingDetailScreen> {
+  final BookingHistoryController controller = Get.find<BookingHistoryController>();
+
+  final BookingsModel appointment = Get.arguments as BookingsModel;
 
   @override
   Widget build(BuildContext context) {
@@ -463,58 +472,71 @@ class BookingDetailScreen extends StatelessWidget {
   }
 
   Widget _buildNotesCard(String notes) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 8,
-            offset: Offset(0, 2),
+    return InkWell(
+      onTap: () {
+      showHtmlEditorForDoctorNote(
+        context: Get.context!,
+        initialHtml: appointment.doctorNotes ?? "",
+        onSave: (String updatedHtml) async {
+          appointment.doctorNotes = updatedHtml;
+          await controller.updateDoctorNote(appointment);
+        },
+        title: "Edit Doctor's Note",
+      );
+    },
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowLight,
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+          border: Border.all(
+            color: AppColors.medicalBlue.withOpacity(0.3),
+            width: 1,
           ),
-        ],
-        border: Border.all(
-          color: AppColors.medicalBlue.withOpacity(0.3),
-          width: 1,
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.sticky_note_2_outlined,
-                color: AppColors.medicalBlue,
-                size: 20,
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Recommendations & Precautions',
-                  style: GoogleFonts.inter(
-                    textStyle: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.medicalBlue,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.sticky_note_2_outlined,
+                  color: AppColors.medicalBlue,
+                  size: 20,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Recommendations & Precautions',
+                    style: GoogleFonts.inter(
+                      textStyle: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.medicalBlue,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Html(
-            data: notes,
-            style: {
-              "body": Style(margin: Margins.zero,),
-            },
-          ),
-        ],
+              ],
+            ),
+            SizedBox(height: 12),
+            Html(
+              data: notes,
+              style: {
+                "body": Style(margin: Margins.zero,),
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -33,6 +33,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
   Widget build(BuildContext context) {
     final sessionType = widget.appointment.aSessionType();
     final patient = widget.appointment.aPatient();
+    final doctor = widget.appointment.aDoctor();
     final timeslot = widget.appointment.aTimeslot();
 
     // Format the time to show start and end times
@@ -233,25 +234,49 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                     },
                     onLongPress: (){}
                 ),
-                _buildActionButton(
-                  label: "Call Patient",
-                  icon: Icons.call,
-                  color: AppColors.wellnessGreen,
-                  onTap: () async {
-                    final phone = patient.mobileNumber ?? "";
-                    final uri = Uri(scheme: 'tel', path: phone);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri);
-                    }
-                  },
-                  onLongPress: () async {
-                    final phone = patient.mobileNumber ?? "";
-                    final whatsappUrl = Uri.parse("https://wa.me/$phone");
-                    if (await canLaunchUrl(whatsappUrl)) {
-                      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-                    }
-                  },
-                ),
+                if(patient.userType.toLowerCase() == UserType.doctor.name)
+                  _buildActionButton(
+                    label: "Call Patient",
+                    icon: Icons.call,
+                    color: AppColors.wellnessGreen,
+                    onTap: () async {
+                      final phone = patient.mobileNumber ?? "";
+                      final uri = Uri(scheme: 'tel', path: phone);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    },
+                    onLongPress: () async {
+                      final phone = patient.mobileNumber ?? "";
+                      final whatsappUrl = Uri.parse("https://wa.me/$phone");
+                      if (await canLaunchUrl(whatsappUrl)) {
+                        await launchUrl(
+                            whatsappUrl, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  ),
+                // TODO: Add Doctor number & whatsapp.
+                if(patient.userType.toLowerCase() == UserType.patient.name)
+                  _buildActionButton(
+                    label: "Call Doctor",
+                    icon: Icons.call,
+                    color: AppColors.wellnessGreen,
+                    onTap: () async {
+                      final phone = doctor.name ?? "";
+                      final uri = Uri(scheme: 'tel', path: phone);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    },
+                    onLongPress: () async {
+                      final phone = doctor.name ?? "";
+                      final whatsappUrl = Uri.parse("https://wa.me/$phone");
+                      if (await canLaunchUrl(whatsappUrl)) {
+                        await launchUrl(
+                            whatsappUrl, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  ),
                 if(patient.userType.toLowerCase() == UserType.doctor.name)
                   _buildActionButton(
                       label: "Add Notes",

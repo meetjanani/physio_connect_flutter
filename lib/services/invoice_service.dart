@@ -10,6 +10,8 @@ import 'package:physio_connect/model/bookings_model.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:printing/printing.dart';
 
+import '../utils/units_extensions.dart';
+
 class InvoiceService {
   /// Generate a PDF invoice for the given appointment
   static Future<File> generateInvoice(BookingsModel appointment) async {
@@ -38,17 +40,19 @@ class InvoiceService {
     final PdfColor wellnessGreen = PdfColor.fromHex(AppColors.wellnessGreen.value.toRadixString(16).substring(2));
 
     // Format dates
-    final dateFormatter = DateFormat('dd MMMM yyyy');
+    final dateFormatter = DateFormat('yyyy-MM-dd');
     final timeFormatter = DateFormat('hh:mm a');
     final invoiceDate = dateFormatter.format(DateTime.now());
-    final appointmentDate = dateFormatter.format(DateFormat('yyyy-MM-dd').parse(appointment.bookingDate));
+    final appointmentDate = "${formatDateToReadable(appointment.bookingDate)}, ${formatDateToWeekday(appointment.bookingDate)}";
 
     // Get doctor and patient
     final doctor = appointment.aDoctor();
+    final timeSlot = appointment.aTimeslot();
+    final sessionType = appointment.aSessionType();
     final patient = appointment.aPatient(); // In this case, you'll need to get the patient details
 
     // Invoice number (you might want to generate this differently)
-    final invoiceNumber = 'INV-${appointment.id}-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+    final invoiceNumber = 'Invoice No:${appointment.id}';
 
     // Add page to the PDF
     pdf.addPage(
@@ -83,7 +87,7 @@ class InvoiceService {
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
-                          'Date: $invoiceDate',
+                          'Date: ${formatDateToReadable(invoiceDate)}',
                           style: pw.TextStyle(
                             fontSize: 14,
                           ),
@@ -92,7 +96,6 @@ class InvoiceService {
                     ),
                   ],
                 ),
-                pw.SizedBox(height: 20),
                 pw.Divider(color: medicalBlue),
               ],
             );
@@ -146,19 +149,20 @@ class InvoiceService {
                       ),
                       pw.SizedBox(height: 8),
                       pw.Text(
-                        'Physio Connect Clinic',
+                        'Physio Connect',
                         style: pw.TextStyle(
                           fontWeight: pw.FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
                       pw.SizedBox(height: 4),
-                      pw.Text('123 Healthcare Avenue'),
+                      // TODO: Physio Connect Address
+                      /*pw.Text('123 Healthcare Avenue'),
                       pw.Text('Mumbai, Maharashtra 400001'),
                       pw.Text('India'),
-                      pw.SizedBox(height: 4),
-                      pw.Text('Phone: +91 98765 43210'),
-                      pw.Text('Email: info@physioconnect.app'),
+                      pw.SizedBox(height: 4),*/
+                      // pw.Text('Phone: +91 98765 43210'),
+                      pw.Text('Email: physioconnect.app@gmail.com'),
                     ],
                   ),
                 ),
@@ -183,7 +187,7 @@ class InvoiceService {
                         ),
                       ),
                       pw.SizedBox(height: 4),
-                      // TODO: atient.address
+                      // TODO: patient.address
                       pw.Text('Address not available'),
                       if (patient.mobileNumber?.isNotEmpty == true)
                         pw.Text('Phone: ${patient.mobileNumber}'),
@@ -195,7 +199,7 @@ class InvoiceService {
               ],
             ),
 
-            pw.SizedBox(height: 30),
+            pw.SizedBox(height: 20),
 
             // Service details
             pw.Container(
@@ -217,12 +221,26 @@ class InvoiceService {
                   ),
                   pw.SizedBox(height: 8),
                   _buildInfoRow('Session Type', appointment.aSessionType().name),
-                  _buildInfoRow('Doctor', doctor?.name ?? 'N/A'),
                   _buildInfoRow('Date', appointmentDate),
-                  _buildInfoRow('Time', appointment.aTimeslot().time),
-                  _buildInfoRow('Duration', appointment.aSessionType().duration),
-                  if (doctor.degree?.isNotEmpty == true)
-                    _buildInfoRow('Specialist', doctor.degree ?? ''),
+                  pw.Row(
+                      children: [
+                        pw.Expanded(child: _buildInfoRow('Time', appointment
+                            .aTimeslot()
+                            .time),),
+                        pw.Expanded(child: _buildInfoRow('Duration', appointment
+                            .aSessionType()
+                            .duration),),
+                      ]
+                  ),
+                  pw.Row(
+                      children: [
+                        pw.Expanded(child: _buildInfoRow(
+                            'Doctor', doctor?.name ?? 'N/A'),),
+                        if (doctor.degree?.isNotEmpty == true)
+                          pw.Expanded(child: _buildInfoRow(
+                              'Specialist', doctor.degree ?? ''),),
+                      ]
+                  ),
                 ],
               ),
             ),
@@ -244,7 +262,7 @@ class InvoiceService {
                   children: [
                     _buildTableCell('Description', isHeader: true),
                     _buildTableCell('Quantity', isHeader: true, alignment: pw.Alignment.center),
-                    _buildTableCell('Unit Price', isHeader: true, alignment: pw.Alignment.center),
+                    // _buildTableCell('Unit Price', isHeader: true, alignment: pw.Alignment.center),
                     _buildTableCell('Total', isHeader: true, alignment: pw.Alignment.center),
                   ],
                 ),
@@ -252,16 +270,16 @@ class InvoiceService {
                 pw.TableRow(
                   children: [
                     _buildTableCell(appointment.aSessionType().name),
-                    _buildTableCell('1', alignment: pw.Alignment.center),
-                    _buildTableCell('₹${appointment.price.toStringAsFixed(0)}', alignment: pw.Alignment.center),
-                    _buildTableCell('₹${appointment.price.toStringAsFixed(0)}', alignment: pw.Alignment.center),
+                    _buildTableCell('1 Session', alignment: pw.Alignment.center),
+                    // _buildTableCell('INR ${appointment.price.toStringAsFixed(0)}', alignment: pw.Alignment.center),
+                    _buildTableCell('INR ${appointment.price.toStringAsFixed(0)}', alignment: pw.Alignment.center),
                   ],
                 ),
                 // Add more rows if there are additional charges
               ],
             ),
 
-            pw.SizedBox(height: 12),
+            pw.SizedBox(height: 10),
 
             // Totals
             pw.Container(
@@ -269,14 +287,66 @@ class InvoiceService {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
-                  _buildTotalRow('Subtotal', '₹${appointment.price.toStringAsFixed(0)}'),
-                  _buildTotalRow('Tax (0%)', '₹0.00'),
-                  _buildTotalRow('Total', '₹${appointment.price.toStringAsFixed(0)}', isBold: true),
+                  _buildTotalRow('Subtotal', 'INR ${appointment.price.toStringAsFixed(0)}'),
+                  // _buildTotalRow('Tax (0%)', '₹0.00'),
+                  _buildTotalRow('Total', 'INR ${appointment.price.toStringAsFixed(0)}', isBold: true),
                 ],
               ),
             ),
 
             pw.SizedBox(height: 20),
+
+            // Signature and stamp
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Expanded(child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  mainAxisAlignment: pw.MainAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Thank you for choosing Physio Connect',
+                      style: pw.TextStyle(
+                        color: medicalBlueDark,
+                        fontSize: 12,
+                      ),
+                    ),
+                    pw.SizedBox(height: 2),
+                    pw.Text(
+                      'This is a computer-generated invoice and requires no signature.',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey,
+                      ),
+                    ),
+                  ],
+                ),),
+                pw.Column(
+                  mainAxisAlignment: pw.MainAxisAlignment.end,
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      doctor.name ?? '',
+                      style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      '${doctor.degree ?? ''} ${doctor.drRegNumber ?? ''}',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                      ),
+                    ),
+                    pw.Container(
+                      height: 60,
+                      width: 120,
+                      child: buildAuthorizedSignature(), // signatureImage
+                    ),
+                  ],
+                ),
+              ],
+            ),
 
             // Payment information
             pw.Container(
@@ -290,25 +360,6 @@ class InvoiceService {
               padding: pw.EdgeInsets.all(12),
               child: pw.Row(
                 children: [
-                  pw.Container(
-                    width: 30,
-                    height: 30,
-                    decoration: pw.BoxDecoration(
-                      color: wellnessGreen,
-                      shape: pw.BoxShape.circle,
-                    ),
-                    child: pw.Center(
-                      child: pw.Text(
-                        '✓',
-                        style: pw.TextStyle(
-                          color: PdfColors.white,
-                          fontWeight: pw.FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                  pw.SizedBox(width: 10),
                   pw.Expanded(
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -376,60 +427,8 @@ class InvoiceService {
                   ],
                 ),
               ),
-
-              pw.SizedBox(height: 20),
             ],
-
-            // Signature and stamp
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'Thank you for choosing Physio Connect',
-                      style: pw.TextStyle(
-                        color: medicalBlueDark,
-                        fontSize: 12,
-                      ),
-                    ),
-                    pw.SizedBox(height: 2),
-                    pw.Text(
-                      'This is a computer-generated invoice and requires no signature.',
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                        color: PdfColors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
-                  children: [
-                    pw.Text(
-                      doctor.name ?? '',
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                    pw.Text(
-                      doctor.degree ?? '',
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                      ),
-                    ),
-                    pw.Container(
-                      height: 60,
-                      width: 120,
-                      child: buildAuthorizedSignature(), // signatureImage
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            pw.Positioned(
+           /* pw.Positioned(
               bottom: 40,
               right: 20,
               child: pw.Opacity(
@@ -440,7 +439,7 @@ class InvoiceService {
                   child: buildDoctorStamp(),// stampImage
                 ),
               ),
-            ),
+            ),*/
           ];
         },
       ),
@@ -581,13 +580,7 @@ class InvoiceService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // You can replace this with a signature image from a byte array
-        // like this: pw.Image(pw.MemoryImage(signatureImageBytes)),
-        /*pw.Text(
-          'Signature',
-          style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
-        ),
-        pw.SizedBox(height: 5),*/
+        pw.SizedBox(height: 5),
         pw.Container(
           width: 150,
           height: 1,
@@ -596,7 +589,7 @@ class InvoiceService {
         pw.SizedBox(height: 5),
         pw.Text(
           'Authorized Signatory',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          style: pw.TextStyle(fontWeight: pw.FontWeight.normal),
         ),
       ],
     );

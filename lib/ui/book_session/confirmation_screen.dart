@@ -159,7 +159,7 @@ class ConfirmationScreen extends StatelessWidget {
                               SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Please arrive 10 minutes before your appointment time',
+                                  'Please get ready 10 minutes before your appointment time',
                                   style: GoogleFonts.inter(
                                     textStyle: TextStyle(
                                       fontSize: 14,

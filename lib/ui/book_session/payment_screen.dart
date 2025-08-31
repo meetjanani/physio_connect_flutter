@@ -63,14 +63,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void _openRazorpayCheckout() {
     // For testing purposes, directly call success handler
     // In production, uncomment the Razorpay integration code below
-    controller.razorpayPaymentId.value = "razor_pay_test_payment_id"!;
-    controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}), PaymentStatus.paid);
-    return;
+    // controller.razorpayPaymentId.value = "razor_pay_test_payment_id"!;
+    // controller.createAppointment(PaymentSuccessResponse("payment_id", "order_id", "signature", {}), PaymentStatus.paid);
+    // return;
 
     // rzp_live_RAnbKgZCZa6RZZ
     // rzp_test_R9Cb4IgtUNcVsB
     var options = {
-      'key': 'rzp_test_R9Cb4IgtUNcVsB',
+      'key': 'rzp_live_RAnbKgZCZa6RZZ',
       'amount': controller.selectedSessionType.value!.price * 100, // In paise
       'name': 'PhysioConnect',
       'description': 'Payment for ${controller.selectedSessionType.value!.name}',
@@ -78,13 +78,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'contact': controller.userModelSupabase?.mobileNumber ?? '',
         // 'email': controller.userModelSupabase?.email ?? '',  // Recommended to include email
       },
-      'external': {
+      /*'external': {
         'wallets': ['googlePay']  // Enable Google Pay
-      },
+      },*/
       'method': {
         'netbanking': false,
-        'wallet': false,
-        'upi': false,
+        'wallet': true,
+        'upi': true,
         'paylater': false,
         'emi': false,
         'card': true  // Only enable card payments
@@ -93,8 +93,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'display': {
           'hide': [
             {'method': 'netbanking'},
-            {'method': 'wallet', 'except': ['googlePay']},  // Hide all wallets except Google Pay
-            {'method': 'upi', 'flows': ['collect']},  // Hide UPI collect
+            // {'method': 'wallet', 'except': ['googlePay']},  // Hide all wallets except Google Pay
+            // {'method': 'upi', 'flows': ['collect']},  // Hide UPI collect
             {'method': 'paylater'},
             {'method': 'emi'}
           ]
