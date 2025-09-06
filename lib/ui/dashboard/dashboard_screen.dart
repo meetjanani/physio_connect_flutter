@@ -23,7 +23,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // TODO: Once per app launch
     controller.getUpComingBookings();
   }
 

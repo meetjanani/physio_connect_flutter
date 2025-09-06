@@ -23,7 +23,6 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     fetchAndSetCurrentLocation();
   }

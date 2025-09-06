@@ -46,7 +46,6 @@ class DashboardController extends GetxController {
     doctor?.saveToSecureStorage();
   }
 
-  // TODO: Update after every 10 min. or first time app launch based on Bool login.
   Future<void> getUpComingBookings() async {
     if (userModelSupabase?.id != null) {
       upComingBookings.clear();

@@ -7,7 +7,6 @@ class SignUpBinding extends BaseBinding {
 
   @override
   void dependencies() {
-    // TODO: implement dependencies
     super.dependencies();
     Get.lazyPut(() => SignUpController());
   }

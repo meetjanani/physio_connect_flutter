@@ -40,7 +40,6 @@ class BookingController extends GetxController {
   final timeSlots = <TimeSlotModel>[].obs;
 
   final selectedDate = DateTime.now().obs;
-  // TODO Handle.
   final razorpayPaymentId = ''.obs;
 
   UserModelSupabase? userModelSupabase;
@@ -69,7 +68,6 @@ class BookingController extends GetxController {
     timeSlots.addAll(response);
   }
 
-  // TODO: Doctor object need to pass
   void createAppointment(PaymentSuccessResponse paymentResponse, PaymentStatus paymentStatus) async {
     isLoading.value = true;
     var doctorModel = await DoctorModel.getFromSecureStorage();

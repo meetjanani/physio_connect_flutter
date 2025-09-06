@@ -16,7 +16,6 @@ class FirebaseNotification {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   void init() async {
-    // TODO: Need to assgin icon at AndroidInitializationSettings('')
     final AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('app_icon');
 
