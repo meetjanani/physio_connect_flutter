@@ -94,7 +94,6 @@ class SupabaseController {
     return bookingList;
   }
 
-  // TODO: Add logic to fetch available time slots based on selected date from bookings table.
   Future<List<TimeSlotModel>> getTimeSlotsMaster(DateTime bookingDate) async {
     final String formattedDate = bookingDate.toIso8601String().split('T')[0];
     final response = await supabaseClient
