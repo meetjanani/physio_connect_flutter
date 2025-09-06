@@ -95,13 +95,27 @@ class SupabaseController {
   }
 
   // TODO: Add logic to fetch available time slots based on selected date from bookings table.
-  Future<List<TimeSlotModel>> getTimeSlotsMaster() async {
+  Future<List<TimeSlotModel>> getTimeSlotsMaster(DateTime bookingDate) async {
+    final String formattedDate = bookingDate.toIso8601String().split('T')[0];
     final response = await supabaseClient
         .from(DatabaseSchema.timeSlotTable)
         .select('*')
         .eq(DatabaseSchema.timeSlotIsActive, true)
         .order(DatabaseSchema.timeSlotOrderBy, ascending: true);
     var timeSlotList = TimeSlotModel.fromJsonList(response);
+
+    final bookingsResponse = await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .select('timeSlotId')
+        .eq(DatabaseSchema.bookingsDate, formattedDate);
+
+    var bookedTimeslotList = bookingsResponse.map((e) => e['timeSlotId']).toList();
+    for (var timeSlot in timeSlotList) {
+      if(bookedTimeslotList.contains(timeSlot.id)) {
+        timeSlot.isBooked = true;
+      }
+    }
+
     return timeSlotList;
   }
 

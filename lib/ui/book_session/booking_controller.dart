@@ -65,7 +65,7 @@ class BookingController extends GetxController {
   Future<void> getTimeSlotsMaster() async {
     timeSlots.clear();
     selectedTimeSlot.value = null;
-    var response = await supabaseController.getTimeSlotsMaster();
+    var response = await supabaseController.getTimeSlotsMaster(selectedDate.value);
     timeSlots.addAll(response);
   }
 
