@@ -70,7 +70,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // rzp_live_RAnbKgZCZa6RZZ
     // rzp_test_R9Cb4IgtUNcVsB
     var options = {
-      'key': 'rzp_live_RAnbKgZCZa6RZZ',
+      'key': 'rzp_test_R9Cb4IgtUNcVsB',
       'amount': controller.selectedSessionType.value!.price * 100, // In paise
       'name': 'PhysioConnect',
       'description': 'Payment for ${controller.selectedSessionType.value!.name}',

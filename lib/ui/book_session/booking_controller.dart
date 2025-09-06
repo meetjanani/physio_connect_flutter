@@ -87,7 +87,7 @@ class BookingController extends GetxController {
       bookingStatus: BookingStatus.booked.name,
       timeSlotId: selectedTimeSlot.value?.id ?? 1, // Replace with actual time slot ID
       timeSlotJson: timeslotJson, // Replace with actual time slot ID
-      doctorId: doctorModel?.id ?? 1, // Replace with actual doctor ID
+      doctorId: doctorModel?.userId ?? 1, // Replace with actual doctor ID
       doctorJson: doctorJson, // Replace with actual doctor ID
       sessionTypeId: selectedSessionType.value?.id ?? 1,
       price: selectedSessionType.value?.price ?? 1,

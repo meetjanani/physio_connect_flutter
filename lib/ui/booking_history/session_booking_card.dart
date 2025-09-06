@@ -230,7 +230,11 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                       Get.toNamed(
                           AppPage.bookingDetail,
                           arguments: widget.appointment
-                      );
+                      )?.then((value) {
+                        setState(() {
+
+                        });
+                      });
                     },
                     onLongPress: (){}
                 ),

@@ -28,16 +28,28 @@ class SupabaseController {
     return bookingList;
   }
 
-  Future<List<BookingsModel>> getFilteredBookings(int userId, DateTime from, DateTime to) async {
+  Future<List<BookingsModel>> getFilteredBookings(int userId, DateTime from, DateTime to, bool isDoctor) async {
     final String fromDate = from.toIso8601String().split('T')[0];
     final String toDate = to.toIso8601String().split('T')[0];
-    final response = await supabaseClient
-        .from(DatabaseSchema.bookingsTable)
-        .select('*')
-        .eq(DatabaseSchema.bookingsUserId, userId)
-        .gte(DatabaseSchema.bookingsDate, fromDate)
-        .lte(DatabaseSchema.bookingsDate, toDate)
-        .order(DatabaseSchema.bookingsId, ascending: false);
+    var response;
+    if (isDoctor) {
+      response = await supabaseClient
+          .from(DatabaseSchema.bookingsTable)
+          .select('*')
+          .eq(DatabaseSchema.bookingsDoctorId, userId)
+          .gte(DatabaseSchema.bookingsDate, fromDate)
+          .lte(DatabaseSchema.bookingsDate, toDate)
+          .order(DatabaseSchema.bookingsId, ascending: false);
+    }
+    else {
+      response = await supabaseClient
+          .from(DatabaseSchema.bookingsTable)
+          .select('*')
+          .eq(DatabaseSchema.bookingsUserId, userId)
+          .gte(DatabaseSchema.bookingsDate, fromDate)
+          .lte(DatabaseSchema.bookingsDate, toDate)
+          .order(DatabaseSchema.bookingsId, ascending: false);
+    }
     var bookingList = BookingsModel.fromJsonList(response);
     return bookingList;
   }
@@ -52,11 +64,20 @@ class SupabaseController {
     }
   }
 
-  Future<void> updateBookings(int bookingID, BookingsModel? updatedBooking) async {
+  Future<void> updateDoctorNote(int bookingID, BookingsModel? updatedBooking) async {
     if (bookingID > 0 && updatedBooking != null) {
       await supabaseClient
           .from(DatabaseSchema.bookingsTable)
           .update({DatabaseSchema.bookingsDoctorNotes: updatedBooking.doctorNotes})
+          .eq(DatabaseSchema.bookingsId, bookingID)
+          .select();
+    }
+  }
+  Future<void> updateBookingStatus(int bookingID, BookingsModel? updatedBooking) async {
+    if (bookingID > 0 && updatedBooking != null) {
+      await supabaseClient
+          .from(DatabaseSchema.bookingsTable)
+          .update({DatabaseSchema.bookingsStatus: updatedBooking.bookingStatus})
           .eq(DatabaseSchema.bookingsId, bookingID)
           .select();
     }

@@ -66,7 +66,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   controller.userModelSupabase.value?.userType
-                                      ?.toLowerCase() == UserType.doctor
+                                      ?.toLowerCase() == UserType.doctor.name
                                       ? "Doctor Profile"
                                       : "Patient Profile",
                                   style: Theme
@@ -148,7 +148,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                   decoration: BoxDecoration(
                                     color: controller.userModelSupabase.value
                                         ?.userType?.toLowerCase() ==
-                                        UserType.doctor
+                                        UserType.doctor.name
                                         ? AppColors.medicalBlueLight
                                         : AppColors.wellnessGreenLight,
                                     borderRadius: BorderRadius.circular(30),
@@ -160,7 +160,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                     style: TextStyle(
                                       color: controller.userModelSupabase.value
                                           ?.userType?.toLowerCase() ==
-                                          UserType.doctor
+                                          UserType.doctor.name
                                           ? AppColors.medicalBlueDark
                                           : AppColors.wellnessGreenDark,
                                       fontWeight: FontWeight.bold,
@@ -190,7 +190,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
 
                                 // User stats
                                 if(controller.userModelSupabase.value?.userType
-                                    ?.toLowerCase() == UserType.doctor)
+                                    ?.toLowerCase() == UserType.doctor.name)
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment
                                         .spaceAround,

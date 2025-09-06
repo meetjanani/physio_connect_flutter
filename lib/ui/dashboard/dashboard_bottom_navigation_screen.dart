@@ -35,7 +35,7 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
   }
 
   void _initializeScreens() {
-    final isDoctor = controller.userModelSupabase?.userType?.toLowerCase() == UserType.doctor;
+    final isDoctor = controller.userModelSupabase?.userType?.toLowerCase() == UserType.doctor.name;
 
     _buildScreens = [
       DashboardScreen(),

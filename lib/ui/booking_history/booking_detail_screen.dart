@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:html_editor_enhanced/utils/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:physio_connect/model/bookings_model.dart';
 import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_note.dart';
@@ -18,7 +17,6 @@ import '../../utils/constants.dart';
 import 'booking_history_controller.dart';
 
 class BookingDetailScreen extends StatefulWidget {
-
   BookingDetailScreen({Key? key}) : super(key: key);
 
   @override
@@ -26,20 +24,23 @@ class BookingDetailScreen extends StatefulWidget {
 }
 
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
-  final BookingHistoryController controller = Get.find<BookingHistoryController>();
+  final BookingHistoryController controller =
+      Get.find<BookingHistoryController>();
 
   final BookingsModel appointment = Get.arguments as BookingsModel;
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: commonAppBar("Appointment Details", isBackButtonVisible: true),
-      body: Obx(() => controller.isLoadingDetails.value
-        ? Center(child: CircularProgressIndicator(color: AppColors.medicalBlue))
-        : controller.selectedAppointment.value == null
-          ? _buildErrorState()
-          : _buildDetailsContent(context),
+      body: Obx(
+        () => controller.isLoadingDetails.value
+            ? Center(
+                child: CircularProgressIndicator(color: AppColors.medicalBlue),
+              )
+            : controller.selectedAppointment.value == null
+            ? _buildErrorState()
+            : _buildDetailsContent(context),
       ),
     );
   }
@@ -69,10 +70,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           Text(
             "The appointment you're looking for does not exist",
             style: GoogleFonts.inter(
-              textStyle: TextStyle(
-                fontSize: 14,
-                color: AppColors.textMuted,
-              ),
+              textStyle: TextStyle(fontSize: 14, color: AppColors.textMuted),
             ),
           ),
           SizedBox(height: 24),
@@ -115,30 +113,113 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   color: AppColors.textOnDark,
                 ),
                 SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _getStatusText(appointment.bookingStatus),
-                      style: GoogleFonts.inter(
-                        textStyle: TextStyle(
-                          color: AppColors.textOnDark,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      appointment.aPatient().userType?.toLowerCase() ==
+                              UserType.doctor.name
+                          ? Obx(
+                              () => controller.isLoading.value
+                                  ? Row(
+                                      children: [
+                                        SizedBox(
+                                          height: 16,
+                                          width: 16,
+                                          child: CircularProgressIndicator(
+                                            color: AppColors.textOnDark,
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Updating status...',
+                                          style: GoogleFonts.inter(
+                                            textStyle: TextStyle(
+                                              color: AppColors.textOnDark,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : DropdownButton<String>(
+                                      value: appointment.bookingStatus
+                                          .toLowerCase(),
+                                      dropdownColor: AppColors.medicalBlueDark,
+                                      style: GoogleFonts.inter(
+                                        textStyle: TextStyle(
+                                          color: AppColors.textOnDark,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      underline: Container(),
+                                      icon: Icon(
+                                        Icons.arrow_drop_down,
+                                        color: AppColors.textOnDark,
+                                      ),
+                                      onChanged: (String? newValue) {
+                                        if (newValue != null &&
+                                            newValue !=
+                                                appointment.bookingStatus
+                                                    .toLowerCase()) {
+                                          appointment.bookingStatus = newValue;
+                                          controller.updateAppointmentStatus(
+                                            appointment,
+                                          ).then((value) {setState(() {
+
+                                          });});
+                                        }
+                                      },
+                                      items:
+                                          [
+                                            'booked',
+                                            'completed',
+                                            'cancelled',
+                                            'no-show',
+                                          ].map<DropdownMenuItem<String>>((
+                                            String value,
+                                          ) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: Text(
+                                                _getStatusText(value),
+                                                style: GoogleFonts.inter(
+                                                  textStyle: TextStyle(
+                                                    color: AppColors.textOnDark,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                    ),
+                            )
+                          : Text(
+                              _getStatusText(appointment.bookingStatus),
+                              style: GoogleFonts.inter(
+                                textStyle: TextStyle(
+                                  color: AppColors.textOnDark,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                      SizedBox(height: 4),
+                      Text(
+                        _getStatusDescription(appointment.bookingStatus),
+                        style: GoogleFonts.inter(
+                          textStyle: TextStyle(
+                            color: AppColors.textOnDark.withOpacity(0.9),
+                            fontSize: 12,
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      _getStatusDescription(appointment.bookingStatus),
-                      style: GoogleFonts.inter(
-                        textStyle: TextStyle(
-                          color: AppColors.textOnDark.withOpacity(0.9),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -162,46 +243,43 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             _buildInfoRow(
               'Session Type',
               "${appointment.aSessionType().name}\n${appointment.aSessionType().description}",
-              (){},
+              () {},
               Icons.healing,
             ),
             _buildInfoRow(
               'Date',
               dateFormatter.format(dateObj),
-                  (){},
+              () {},
               Icons.calendar_today,
             ),
             _buildInfoRow(
               'Time',
               appointment.aTimeslot().time,
-                  (){},
+              () {},
               Icons.access_time,
             ),
             _buildInfoRow(
               'Duration',
               appointment.aSessionType().duration,
-                  (){},
+              () {},
               Icons.timelapse,
             ),
-            _buildInfoRow(
-              'Address',
-              appointment.address ?? 'N/A',
-                  () async {
-                if (appointment.latLong != null) {
-                  var latLongPoint = appointment.latLong!.split(
-                      LAT_LONG_SEPRATOR);
-                  var lat = latLongPoint[0];
-                  var long = latLongPoint[1];
-                  final url = 'https://www.google.com/maps/dir/?api=1&destination=$lat,$long&travelmode=driving';
-                  try {
-                    await launchUrl(Uri.parse(url));
-                  } catch (e) {
-                    showErrorSnackbar('Could not open the map: ${e.toString()}');
-                  }
+            _buildInfoRow('Address', appointment.address ?? 'N/A', () async {
+              if (appointment.latLong != null) {
+                var latLongPoint = appointment.latLong!.split(
+                  LAT_LONG_SEPRATOR,
+                );
+                var lat = latLongPoint[0];
+                var long = latLongPoint[1];
+                final url =
+                    'https://www.google.com/maps/dir/?api=1&destination=$lat,$long&travelmode=driving';
+                try {
+                  await launchUrl(Uri.parse(url));
+                } catch (e) {
+                  showErrorSnackbar('Could not open the map: ${e.toString()}');
                 }
-              },
-              Icons.location_pin,
-            ),
+              }
+            }, Icons.location_pin),
           ]),
 
           SizedBox(height: 24),
@@ -238,7 +316,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             _buildInfoRow(
               'Amount',
               '₹${appointment.price.toStringAsFixed(0)}',
-                  (){},
+              () {},
               Icons.payments,
               valueColor: AppColors.medicalBlueDark,
               valueBold: true,
@@ -246,7 +324,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             _buildInfoRow(
               'Status',
               appointment.paymentStatus,
-                  (){},
+              () {},
               Icons.check_circle,
               valueColor: _getPaymentStatusColor(appointment.paymentStatus),
             ),
@@ -254,7 +332,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               _buildInfoRow(
                 'Transaction ID',
                 appointment.paymentId ?? 'N/A',
-                    (){},
+                () {},
                 Icons.receipt_long,
                 valueStyle: TextStyle(
                   fontSize: 13,
@@ -279,7 +357,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               ),
             ),
             SizedBox(height: 16),
-            _buildNotesCard(appointment.doctorNotes ?? 'No additional notes provided.'),
+            _buildNotesCard(
+              appointment.doctorNotes ?? 'No additional notes provided.',
+            ),
             SizedBox(height: 24),
           ],
 
@@ -395,11 +475,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ),
           child: InkWell(
             onTap: iconTap,
-            child: Icon(
-              icon,
-              color: AppColors.medicalBlueDark,
-              size: 16,
-            ),
+            child: Icon(icon, color: AppColors.medicalBlueDark, size: 16),
           ),
         ),
         SizedBox(width: 12),
@@ -419,13 +495,17 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               SizedBox(height: 4),
               Text(
                 value,
-                style: valueStyle ?? GoogleFonts.inter(
-                  textStyle: TextStyle(
-                    fontSize: 14,
-                    color: valueColor ?? AppColors.textPrimary,
-                    fontWeight: valueBold ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
+                style:
+                    valueStyle ??
+                    GoogleFonts.inter(
+                      textStyle: TextStyle(
+                        fontSize: 14,
+                        color: valueColor ?? AppColors.textPrimary,
+                        fontWeight: valueBold
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
               ),
             ],
           ),
@@ -489,8 +569,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ElevatedButton.icon(
             onPressed: () {
               showSuccessSnackbar(
-                  "Request for call has been initiated\n"
-                      "Doctor may call you back within 8 hours");
+                "Request for call has been initiated\n"
+                "Doctor may call you back within 8 hours",
+              );
               controller.sendReminderNotification();
             },
             icon: Icon(Icons.call, size: 16),
@@ -510,7 +591,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Widget _buildNotesCard(String notes) {
     return InkWell(
       onTap: () {
-        if (appointment.aPatient().userType?.toLowerCase() == UserType.doctor.name)
+        if (appointment.aPatient().userType?.toLowerCase() ==
+            UserType.doctor.name)
           showHtmlEditorForDoctorNote(
             context: Get.context!,
             initialHtml: appointment.doctorNotes ?? "",
@@ -520,7 +602,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             },
             title: "Edit Doctor's Note",
           );
-    },
+      },
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.all(16),
@@ -568,9 +650,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             SizedBox(height: 12),
             Html(
               data: notes,
-              style: {
-                "body": Style(margin: Margins.zero,),
-              },
+              style: {"body": Style(margin: Margins.zero)},
             ),
           ],
         ),
@@ -585,9 +665,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         title: Text(
           'Cancel Appointment',
           style: GoogleFonts.inter(
-            textStyle: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
+            textStyle: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
         content: Column(
@@ -604,9 +682,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               decoration: BoxDecoration(
                 color: AppColors.warningLight,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.warning.withOpacity(0.3),
-                ),
+                border: Border.all(color: AppColors.warning.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
@@ -638,9 +714,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             child: Text(
               'Keep Appointment',
               style: GoogleFonts.inter(
-                textStyle: TextStyle(
-                  color: AppColors.textMuted,
-                ),
+                textStyle: TextStyle(color: AppColors.textMuted),
               ),
             ),
           ),
@@ -653,10 +727,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               backgroundColor: AppColors.error,
               foregroundColor: AppColors.textOnDark,
             ),
-            child: Text(
-              'Cancel Appointment',
-              style: GoogleFonts.inter(),
-            ),
+            child: Text('Cancel Appointment', style: GoogleFonts.inter()),
           ),
         ],
       ),
@@ -794,4 +865,3 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     }
   }
 }
-

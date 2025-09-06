@@ -1,12 +1,11 @@
 // lib/ui/booking/history/booking_history_controller.dart
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:physio_connect/utils/view_extension.dart';
 
-import '../../model/appointment_model.dart';
 import '../../model/bookings_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
-import '../../utils/app_shared_preference.dart';
 import '../../utils/enum.dart';
 
 class BookingHistoryController extends GetxController {
@@ -20,19 +19,20 @@ class BookingHistoryController extends GetxController {
   final toDate = DateTime.now().add(Duration(days: 7)).obs;
 
   // Appointments
-  final allAppointments = <AppointmentModel>[].obs;
   final selectedAppointment = Rx<BookingsModel?>(null);
 
   SupabaseController supabaseController =
       SupabaseController.to;
   UserModelSupabase? userModelSupabase;
   RxList<BookingsModel> upComingBookings = RxList();
+  RxBool isDoctor = false.obs;
   final therapistsImage = "https://randomuser.me/api/portraits/women/44.jpg";
 
   @override
   Future<void> onInit() async {
     super.onInit();
     userModelSupabase = await UserModelSupabase.getFromSecureStorage();
+    isDoctor.value = userModelSupabase?.userType?.toLowerCase() == UserType.doctor.name;
     getFilteredBookings();
   }
 
@@ -40,16 +40,25 @@ class BookingHistoryController extends GetxController {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
       upComingBookings.clear();
-      var response = await supabaseController.getFilteredBookings(userModelSupabase?.id ?? 0, fromDate.value, toDate.value);
+      var response = await supabaseController.getFilteredBookings(userModelSupabase?.id ?? 0, fromDate.value, toDate.value, isDoctor.value);
       upComingBookings.addAll(response);
       isLoading.value = false;
+      showSuccessSnackbar("${upComingBookings.value.length}");
     }
   }
 
   Future<void> updateDoctorNote(BookingsModel doctorNotes) async {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
-      var response = await supabaseController.updateBookings(doctorNotes?.id ?? 0, doctorNotes);
+      var response = await supabaseController.updateBookingStatus(doctorNotes?.id ?? 0, doctorNotes);
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> updateAppointmentStatus(BookingsModel doctorNotes) async {
+    if (userModelSupabase?.id != null) {
+      isLoading.value = true;
+      var response = await supabaseController.updateBookingStatus(doctorNotes?.id ?? 0, doctorNotes);
       isLoading.value = false;
     }
   }
