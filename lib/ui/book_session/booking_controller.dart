@@ -15,6 +15,7 @@ import '../../model/time_slots_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
 import '../../utils/app_shared_preference.dart';
+import '../../utils/constants.dart';
 
 class BookingController extends GetxController {
   static BookingController get to => Get.find();
@@ -22,6 +23,9 @@ class BookingController extends GetxController {
   BookingController();
   // Add a TextEditingController for address if not present in controller
   final TextEditingController addressController = TextEditingController();
+  final TextEditingController houseNameBlockNumberController = TextEditingController();
+  final RxString latitudeOfAddress = ''.obs;
+  final RxString longitudeOfAddress = ''.obs;
   SupabaseController supabaseController =
       SupabaseController.to;
 
@@ -92,7 +96,8 @@ class BookingController extends GetxController {
       orderId: paymentResponse.orderId,
       signature: paymentResponse.signature,
       doctorNotes: "No additional notes provided.",
-      address: addressController.text,
+      address: "${houseNameBlockNumberController.text}\n${addressController.text}",
+      latLong: "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
       bookingDate: DateFormat('yyyy-MM-dd').format(selectedDate.value),
       createdAt: DateTime.now().toString(),
     );

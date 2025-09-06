@@ -38,10 +38,8 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
     final isDoctor = controller.userModelSupabase?.userType.toLowerCase() == UserType.doctor;
 
     _buildScreens = [
-      // isDoctor == false ? DoctorDashboardScreen() : DashboardScreen(),
       DashboardScreen(),
-      DoctorDashboardScreen(),
-      BookingHistoryScreen(),
+      isDoctor == true ? DoctorDashboardScreen() :BookingHistoryScreen(),
       ProfileAboutUsScreen(),
     ];
   }
@@ -81,11 +79,11 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
                 activeIcon: Icon(Icons.home, color: AppColors.wellnessGreen),
                 label: "Home"
               ),
-              BottomNavigationBarItem(
+              /*BottomNavigationBarItem(
                 icon: Icon(Icons.home, color: AppColors.medicalBlue),
                 activeIcon: Icon(Icons.home, color: AppColors.wellnessGreen),
                 label: "Home"
-              ),
+              ),*/
               BottomNavigationBarItem(
                 icon: Icon(Icons.history, color: AppColors.medicalBlue),
                 activeIcon: Icon(Icons.history, color: AppColors.wellnessGreen),

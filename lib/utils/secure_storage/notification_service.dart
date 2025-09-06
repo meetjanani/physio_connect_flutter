@@ -1,9 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:googleapis_auth/auth_io.dart' as auth;
 
 class NotificationService {
 

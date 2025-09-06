@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/supabase/firebase_notification.dart';
@@ -38,6 +39,7 @@ void main() async{
   });
 
   await requestPermission();
+  requestLocationPermission();
   await Supabase.initialize(
     url: 'https://cjnxrkzrmeetzragwrlm.supabase.co',
     anonKey:
@@ -46,6 +48,14 @@ void main() async{
 
   //await FirebaseApi().initNotification();
   runApp(const MyApp());
+}
+
+Future<void> requestLocationPermission() async {
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+  // Handle deniedForever, granted, etc. as needed
 }
 
 Future<void> requestPermission() async {

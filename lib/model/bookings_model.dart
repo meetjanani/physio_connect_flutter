@@ -27,6 +27,7 @@ class BookingsModel {
   String? signature = "";
   String? doctorNotes = "";
   String? address = "";
+  String? latLong = "";
   String bookingDate = DateTime.now().toString();
   String createdAt = DateTime.now().toString();
 
@@ -48,6 +49,7 @@ class BookingsModel {
     required this.signature,
     required this.doctorNotes,
     required this.address,
+    required this.latLong,
     required this.bookingDate,
     required this.createdAt,
   });

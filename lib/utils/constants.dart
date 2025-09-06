@@ -1,0 +1,1 @@
+const LAT_LONG_SEPRATOR = "@-@";

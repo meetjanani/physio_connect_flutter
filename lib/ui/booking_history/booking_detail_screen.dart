@@ -11,8 +11,10 @@ import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:physio_connect/utils/view_extension.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/invoice_service.dart';
+import '../../utils/constants.dart';
 import 'booking_history_controller.dart';
 
 class BookingDetailScreen extends StatefulWidget {
@@ -160,26 +162,44 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             _buildInfoRow(
               'Session Type',
               "${appointment.aSessionType().name}\n${appointment.aSessionType().description}",
+              (){},
               Icons.healing,
             ),
             _buildInfoRow(
               'Date',
               dateFormatter.format(dateObj),
+                  (){},
               Icons.calendar_today,
             ),
             _buildInfoRow(
               'Time',
               appointment.aTimeslot().time,
+                  (){},
               Icons.access_time,
             ),
             _buildInfoRow(
               'Duration',
               appointment.aSessionType().duration,
+                  (){},
               Icons.timelapse,
             ),
             _buildInfoRow(
-              'Duration',
+              'Address',
               appointment.address ?? 'N/A',
+                  () async {
+                if (appointment.latLong != null) {
+                  var latLongPoint = appointment.latLong!.split(
+                      LAT_LONG_SEPRATOR);
+                  var lat = latLongPoint[0];
+                  var long = latLongPoint[1];
+                  final url = 'https://www.google.com/maps/dir/?api=1&destination=$lat,$long&travelmode=driving';
+                  try {
+                    await launchUrl(Uri.parse(url));
+                  } catch (e) {
+                    showErrorSnackbar('Could not open the map: ${e.toString()}');
+                  }
+                }
+              },
               Icons.location_pin,
             ),
           ]),
@@ -218,6 +238,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             _buildInfoRow(
               'Amount',
               '₹${appointment.price.toStringAsFixed(0)}',
+                  (){},
               Icons.payments,
               valueColor: AppColors.medicalBlueDark,
               valueBold: true,
@@ -225,6 +246,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             _buildInfoRow(
               'Status',
               appointment.paymentStatus,
+                  (){},
               Icons.check_circle,
               valueColor: _getPaymentStatusColor(appointment.paymentStatus),
             ),
@@ -232,6 +254,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               _buildInfoRow(
                 'Transaction ID',
                 appointment.paymentId ?? 'N/A',
+                    (){},
                 Icons.receipt_long,
                 valueStyle: TextStyle(
                   fontSize: 13,
@@ -356,6 +379,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Widget _buildInfoRow(
     String label,
     String value,
+    VoidCallback iconTap,
     IconData icon, {
     Color? valueColor,
     bool valueBold = false,
@@ -369,10 +393,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             color: AppColors.medicalBlueLight,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.medicalBlueDark,
-            size: 16,
+          child: InkWell(
+            onTap: iconTap,
+            child: Icon(
+              icon,
+              color: AppColors.medicalBlueDark,
+              size: 16,
+            ),
           ),
         ),
         SizedBox(width: 12),

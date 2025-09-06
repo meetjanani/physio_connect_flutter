@@ -1,17 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:geocoding/geocoding.dart';
 
 import '../../route/route_module.dart';
 import 'booking_controller.dart';
 
-class DateTimeScreen extends StatelessWidget {
-  final BookingController controller = Get.find<BookingController>();
+class DateTimeScreen extends StatefulWidget {
 
   DateTimeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<DateTimeScreen> createState() => _DateTimeScreenState();
+}
+
+class _DateTimeScreenState extends State<DateTimeScreen> {
+  final BookingController controller = Get.find<BookingController>();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    fetchAndSetCurrentLocation();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -283,6 +298,26 @@ class DateTimeScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: TextField(
+                        controller: controller.houseNameBlockNumberController,
+                        maxLines: 3,
+                        minLines: 2,
+                        decoration: InputDecoration(
+                          labelText: 'Appartment/House Name &  Block number',
+                          hintText: 'Appartment Name &  Block number',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextField(
                         controller: controller.addressController,
                         maxLines: 3,
                         minLines: 2,
@@ -295,17 +330,14 @@ class DateTimeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                   /* SizedBox(width: 8),
+                    SizedBox(width: 8),
                     IconButton(
                       icon: Icon(Icons.my_location, color: AppColors.medicalBlue),
                       tooltip: 'Use current location',
                       onPressed: () async {
-                        // TODO: Implement GPS logic to fetch and set address
-                        // Example:
-                        // String address = await controller.getCurrentLocationAddress();
-                        // addressController.text = address;
+                        fetchAndSetCurrentLocation();
                       },
-                    ),*/
+                    ),
                   ],
                 ),
                 SizedBox(height: 12),
@@ -361,5 +393,33 @@ class DateTimeScreen extends StatelessWidget {
         ],
       )),
     );
+  }
+
+  Future<void> fetchAndSetCurrentLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude, position.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        final placemark = placemarks.first;
+        final addressParts = [
+          placemark.street,
+          placemark.subLocality,
+          placemark.locality,
+          placemark.postalCode,
+          placemark.administrativeArea,
+          placemark.country,
+        ].where((part) => part != null && part.isNotEmpty).toSet().toList();
+        final address = addressParts.join(', ');
+        controller.addressController.text = address;
+        controller.latitudeOfAddress.value = position.latitude.toString();
+        controller.longitudeOfAddress.value = position.longitude.toString();
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 }
