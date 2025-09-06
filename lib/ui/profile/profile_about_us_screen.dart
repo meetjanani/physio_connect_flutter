@@ -66,7 +66,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   controller.userModelSupabase.value?.userType
-                                      .toLowerCase() == UserType.doctor
+                                      ?.toLowerCase() == UserType.doctor
                                       ? "Doctor Profile"
                                       : "Patient Profile",
                                   style: Theme
@@ -147,18 +147,19 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                       horizontal: 16, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: controller.userModelSupabase.value
-                                        ?.userType.toLowerCase() ==
+                                        ?.userType?.toLowerCase() ==
                                         UserType.doctor
                                         ? AppColors.medicalBlueLight
                                         : AppColors.wellnessGreenLight,
                                     borderRadius: BorderRadius.circular(30),
                                   ),
                                   child: Text(
-                                    controller.userModelSupabase.value
-                                        ?.userType ?? '',
+                                    (controller.userModelSupabase.value?.userType ??
+                                        '') + '~' + '${controller.userModelSupabase.value?.id.toString() ??
+                                        ''}',
                                     style: TextStyle(
                                       color: controller.userModelSupabase.value
-                                          ?.userType.toLowerCase() ==
+                                          ?.userType?.toLowerCase() ==
                                           UserType.doctor
                                           ? AppColors.medicalBlueDark
                                           : AppColors.wellnessGreenDark,
@@ -189,7 +190,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
 
                                 // User stats
                                 if(controller.userModelSupabase.value?.userType
-                                    .toLowerCase() == UserType.doctor)
+                                    ?.toLowerCase() == UserType.doctor)
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment
                                         .spaceAround,

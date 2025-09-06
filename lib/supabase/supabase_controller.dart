@@ -113,26 +113,23 @@ class SupabaseController {
     }
   }
 
-  Future<void> newBookingNotificationToAdmin(int userIdOfDoctor) async {
+  Future<void> sentNotification(int userIdOfDoctor, String title,
+      String messageBody) async {
+    print("${userIdOfDoctor}");
     try {
-      final response = await Supabase.instance.client
+      var response = await supabaseClient
           .from(DatabaseSchema.usersTable)
-          .select('*')
-          .eq(DatabaseSchema.usersId, userIdOfDoctor)
-          .eq(DatabaseSchema.usersUserType, "Doctor");
-
-      var userList = (UserModelSupabase.fromJsonList(response)).where((it) =>
-      it.firebaseToken != null && it.firebaseToken!.isNotEmpty).toList();
-      // Use a proper async loop
-      for (final adminUser in userList) {
+          .select(DatabaseSchema.userFirebaseToken)
+          .eq(DatabaseSchema.usersId, userIdOfDoctor);
+      var firebaseTokenList = response.map((e) => e['firebaseToken']).toList();
+      for (final firebaseToken in firebaseTokenList) {
         await notificationService.sendPushNotification(
-          adminUser.firebaseToken!,
-          "Yippee!!!, New Booking...",
-          "New booking placed successfully.",
+            firebaseToken,
+            title, messageBody
         );
       }
     } catch (e) {
-      print('Error in newBookingNotificationToAdmin: $e');
+      print('Error in send notification: $e');
     }
   }
 }

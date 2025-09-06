@@ -491,6 +491,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               showSuccessSnackbar(
                   "Request for call has been initiated\n"
                       "Doctor may call you back within 8 hours");
+              controller.sendReminderNotification();
             },
             icon: Icon(Icons.call, size: 16),
             label: Text('Call'),
@@ -509,7 +510,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Widget _buildNotesCard(String notes) {
     return InkWell(
       onTap: () {
-        if (appointment.aPatient().userType.toLowerCase() == UserType.doctor.name)
+        if (appointment.aPatient().userType?.toLowerCase() == UserType.doctor.name)
           showHtmlEditorForDoctorNote(
             context: Get.context!,
             initialHtml: appointment.doctorNotes ?? "",

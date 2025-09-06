@@ -18,7 +18,7 @@ class FirebaseNotification {
   void init() async {
     // TODO: Need to assgin icon at AndroidInitializationSettings('')
     final AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('');
+    AndroidInitializationSettings('app_icon');
 
     final InitializationSettings initializationSettings =
     InitializationSettings(

@@ -33,34 +33,38 @@ class NotificationService {
 
 
   Future<void> sendPushNotification(String deviceToken,  String title, String messageBody) async {
-    notificationAccessToken ??= await getAccessToken();
+    try {
+      notificationAccessToken ??= await getAccessToken();
 
-    final url = Uri.parse(
-        'https://fcm.googleapis.com/v1/projects/physio-connect-app/messages:send');
+      final url = Uri.parse(
+          'https://fcm.googleapis.com/v1/projects/physio-connect-app/messages:send');
 
-    final body = {
-      "message": {
-        "token": deviceToken,
-        "notification": {
-          "title": title,
-          "body": messageBody
-        },
-        "data": {
-          "screen": "booking",
-          "doctorId": "1234"
+      final body = {
+        "message": {
+          "token": deviceToken,
+          "notification": {
+            "title": title,
+            "body": messageBody
+          },
+          "data": {
+            "screen": "booking",
+            "doctorId": "1234"
+          }
         }
-      }
-    };
+      };
 
-    final response = await http.post(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer ${notificationAccessToken}",
-      },
-      body: jsonEncode(body),
-    );
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${notificationAccessToken}",
+        },
+        body: jsonEncode(body),
+      );
 
-    print("Response: ${response.statusCode} ${response.body}");
+      print("Response: ${response.statusCode} ${response.body}");
+    } catch (e) {
+      print('Error sending push notification: $e');
+    }
   }
 }

@@ -32,7 +32,7 @@ class SecureStorageRepository implements SecureStorageProvider {
   }
 
   @override
-  Future<void> write(String key, String value) async {
+  Future<void> write(String key, dynamic value) async {
     await _secureStorage.write(key: key, value: value);
   }
 

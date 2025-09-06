@@ -36,7 +36,7 @@ class ProfileAboutUsController extends GetxController {
     if (doctor.value?.id == null &&
         (userModelSupabase.value?.doctorId ?? 0) > 0) {
       doctor.value = await supabaseController.getDoctorById(
-        userModelSupabase.value!.doctorId,
+        userModelSupabase.value!.doctorId ?? 0,
       );
       doctor.value?.saveToSecureStorage();
     }

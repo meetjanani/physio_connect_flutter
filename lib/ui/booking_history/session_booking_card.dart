@@ -234,7 +234,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                     },
                     onLongPress: (){}
                 ),
-                if(patient.userType.toLowerCase() == UserType.doctor.name)
+                if(patient.userType?.toLowerCase() == UserType.doctor.name)
                   _buildActionButton(
                     label: "Call Patient",
                     icon: Icons.call,
@@ -256,7 +256,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                     },
                   ),
                 // TODO: Add Doctor number & whatsapp.
-                if(patient.userType.toLowerCase() == UserType.patient.name)
+                if(patient.userType?.toLowerCase() == UserType.patient.name)
                   _buildActionButton(
                     label: "Call Doctor",
                     icon: Icons.call,
@@ -277,7 +277,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                       }
                     },
                   ),
-                if(patient.userType.toLowerCase() == UserType.doctor.name)
+                if(patient.userType?.toLowerCase() == UserType.doctor.name)
                   _buildActionButton(
                       label: "Add Notes",
                       icon: Icons.note_add,

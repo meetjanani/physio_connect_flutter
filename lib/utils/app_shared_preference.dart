@@ -40,12 +40,12 @@ Future<UserModelSupabase> getUserModel() async {
 
 Future<void> setUserModel(UserModelSupabase userModelSupabase) async {
   await secureStorageRepository.write(SecureStorage.userIdSessionStorage, userModelSupabase.id.toString());
-  await secureStorageRepository.write(SecureStorage.userNameSessionStorage, userModelSupabase.name);
-  await secureStorageRepository.write(SecureStorage.userTypeSessionStorage, userModelSupabase.userType);
-  await secureStorageRepository.write(SecureStorage.doctorNameSessionStorage, userModelSupabase.doctorName);
-  await secureStorageRepository.write(SecureStorage.doctorIdSessionStorage, userModelSupabase.doctorId.toString());
-  await secureStorageRepository.write(SecureStorage.userCreatedAtSessionStorage, userModelSupabase.createAt);
-  await secureStorageRepository.write(SecureStorage.userMobileNumberSessionStorage, userModelSupabase.mobileNumber);
+  await secureStorageRepository.write(SecureStorage.userNameSessionStorage, userModelSupabase.name ?? "");
+  await secureStorageRepository.write(SecureStorage.userTypeSessionStorage, userModelSupabase.userType ?? "");
+  await secureStorageRepository.write(SecureStorage.doctorNameSessionStorage, userModelSupabase.doctorName ?? "");
+  await secureStorageRepository.write(SecureStorage.doctorIdSessionStorage, userModelSupabase.doctorId ?? 0);
+  await secureStorageRepository.write(SecureStorage.userCreatedAtSessionStorage, userModelSupabase.createAt ?? "");
+  await secureStorageRepository.write(SecureStorage.userMobileNumberSessionStorage, userModelSupabase.mobileNumber ?? "");
   await secureStorageRepository.write(SecureStorage.userProfileFirebaseToken, userModelSupabase.firebaseToken ?? "");
 }
 

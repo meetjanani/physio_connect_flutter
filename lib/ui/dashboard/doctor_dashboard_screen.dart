@@ -31,7 +31,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    dashboardController.fetchFirebaseToken();
   }
 
   @override

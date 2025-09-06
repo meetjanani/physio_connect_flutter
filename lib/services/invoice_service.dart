@@ -180,7 +180,7 @@ class InvoiceService {
                       ),
                       pw.SizedBox(height: 8),
                       pw.Text(
-                        patient.name,
+                        patient.name ?? "",
                         style: pw.TextStyle(
                           fontWeight: pw.FontWeight.bold,
                           fontSize: 16,

@@ -3,6 +3,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/supabase/supabase_controller.dart';
+import 'package:physio_connect/utils/view_extension.dart';
 
 import '../../model/bookings_model.dart';
 import '../../model/user_model_supabase.dart';
@@ -21,18 +22,20 @@ class DashboardController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    userModelSupabase = await UserModelSupabase.getFromSecureStorage();
+    fetchFirebaseToken();
     await fetchDoctorDetail();
-    await getUpComingBookings();
   }
 
   Future<void> fetchFirebaseToken() async {
+    userModelSupabase = await UserModelSupabase.getFromSecureStorage();
     final messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
     if(token != null && ((userModelSupabase?.id ?? 0) > 0) && userModelSupabase?.firebaseToken != token) {
-      updateFirebaseToken(token.toString());
-      print('Firebase Token=$token');
+      userModelSupabase?.firebaseToken = token;
+      userModelSupabase?.saveToSecureStorage();
     }
+    print('Firebase Token=$token');
+    updateFirebaseToken(token.toString());
     await supabaseController.updateFirebaseToken(
         userModelSupabase?.id ?? 0, token.toString());
   }

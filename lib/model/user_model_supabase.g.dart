@@ -9,14 +9,14 @@ part of 'user_model_supabase.dart';
 UserModelSupabase _$UserModelSupabaseFromJson(Map<String, dynamic> json) =>
     UserModelSupabase(
         id: (json['id'] as num).toInt(),
-        name: json['name'] as String,
-        doctorName: json['doctorName'] as String,
-        doctorId: (json['doctorId'] as num).toInt(),
-        mobileNumber: json['mobileNumber'] as String,
+        name: json['name'] as String?,
+        doctorName: json['doctorName'] as String?,
+        doctorId: (json['doctorId'] as num?)?.toInt(),
+        mobileNumber: json['mobileNumber'] as String?,
       )
-      ..userType = json['userType'] as String
+      ..userType = json['userType'] as String?
       ..firebaseToken = json['firebaseToken'] as String?
-      ..createAt = json['createAt'] as String;
+      ..createAt = json['createAt'] as String?;
 
 Map<String, dynamic> _$UserModelSupabaseToJson(UserModelSupabase instance) =>
     <String, dynamic>{
