@@ -22,7 +22,7 @@ class DashboardController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    fetchFirebaseToken();
+    await fetchFirebaseToken();
     await fetchDoctorDetail();
   }
 
