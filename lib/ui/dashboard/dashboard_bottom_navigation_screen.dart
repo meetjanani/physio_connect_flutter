@@ -7,6 +7,7 @@ import 'package:physio_connect/utils/app_shared_preference.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import '../../model/user_model_supabase.dart';
+import '../../utils/constants.dart';
 import '../booking_history/booking_history_screen.dart';
 import '../profile/profile_about_us_screen.dart';
 
@@ -35,7 +36,7 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
   }
 
   void _initializeScreens() {
-    final isDoctor = controller.userModelSupabase?.userType?.toLowerCase() == UserType.doctor.name;
+    final isDoctor = isDoctorTypeUser(controller.userModelSupabase?.id ?? 0);
 
     _buildScreens = [
       DashboardScreen(),

@@ -6,6 +6,7 @@ import 'package:physio_connect/utils/view_extension.dart';
 import '../../model/bookings_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
+import '../../utils/constants.dart';
 import '../../utils/enum.dart';
 
 class BookingHistoryController extends GetxController {
@@ -32,7 +33,7 @@ class BookingHistoryController extends GetxController {
   Future<void> onInit() async {
     super.onInit();
     userModelSupabase = await UserModelSupabase.getFromSecureStorage();
-    isDoctor.value = userModelSupabase?.userType?.toLowerCase() == UserType.doctor.name;
+    isDoctor.value = isDoctorTypeUser(userModelSupabase?.id ?? 0);
     getFilteredBookings();
   }
 
@@ -129,7 +130,7 @@ class BookingHistoryController extends GetxController {
     var userId = appointment?.userId ?? 0;
     var bookingDate = appointment?.bookingDate ?? "";
 
-    if(userModelSupabase?.userType?.toLowerCase() == UserType.patient.name) {
+    if(isDoctorTypeUser(userModelSupabase?.id ?? 0) == false) { // patient type user
       await supabaseController.sentNotification(
         doctorId, "Patient: ${appointment?.aPatient().name} ",
         "The appointment on ${bookingDate}, patient has requested a callback",);

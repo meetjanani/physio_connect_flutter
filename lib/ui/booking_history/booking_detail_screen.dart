@@ -117,8 +117,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      appointment.aPatient().userType?.toLowerCase() ==
-                              UserType.doctor.name
+                      isDoctorTypeUser(controller.userModelSupabase?.id ?? 0)
+                      /*appointment.aPatient().userType?.toLowerCase() ==
+                              UserType.doctor.name*/
                           ? Obx(
                               () => controller.isLoading.value
                                   ? Row(
@@ -591,8 +592,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Widget _buildNotesCard(String notes) {
     return InkWell(
       onTap: () {
-        if (appointment.aPatient().userType?.toLowerCase() ==
-            UserType.doctor.name)
+        if (isDoctorTypeUser(controller.userModelSupabase?.id ?? 0))
           showHtmlEditorForDoctorNote(
             context: Get.context!,
             initialHtml: appointment.doctorNotes ?? "",

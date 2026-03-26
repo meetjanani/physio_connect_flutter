@@ -8,6 +8,7 @@ import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_no
 import 'package:physio_connect/ui/booking_history/booking_history_controller.dart';
 
 import '../../route/route_module.dart';
+import '../../utils/constants.dart';
 import '../../utils/theme/app_colors.dart';
 import '../../utils/units_extensions.dart';
 
@@ -238,7 +239,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                     },
                     onLongPress: (){}
                 ),
-                if(patient.userType?.toLowerCase() == UserType.doctor.name)
+                if(isDoctorTypeUser(controller.userModelSupabase?.id ?? 0)) // patient.userType?.toLowerCase() == UserType.doctor.name
                   _buildActionButton(
                     label: "Call Patient",
                     icon: Icons.call,
@@ -260,7 +261,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                     },
                   ),
                 // TODO: Add Doctor number & whatsapp.
-                if(patient.userType?.toLowerCase() == UserType.patient.name)
+                if(isDoctorTypeUser(patient?.id ?? 0) == false ) // patient
                   _buildActionButton(
                     label: "Call Doctor",
                     icon: Icons.call,
@@ -281,7 +282,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                       }
                     },
                   ),
-                if(patient.userType?.toLowerCase() == UserType.doctor.name)
+                if(doctor.userId == controller.userModelSupabase?.id) // patient.userType?.toLowerCase() == UserType.doctor.name
                   _buildActionButton(
                       label: "Add Notes",
                       icon: Icons.note_add,

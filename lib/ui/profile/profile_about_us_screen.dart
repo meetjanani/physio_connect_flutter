@@ -5,6 +5,8 @@ import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
+import '../../utils/constants.dart';
+
 class ProfileAboutUsScreen extends StatefulWidget {
   const ProfileAboutUsScreen({super.key});
 
@@ -65,8 +67,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                 const Icon(Icons.person, color: Colors.white),
                                 const SizedBox(width: 8),
                                 Text(
-                                  controller.userModelSupabase.value?.userType
-                                      ?.toLowerCase() == UserType.doctor.name
+                                    isDoctorTypeUser(controller.userModelSupabase.value?.id ?? 0)
                                       ? "Doctor Profile"
                                       : "Patient Profile",
                                   style: Theme
@@ -146,9 +147,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: controller.userModelSupabase.value
-                                        ?.userType?.toLowerCase() ==
-                                        UserType.doctor.name
+                                    color: isDoctorTypeUser(controller.userModelSupabase.value?.id ?? 0)
                                         ? AppColors.medicalBlueLight
                                         : AppColors.wellnessGreenLight,
                                     borderRadius: BorderRadius.circular(30),
@@ -158,9 +157,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                         '') + '~' + '${controller.userModelSupabase.value?.id.toString() ??
                                         ''}',
                                     style: TextStyle(
-                                      color: controller.userModelSupabase.value
-                                          ?.userType?.toLowerCase() ==
-                                          UserType.doctor.name
+                                      color: isDoctorTypeUser(controller.userModelSupabase.value?.id ?? 0)
                                           ? AppColors.medicalBlueDark
                                           : AppColors.wellnessGreenDark,
                                       fontWeight: FontWeight.bold,
@@ -189,8 +186,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                 const SizedBox(height: 24),
 
                                 // User stats
-                                if(controller.userModelSupabase.value?.userType
-                                    ?.toLowerCase() == UserType.doctor.name)
+                                if(isDoctorTypeUser(controller.userModelSupabase.value?.id ?? 0))
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment
                                         .spaceAround,

@@ -36,7 +36,7 @@ class SupabaseController {
       response = await supabaseClient
           .from(DatabaseSchema.bookingsTable)
           .select('*')
-          .eq(DatabaseSchema.bookingsDoctorId, userId)
+          // .eq(DatabaseSchema.bookingsDoctorId, userId)
           .gte(DatabaseSchema.bookingsDate, fromDate)
           .lte(DatabaseSchema.bookingsDate, toDate)
           .order(DatabaseSchema.bookingsId, ascending: false);
