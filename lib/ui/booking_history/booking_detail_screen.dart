@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:physio_connect/model/bookings_model.dart';
+import 'package:physio_connect/services/letter_head_service.dart';
 import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_note.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/enum.dart';
@@ -363,6 +364,29 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               appointment.doctorNotes ?? 'No additional notes provided.',
             ),
             SizedBox(height: 24),
+          ],
+
+          // Letter Head Button
+          if (controller.isDoctor.value) ...[
+            SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final file = await LetterHeadService.generateLetterHead();
+                await LetterHeadService.openPdf(file);
+              },
+              icon: Icon(Icons.description_outlined),
+              label: Text('Generate Letter Head'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.medicalBlueDark,
+                foregroundColor: AppColors.textOnDark,
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+            ),
+            SizedBox(height: 8),
           ],
 
           // Prescription Button

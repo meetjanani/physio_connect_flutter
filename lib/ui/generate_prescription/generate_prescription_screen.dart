@@ -110,7 +110,7 @@ class _GeneratePrescriptionScreenState extends State<GeneratePrescriptionScreen>
                 CustomTextField(
                   controller: controller.doctorCredentialsController,
                   labelText: 'Doctor Degree & Registered Number',
-                  hintText: 'Physiotherapist G-2345',
+                  hintText: 'Physiotherapist GPC-2345',
                   prefixIcon: Icons.badge_outlined,
                   validator: (value) =>
                       _required(value, 'Doctor degree and register number is required'),
