@@ -17,6 +17,7 @@ import '../ui/profile/profile_about_us_screen.dart';
 import '../ui/signUp/signup_screen.dart';
 import '../ui/splash_binding.dart';
 import '../ui/splash_screen.dart';
+import '../ui/generate_prescription/generate_prescription_screen.dart';
 
 class AppPage {
   AppPage._();
@@ -33,6 +34,7 @@ class AppPage {
   static const String bookingHistory = '/booking-history';
   static const String bookingDetail = '/booking-detail';
   static const String userProfile = '/user-profile';
+  static const String generatePrescription = '/generate-prescription';
 
   static final routes = [
     GetPage(
@@ -84,6 +86,11 @@ class AppPage {
     ),
     GetPage(name: AppPage.bookingHistory, page: () => BookingHistoryScreen()),
     GetPage(name: AppPage.bookingDetail, page: () => BookingDetailScreen()),
+    GetPage(
+      name: AppPage.generatePrescription,
+      page: () => const GeneratePrescriptionScreen(),
+    ),
     GetPage(name: AppPage.userProfile, page: () => ProfileAboutUsScreen()),
   ];
 }
+// General Physiotherapy

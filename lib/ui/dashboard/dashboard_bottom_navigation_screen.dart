@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_controller.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
 import 'package:physio_connect/ui/dashboard/doctor_dashboard_screen.dart';
+import 'package:physio_connect/ui/generate_prescription/generate_prescription_screen.dart';
 import 'package:physio_connect/utils/app_shared_preference.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
@@ -42,6 +43,7 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
       DashboardScreen(),
       isDoctor == true ? DoctorDashboardScreen() :BookingHistoryScreen(),
       ProfileAboutUsScreen(),
+      isDoctor == true ? GeneratePrescriptionScreen() : Container(),
     ];
   }
 
@@ -53,6 +55,7 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
 
   @override
   Widget build(BuildContext context) {
+    final isDoctor = isDoctorTypeUser(controller.userModelSupabase?.id ?? 0);
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: (_buildScreens != null && _buildScreens.length > 0)
@@ -95,7 +98,13 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
                 activeIcon: Icon(Icons.settings, color: AppColors.wellnessGreen),
                 label: "About-Us"
               ),
-            ],
+            ]..addAll(isDoctor == true ? [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.note_add_outlined, color: AppColors.medicalBlue),
+                  activeIcon: Icon(Icons.history, color: AppColors.wellnessGreen),
+                  label: "Prescriptions"
+              )
+            ] : []),
             currentIndex: widget.currentIndex,
             onTap: onTapped,
             selectedItemColor: AppColors.wellnessGreen,

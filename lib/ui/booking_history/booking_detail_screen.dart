@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../services/invoice_service.dart';
 import '../../utils/constants.dart';
 import 'booking_history_controller.dart';
+import '../../route/route_module.dart';
 
 class BookingDetailScreen extends StatefulWidget {
   BookingDetailScreen({Key? key}) : super(key: key);
@@ -362,6 +363,29 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               appointment.doctorNotes ?? 'No additional notes provided.',
             ),
             SizedBox(height: 24),
+          ],
+
+          // Prescription Button
+          if (controller.isDoctor.value) ...[
+            SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => Get.toNamed(
+                AppPage.generatePrescription,
+                arguments: appointment,
+              ),
+              icon: Icon(Icons.description_outlined),
+              label: Text('Generate Prescription'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.medicalBlueDark,
+                foregroundColor: AppColors.textOnDark,
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+            ),
+            SizedBox(height: 8),
           ],
 
           // Invoice Button
