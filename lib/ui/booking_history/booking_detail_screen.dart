@@ -366,6 +366,29 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             SizedBox(height: 24),
           ],
 
+          // Prescription Button
+          if (controller.isDoctor.value) ...[
+            SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => Get.toNamed(
+                AppPage.generatePrescription,
+                arguments: appointment,
+              ),
+              icon: Icon(Icons.description_outlined),
+              label: Text('Generate Prescription'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.medicalBlueDark,
+                foregroundColor: AppColors.textOnDark,
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+            ),
+            SizedBox(height: 8),
+          ],
+
           // Letter Head Button
           if (controller.isDoctor.value) ...[
             SizedBox(height: 16),

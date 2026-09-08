@@ -19,7 +19,7 @@ class GeneratePrescriptionController extends GetxController {
   final doctorNameController = TextEditingController(text: 'Dr. Parul Desai');
   final specialistController = TextEditingController(text: 'Physiotherapist');
   final doctorCredentialsController =
-      TextEditingController(text: 'Physiotherapist GPC-2345');
+      TextEditingController(text: 'Physiotherapist G-2345');
 
   final isGenerating = false.obs;
 
