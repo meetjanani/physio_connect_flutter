@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.physio.connect.physio_connect"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -26,10 +26,10 @@ android {
         applicationId = "com.physio.connect.physio_connect"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = 6
-        versionName = "1.0.0"
+        minSdk = 24
+        targetSdk = 36
+        versionCode = 7
+        versionName = "1.0.1"
     }
 
     buildTypes {
