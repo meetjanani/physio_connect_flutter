@@ -67,4 +67,45 @@ class DatabaseSchema extends GetxController {
   // common string
   static const String projectName = "PHYSIO CONNECT";
 
+  // Razorpay / Payment fields
+  // Bookings Razorpay fields
+  static const String bookingsRazorpayOrderId =
+      "razorpayOrderId";
+
+  static const String bookingsRazorpayPaymentId =
+      "razorpayPaymentId";
+
+  static const String bookingsRazorpaySignature =
+      "razorpaySignature";
+
+  static const String bookingsPaymentAmount =
+      "paymentAmount";
+
+  static const String bookingsDoctorAmount =
+      "doctorAmount";
+
+  static const String bookingsPlatformFeeAmount =
+      "platformFeeAmount";
+
+  static const String bookingsPaymentCurrency =
+      "paymentCurrency";
+
+  static const String bookingsPaymentVerifiedAt =
+      "paymentVerifiedAt";
+
+  static const String bookingsRazorpayTransferId =
+      "razorpayTransferId";
+
+  static const String bookingsTransferStatus =
+      "transferStatus";
+
+  // Doctor Razorpay Account fields
+  static const String doctorRazorpayAccountId =
+      "razorpayAccountId";
+
+  static const String doctorRazorpayAccountStatus =
+      "razorpayAccountStatus";
+
+  static const String doctorRazorpayOnboardedAt =
+      "razorpayOnboardedAt";
 }

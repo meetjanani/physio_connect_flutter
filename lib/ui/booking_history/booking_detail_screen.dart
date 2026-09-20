@@ -1,6 +1,6 @@
 // lib/ui/booking/history/booking_detail_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -719,9 +719,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               ],
             ),
             SizedBox(height: 12),
-            Html(
-              data: notes,
-              style: {"body": Style(margin: Margins.zero)},
+            HtmlWidget(
+              notes,
             ),
           ],
         ),
