@@ -10,6 +10,7 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../model/bookings_model.dart';
+import '../../model/create_razorpay_order_model.dart';
 import '../../model/session_type_model.dart';
 import '../../model/time_slots_model.dart';
 import '../../model/user_model_supabase.dart';
@@ -135,6 +136,113 @@ class BookingController extends GetxController {
     // databaseService.savePayment(payment);
 
     print('Appointment created with ID: $appointmentId');
+  }
+
+  Future<CreateRazorPayOrderModel?> createPendingBookingBeforePayment() async {
+    isLoading.value = true;
+
+    try {
+      final doctorModel = await DoctorModel.getFromSecureStorage();
+      final doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
+      final timeslotJson = jsonEncode(selectedTimeSlot.value?.toJson() ?? {});
+      final sessionTypeJson = jsonEncode(selectedSessionType.value?.toJson() ?? {});
+      final patientJson = jsonEncode(userModelSupabase?.toJson() ?? {});
+
+      bookingsModel.value = BookingsModel(
+        id: 0,
+        userId: userModelSupabase?.id ?? 0,
+        bookingStatus: BookingStatus.pending.name,
+        timeSlotId: selectedTimeSlot.value?.id ?? 1,
+        timeSlotJson: timeslotJson,
+        doctorId: doctorModel?.userId ?? 1,
+        doctorJson: doctorJson,
+        sessionTypeId: selectedSessionType.value?.id ?? 1,
+        price: selectedSessionType.value?.price ?? 1,
+        sessionTypeJson: sessionTypeJson,
+        patientJson: patientJson,
+        paymentStatus: PaymentStatus.pending.name,
+        paymentId: null,
+        orderId: null,
+        signature: null,
+        doctorNotes: 'No additional notes provided.',
+        address: "${houseNameBlockNumberController.text}\n${addressController.text}",
+        latLong: "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
+        bookingDate: DateFormat('yyyy-MM-dd').format(selectedDate.value),
+        createdAt: DateTime.now().toString(),
+      );
+
+      var bookingID = await supabaseController.createNewBooking(bookingsModel.value!, doctorModel?.userId ?? 1);
+      var razorpayOrder = await supabaseController.callCreateRazorPayOrderSBEdgeFunction(bookingID, userModelSupabase?.id ?? 0,);
+      return razorpayOrder;
+
+      print('Pending booking created. Payment not captured yet.');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> updateBookingPaymentStatusAfterSuccess({
+    required PaymentSuccessResponse paymentResponse,
+  }) async {
+    if (bookingsModel.value == null) {
+      throw Exception('No pending booking exists to update.');
+    }
+
+    bookingsModel.value = BookingsModel(
+      id: bookingsModel.value!.id,
+      userId: bookingsModel.value!.userId,
+      bookingStatus: BookingStatus.booked.name,
+      timeSlotId: bookingsModel.value!.timeSlotId,
+      timeSlotJson: bookingsModel.value!.timeSlotJson,
+      doctorId: bookingsModel.value!.doctorId,
+      doctorJson: bookingsModel.value!.doctorJson,
+      sessionTypeId: bookingsModel.value!.sessionTypeId,
+      price: bookingsModel.value!.price,
+      sessionTypeJson: bookingsModel.value!.sessionTypeJson,
+      patientJson: bookingsModel.value!.patientJson,
+      paymentStatus: PaymentStatus.paid.name,
+      paymentId: paymentResponse.paymentId,
+      orderId: paymentResponse.orderId,
+      signature: paymentResponse.signature,
+      doctorNotes: bookingsModel.value!.doctorNotes,
+      address: bookingsModel.value!.address,
+      latLong: bookingsModel.value!.latLong,
+      bookingDate: bookingsModel.value!.bookingDate,
+      createdAt: bookingsModel.value!.createdAt,
+    );
+
+    await supabaseController.createNewBooking(bookingsModel.value!, bookingsModel.value!.doctorId);
+  }
+
+  Future<void> updateBookingPaymentStatusAfterFailure() async {
+    if (bookingsModel.value == null) {
+      return;
+    }
+
+    bookingsModel.value = BookingsModel(
+      id: bookingsModel.value!.id,
+      userId: bookingsModel.value!.userId,
+      bookingStatus: BookingStatus.cancelled.name,
+      timeSlotId: bookingsModel.value!.timeSlotId,
+      timeSlotJson: bookingsModel.value!.timeSlotJson,
+      doctorId: bookingsModel.value!.doctorId,
+      doctorJson: bookingsModel.value!.doctorJson,
+      sessionTypeId: bookingsModel.value!.sessionTypeId,
+      price: bookingsModel.value!.price,
+      sessionTypeJson: bookingsModel.value!.sessionTypeJson,
+      patientJson: bookingsModel.value!.patientJson,
+      paymentStatus: PaymentStatus.failed.name,
+      paymentId: null,
+      orderId: null,
+      signature: null,
+      doctorNotes: bookingsModel.value!.doctorNotes,
+      address: bookingsModel.value!.address,
+      latLong: bookingsModel.value!.latLong,
+      bookingDate: bookingsModel.value!.bookingDate,
+      createdAt: bookingsModel.value!.createdAt,
+    );
+
+    await supabaseController.createNewBooking(bookingsModel.value!, bookingsModel.value!.doctorId);
   }
 
   String calculateEndTime(String startTime, int durationMinutes) {

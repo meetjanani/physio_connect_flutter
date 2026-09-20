@@ -5,6 +5,7 @@ import 'package:physio_connect/utils/view_extension.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../model/bookings_model.dart';
+import '../model/create_razorpay_order_model.dart';
 import '../model/session_type_model.dart';
 import '../model/user_model_supabase.dart';
 import '../route/route_module.dart';
@@ -118,19 +119,43 @@ class SupabaseController {
     return timeSlotList;
   }
 
-  Future<void> createNewBooking(
+  Future<int> createNewBooking(
     BookingsModel bookingsModel,
     int notificationUserId,
   ) async {
     var request = bookingsModel.toJson();
     request.remove('id');
-     await Supabase.instance.client
+    var response = await Supabase.instance.client
         .from(DatabaseSchema.bookingsTable)
         .upsert([request])
         .select();
+    var newId = response[0]['id'];
     Get.back(result: true); // dismiss progress bar
     Get.showSuccessSnackbar('Your booking has been placed successfully.');
     Get.toNamed(AppPage.bookingConfirmation);
+    return newId;
+  }
+
+  Future<CreateRazorPayOrderModel?> callCreateRazorPayOrderSBEdgeFunction(int bookingId, int userId) async {
+    final response =
+    await Supabase.instance.client.functions.invoke(
+      'create-razorpay-order',
+      body: {
+        'bookingId': bookingId,
+        'userId': userId,
+      },
+    );
+    final orderModel = CreateRazorPayOrderModel.fromJson(response.data);
+    if (orderModel.hasOrder) {
+      print('orderId: ${orderModel.orderId}');
+      print('amount: ${orderModel.amount}');
+      print('keyId: ${orderModel.keyId}');
+    }
+
+    if (orderModel.isExistingOrder) {
+      print('Existing order returned');
+    }
+    return orderModel;
   }
 
   Future<DoctorModel?> getDoctorById(int doctorId) async {
