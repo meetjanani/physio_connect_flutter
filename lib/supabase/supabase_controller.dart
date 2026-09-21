@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/model/time_slots_model.dart';
+import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/view_extension.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,6 +9,7 @@ import '../model/bookings_model.dart';
 import '../model/create_razorpay_order_model.dart';
 import '../model/session_type_model.dart';
 import '../model/user_model_supabase.dart';
+import '../model/verify_razorpay_payment_order_model.dart';
 import '../route/route_module.dart';
 import '../utils/database_schema.dart';
 import '../utils/secure_storage/notification_service.dart';
@@ -130,10 +132,28 @@ class SupabaseController {
         .upsert([request])
         .select();
     var newId = response[0]['id'];
-    Get.back(result: true); // dismiss progress bar
+    // Get.back(result: true); // dismiss progress bar
     Get.showSuccessSnackbar('Your booking has been placed successfully.');
-    Get.toNamed(AppPage.bookingConfirmation);
+    // Get.toNamed(AppPage.bookingConfirmation);
     return newId;
+  }
+
+  Future<void> updatePaymentStatus(int bookingID, String? bookingStatus,
+      String? paymentStatus, String? bookingsPaymentId,
+      String? bookingsOrderId, String? bookingsSignature,) async {
+    if (bookingID > 0) {
+      await supabaseClient
+          .from(DatabaseSchema.bookingsTable)
+          .update({
+        DatabaseSchema.bookingsStatus: bookingStatus,
+        DatabaseSchema.bookingsPaymentStatus: paymentStatus,
+        DatabaseSchema.bookingsPaymentId: bookingsPaymentId,
+        DatabaseSchema.bookingsOrderId: bookingsOrderId,
+        DatabaseSchema.bookingsSignature: bookingsSignature,
+      })
+          .eq(DatabaseSchema.bookingsId, bookingID)
+          .select();
+    }
   }
 
   Future<CreateRazorPayOrderModel?> callCreateRazorPayOrderSBEdgeFunction(int bookingId, int userId) async {
@@ -156,6 +176,57 @@ class SupabaseController {
       print('Existing order returned');
     }
     return orderModel;
+  }
+
+
+  Future<VerifyPaymentResponseModel?> callVerifyRazorPayPaymentSBEdgeFunction({
+    required String? bookingId, // Use int if your app uses int, but your JSON showed String "92"
+    required String? userId,    // Use int if your app uses int, but your JSON showed String "5"
+    required String? razorpayOrderId,
+    required String? razorpayPaymentId,
+    required String? razorpaySignature,
+  }) async {
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'verify-razorpay-payment',
+        body: {
+          'bookingId': bookingId,
+          'userId': userId,
+          'razorpayOrderId': razorpayOrderId,
+          'razorpayPaymentId': razorpayPaymentId,
+          'razorpaySignature': razorpaySignature,
+        },
+      );
+
+      final verifyModel = VerifyPaymentResponseModel.fromJson(response.data);
+
+      if (verifyModel.success) {
+        print('Payment Verified! Message: ${verifyModel.message}');
+
+        if (verifyModel.transferId != null) {
+          print('Transfer ID: ${verifyModel.transferId}');
+          print('Transfer Status: ${verifyModel.transferStatus}');
+        }
+
+        if (verifyModel.alreadyPaid) {
+          print('Note: This booking was already marked as paid previously.');
+        }
+      } else {
+        print('Verification returned false. Error: ${verifyModel.error}');
+      }
+
+      return verifyModel;
+
+    } on FunctionException catch (e) {
+      // Supabase throws this if the Edge Function returns a 400 or 500 error
+      print('Edge Function Error: ${e.reasonPhrase}');
+      print('Error Details: ${e.details}');
+      return VerifyPaymentResponseModel(success: false, error: e.reasonPhrase);
+    } catch (e) {
+      // Catches network or parsing errors
+      print('Unexpected Error verifying payment: $e');
+      return VerifyPaymentResponseModel(success: false, error: e.toString());
+    }
   }
 
   Future<DoctorModel?> getDoctorById(int doctorId) async {

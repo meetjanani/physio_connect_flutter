@@ -42,6 +42,8 @@ class BookingController extends GetxController {
 
   final selectedDate = DateTime.now().obs;
   final razorpayPaymentId = ''.obs;
+  var bookingId = 0;
+  final createRazorPayOrderModel = Rx<CreateRazorPayOrderModel?>(null);
 
   UserModelSupabase? userModelSupabase;
   @override
@@ -171,8 +173,11 @@ class BookingController extends GetxController {
         createdAt: DateTime.now().toString(),
       );
 
-      var bookingID = await supabaseController.createNewBooking(bookingsModel.value!, doctorModel?.userId ?? 1);
-      var razorpayOrder = await supabaseController.callCreateRazorPayOrderSBEdgeFunction(bookingID, userModelSupabase?.id ?? 0,);
+      // create booking on server with pending status and get booking ID
+      bookingId = await supabaseController.createNewBooking(bookingsModel.value!, doctorModel?.userId ?? 1);
+      // Call the Supabase Edge Function to create Razorpay order
+      var razorpayOrder = await supabaseController.callCreateRazorPayOrderSBEdgeFunction(bookingId, userModelSupabase?.id ?? 0,);
+      createRazorPayOrderModel.value = razorpayOrder;
       return razorpayOrder;
 
       print('Pending booking created. Payment not captured yet.');
