@@ -8,6 +8,7 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
 import '../../model/create_razorpay_order_model.dart';
+import '../../route/route_module.dart';
 import '../../utils/enum.dart';
 import 'booking_controller.dart';
 
@@ -37,10 +38,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    print('[Razorpay] PAYMENT SUCCESS callback invoked: paymentId=${response.paymentId}, orderId=${response.orderId}, signature=${response.signature}');
+    print('[Razorpay] PAYMENT SUCCESS callback invoked: paymentId=${response
+        .paymentId}, orderId=${response.orderId}, signature=${response
+        .signature}');
     // Store payment data and navigate to confirmation
     controller.razorpayPaymentId.value = response.paymentId!;
-    controller.updateBookingPaymentStatusAfterSuccess(paymentResponse: response);
+
+    // controller.supabaseController.callVerifyRazorPayPaymentSBEdgeFunction(
+    //     bookingId: controller.bookingId.toString(),
+    //     userId: controller.userModelSupabase?.id!.toString(),
+    //     razorpayOrderId: response.orderId,
+    //     razorpayPaymentId: response.paymentId,
+    //     razorpaySignature: response.signature);
+
+
+    controller.supabaseController.callVerifyRazorPayPaymentSBEdgeFunction(
+        bookingId: controller.bookingId.toString(),
+        userId: controller.userModelSupabase?.id!.toString(),
+        razorpayOrderId: response.orderId,
+        razorpayPaymentId: response.paymentId,
+        razorpaySignature: response.signature).then((_) {
+      Get.toNamed(AppPage.bookingConfirmation);
+    });
+    // controller.updateBookingPaymentStatusAfterSuccess(paymentResponse: response);
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
@@ -111,8 +131,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
     try {
       print('[Razorpay] Opening checkout for order ${razorpayOrder.orderId} amount=${razorpayOrder.amount}');
       _razorpay.open(options);
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('[Razorpay] Error opening checkout: ${e.toString()}');
+      print('[Razorpay] ERROR = $e');
+      print('[Razorpay] STACK = $stackTrace');
       Get.snackbar(
         'Error',
         'Unable to start payment process',

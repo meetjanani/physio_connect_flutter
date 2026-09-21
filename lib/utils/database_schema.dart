@@ -30,6 +30,9 @@ class DatabaseSchema extends GetxController {
   static const String bookingsDate = "bookingDate";
   static const String bookingsStatus = "bookingStatus";
   static const String bookingsDoctorNotes = "doctorNotes";
+  static const String bookingsPaymentId = "paymentId";
+  static const String bookingsOrderId = "orderId";
+  static const String bookingsSignature = "signature";
   static const String bookingsCreatedAt = "createdAt";
 
 
