@@ -8,6 +8,9 @@ import '../ui/book_session/booking_session_bindings.dart';
 import '../ui/book_session/confirmation_screen.dart';
 import '../ui/book_session/date_time_screen.dart';
 import '../ui/book_session/payment_screen.dart';
+import '../ui/book_session/select_doctor_screen.dart';
+import '../ui/book_session/service_area_screen.dart';
+import '../ui/book_session/service_city_screen.dart';
 import '../ui/book_session/session_type_screen.dart';
 import '../ui/booking_history/booking_detail_screen.dart';
 import '../ui/booking_history/booking_history_screen.dart';
@@ -28,6 +31,9 @@ class AppPage {
   static const signUpScreen = '/register';
   static const dashboardScreen = '/dashboard';
   static const doctorDashboardScreen = '/doctorDashboard';
+  static const selectServiceCity = '/selectServiceCity';
+  static const selectServiceArea = '/selectServiceArea';
+  static const selectDoctor = '/selectDoctor';
   static const selectSessionType = '/selectSessionType';
   static const selectDateAndTime = '/selectDateAndTime';
   static const performPayment = '/performPayment';
@@ -66,6 +72,21 @@ class AppPage {
       binding: DashboardBinding(),
     ),
 
+    GetPage(
+      name: AppPage.selectServiceCity,
+      page: () => const ServiceCityScreen(),
+      binding: BookingSessionBindings(),
+    ),
+    GetPage(
+      name: AppPage.selectServiceArea,
+      page: () => const ServiceAreaScreen(),
+      binding: BookingSessionBindings(),
+    ),
+    GetPage(
+      name: AppPage.selectDoctor,
+      page: () => const SelectDoctorScreen(),
+      binding: BookingSessionBindings(),
+    ),
     GetPage(
       name: AppPage.selectSessionType,
       page: () => SessionTypeScreen(),

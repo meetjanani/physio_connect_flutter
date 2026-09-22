@@ -14,6 +14,9 @@ class DoctorModel {
   String? experience = "";
   String? drRegNumber = "";
   String? biodata = "";
+  String? razorpayAccountId = "";
+  String? razorpayAccountStatus = "";
+  int? percentageSplit = 0;
   int? userId = 0;
 
   DoctorModel({
@@ -23,6 +26,9 @@ class DoctorModel {
     required this.experience,
     required this.drRegNumber,
     required this.biodata,
+    required this.razorpayAccountId,
+    required this.razorpayAccountStatus,
+    required this.percentageSplit,
     required this.userId,
   });
 

@@ -17,7 +17,6 @@ import '../../utils/view_extension.dart';
 import 'booking_history_controller.dart';
 
 class BookingHistoryScreen extends StatefulWidget {
-
   BookingHistoryScreen({super.key});
 
   @override
@@ -25,7 +24,9 @@ class BookingHistoryScreen extends StatefulWidget {
 }
 
 class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
-  final BookingHistoryController controller = Get.put(BookingHistoryController());
+  final BookingHistoryController controller = Get.put(
+    BookingHistoryController(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +36,16 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         children: [
           _buildDateFilter(context),
           Expanded(
-            child: Obx(() => controller.isLoading.value
-              ? Center(child: CircularProgressIndicator(
-                  color: AppColors.medicalBlue,
-                ))
-              : controller.upComingBookings.isEmpty
-                ? _buildEmptyState()
-                : _buildAppointmentsList(),
+            child: Obx(
+              () => controller.isLoading.value
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.medicalBlue,
+                      ),
+                    )
+                  : controller.upComingBookings.isEmpty
+                  ? _buildEmptyState()
+                  : _buildAppointmentsList(),
             ),
           ),
         ],
@@ -79,30 +83,43 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           Row(
             children: [
               Expanded(
-                child: Obx(() => buildDatePickerButton(
-                  label: 'From',
-                  date: controller.fromDate.value,
-                  onTap: () => _selectDate(context, true),
-                )),
+                child: Obx(
+                  () => buildDatePickerButton(
+                    label: 'From',
+                    date: controller.fromDate.value,
+                    onTap: () => _selectDate(context, true),
+                  ),
+                ),
               ),
               SizedBox(width: 16),
               Expanded(
-                child: Obx(() => buildDatePickerButton(
-                  label: 'To',
-                  date: controller.toDate.value,
-                  onTap: () => _selectDate(context, false),
-                )),
+                child: Obx(
+                  () => buildDatePickerButton(
+                    label: 'To',
+                    date: controller.toDate.value,
+                    onTap: () => _selectDate(context, false),
+                  ),
+                ),
               ),
             ],
           ),
           SizedBox(height: 12),
           Row(
             children: [
-              _buildQuickFilterChip('Last 7 days', () => controller.applyQuickFilter(7)),
+              _buildQuickFilterChip(
+                'Last 7 days',
+                () => controller.applyQuickFilter(7),
+              ),
               SizedBox(width: 8),
-              _buildQuickFilterChip('Last 30 days', () => controller.applyQuickFilter(30)),
+              _buildQuickFilterChip(
+                'Last 30 days',
+                () => controller.applyQuickFilter(30),
+              ),
               SizedBox(width: 8),
-              _buildQuickFilterChip('This month', () => controller.filterCurrentMonth()),
+              _buildQuickFilterChip(
+                'This month',
+                () => controller.filterCurrentMonth(),
+              ),
             ],
           ),
         ],
@@ -119,7 +136,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         decoration: BoxDecoration(
           color: AppColors.medicalBlueLight,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.medicalBlue)
+          border: Border.all(color: AppColors.medicalBlue),
         ),
         child: Text(
           label,
@@ -138,15 +155,15 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   Future<void> _selectDate(BuildContext context, bool isFromDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isFromDate ? controller.fromDate.value : controller.toDate.value,
+      initialDate: isFromDate
+          ? controller.fromDate.value
+          : controller.toDate.value,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(Duration(days: 365)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.medicalBlue,
-            ),
+            colorScheme: ColorScheme.light(primary: AppColors.medicalBlue),
           ),
           child: child!,
         );
@@ -174,11 +191,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.event_busy,
-            size: 80,
-            color: AppColors.medicalBlueLight,
-          ),
+          Icon(Icons.event_busy, size: 80, color: AppColors.medicalBlueLight),
           SizedBox(height: 16),
           Text(
             'No appointments found',
@@ -195,15 +208,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
             'Try adjusting your filter or book a new appointment',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              textStyle: TextStyle(
-                fontSize: 14,
-                color: AppColors.textMuted,
-              ),
+              textStyle: TextStyle(fontSize: 14, color: AppColors.textMuted),
             ),
           ),
           SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Get.toNamed(AppPage.selectSessionType),
+            onPressed: () => Get.toNamed(AppPage.selectServiceCity),
             icon: Icon(Icons.add),
             label: Text('Book New Session'),
             style: ElevatedButton.styleFrom(
@@ -223,7 +233,8 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       itemCount: controller.upComingBookings.length,
       itemBuilder: (context, index) {
         final appointment = controller.upComingBookings[index];
-        final isUpcoming = appointment.paymentStatus == BookingStatus.booked.name;
+        final isUpcoming =
+            appointment.paymentStatus == BookingStatus.booked.name;
         return SessionBookingCard(appointment);
       },
     );

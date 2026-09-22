@@ -13,6 +13,9 @@ DoctorModel _$DoctorModelFromJson(Map<String, dynamic> json) => DoctorModel(
   experience: json['experience'] as String?,
   drRegNumber: json['drRegNumber'] as String?,
   biodata: json['biodata'] as String?,
+  razorpayAccountId: json['razorpayAccountId'] as String?,
+  razorpayAccountStatus: json['razorpayAccountStatus'] as String?,
+  percentageSplit: (json['percentageSplit'] as num?)?.toInt(),
   userId: (json['userId'] as num?)?.toInt(),
 );
 
@@ -24,5 +27,8 @@ Map<String, dynamic> _$DoctorModelToJson(DoctorModel instance) =>
       'experience': instance.experience,
       'drRegNumber': instance.drRegNumber,
       'biodata': instance.biodata,
+      'razorpayAccountId': instance.razorpayAccountId,
+      'razorpayAccountStatus': instance.razorpayAccountStatus,
+      'percentageSplit': instance.percentageSplit,
       'userId': instance.userId,
     };

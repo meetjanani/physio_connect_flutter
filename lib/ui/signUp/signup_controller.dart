@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -40,17 +39,19 @@ class SignUpController extends GetxController {
       return;
     } else if (!isSelect1.value) {
       Get.showErrorSnackbar(
-          'Please approve Terms & Condition and Privacy Policy');
+        'Please approve Terms & Condition and Privacy Policy',
+      );
       return;
     }
-    var mobileNumber = countryCodeController.text.toString() +
+    var mobileNumber =
+        countryCodeController.text.toString() +
         mobileNumberController.text.toString();
     firebaseController.isLoginRequest = false;
     firebaseController.userRegisterData = UserModel(
-        name: nameController.text.toString(),
-        mobileNumber: mobileNumber,
-        doctorName: "Dr. Parul Desai",
-        doctorId: 1
+      name: nameController.text.toString(),
+      mobileNumber: mobileNumber,
+      doctorName: "",
+      doctorId: 0,
     ).toJson();
     firebaseController.fbRegister();
   }

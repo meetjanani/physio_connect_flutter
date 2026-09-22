@@ -17,6 +17,8 @@ class BookingsModel {
   int timeSlotId = 0;
   String timeSlotJson = "";
   int doctorId = 0;
+  String? cityStateJson = "";
+  String? areaJson = "";
   String doctorJson = "";
   int sessionTypeId = 0;
   String sessionTypeJson = "";
@@ -39,6 +41,8 @@ class BookingsModel {
     required this.timeSlotId,
     required this.timeSlotJson,
     required this.doctorId,
+    this.cityStateJson,
+    this.areaJson,
     required this.doctorJson,
     required this.sessionTypeId,
     required this.sessionTypeJson,
@@ -68,7 +72,10 @@ class BookingsModel {
   Map<String, dynamic> toJson() => _$BookingsModelToJson(this);
 
   DoctorModel aDoctor() => DoctorModel.fromJson(jsonDecode(this.doctorJson));
-  UserModelSupabase aPatient() => UserModelSupabase.fromJson(jsonDecode(this.patientJson));
-  TimeSlotModel aTimeslot() => TimeSlotModel.fromJson(jsonDecode(this.timeSlotJson));
-  SessionTypeModel aSessionType() => SessionTypeModel.fromJson(jsonDecode(this.sessionTypeJson));
+  UserModelSupabase aPatient() =>
+      UserModelSupabase.fromJson(jsonDecode(this.patientJson));
+  TimeSlotModel aTimeslot() =>
+      TimeSlotModel.fromJson(jsonDecode(this.timeSlotJson));
+  SessionTypeModel aSessionType() =>
+      SessionTypeModel.fromJson(jsonDecode(this.sessionTypeJson));
 }
