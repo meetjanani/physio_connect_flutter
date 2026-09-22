@@ -19,7 +19,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   DashboardController controller = DashboardController.to;
 
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -32,73 +31,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: commonAppBar("Physio Connect"),
       body: SafeArea(
         child: Center(
-          child: Obx(() => Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: Get.height * 0.02),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: Get.height * 0.2,
-                        ),
-                        child: Container(
-                          width: Get.width,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppColors.border,
-                              width: 2,
+          child: Obx(
+            () => Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: Get.height * 0.02),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: Get.height * 0.2,
+                          ),
+                          child: Container(
+                            width: Get.width,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppColors.border,
+                                width: 2,
+                              ),
+                              gradient: LinearGradient(
+                                colors: AppColors.backgroundGradientColors,
+                              ),
                             ),
-                            gradient: LinearGradient(
-                              colors: AppColors.backgroundGradientColors,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child:
+                                  controller.upComingBookings.value.isNotEmpty
+                                  ? _buildAppointmentView()
+                                  : _buildNoAppointmentView(),
                             ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: controller.upComingBookings.value.isNotEmpty
-                                ? _buildAppointmentView()
-                                : _buildNoAppointmentView(),
+                        ),
+                        // Add this after your appointment container
+                        SizedBox(height: 24),
+                        Text(
+                          "Health & Recovery Tips",
+                          style: GoogleFonts.inter(
+                            textStyle: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      // Add this after your appointment container
-                      SizedBox(height: 24),
-                      Text(
-                        "Health & Recovery Tips",
-                        style: GoogleFonts.inter(
-                          textStyle: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                        SizedBox(height: 16),
+                        SizedBox(
+                          height: 230,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            physics: BouncingScrollPhysics(),
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            children: _buildHealthTipCards(),
                           ),
                         ),
-                      ),
-                      SizedBox(height: 16),
-                      SizedBox(
-                        height: 230,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          physics: BouncingScrollPhysics(),
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          children: _buildHealthTipCards(),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          )),
+              ],
+            ),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Get.toNamed(AppPage.selectSessionType);
+          Get.toNamed(AppPage.selectServiceCity);
           // Navigate to booking screen
         },
         backgroundColor: AppColors.medicalBlue,
@@ -120,7 +122,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.event_busy, size: 60, color: AppColors.medicalBlueDark.withOpacity(0.7)),
+        Icon(
+          Icons.event_busy,
+          size: 60,
+          color: AppColors.medicalBlueDark.withOpacity(0.7),
+        ),
         const SizedBox(height: 16),
         Text(
           "No upcoming appointments",
@@ -138,16 +144,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           "Book your next session to continue your progress",
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
-            textStyle: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 16,
-            ),
+            textStyle: TextStyle(color: AppColors.textSecondary, fontSize: 16),
           ),
         ),
         const SizedBox(height: 16),
         FloatingActionButton.extended(
           onPressed: () {
-            Get.toNamed(AppPage.selectSessionType);
+            Get.toNamed(AppPage.selectServiceCity);
             // Navigate to booking screen
           },
           backgroundColor: AppColors.medicalBlue,
@@ -286,7 +289,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // Handle reschedule
               },
               icon: Icon(Icons.edit_calendar, color: AppColors.medicalBlueDark),
-              label: Text("Reschedule", style: TextStyle(color: AppColors.medicalBlueDark)),
+              label: Text(
+                "Reschedule",
+                style: TextStyle(color: AppColors.medicalBlueDark),
+              ),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: AppColors.medicalBlueDark),
               ),
@@ -438,7 +444,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Text(
                       tip['description'],
                       style: GoogleFonts.inter(
-                        textStyle: TextStyle(color: AppColors.textOnDark, fontSize: 14),
+                        textStyle: TextStyle(
+                          color: AppColors.textOnDark,
+                          fontSize: 14,
+                        ),
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,

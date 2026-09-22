@@ -30,6 +30,27 @@ class SessionTypeScreen extends StatelessWidget {
               : ListView(
                   padding: EdgeInsets.all(16),
                   children: [
+                    Container(
+                      padding: EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.medicalBlueLight,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.medicalBlue.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Text(
+                        '${controller.selectedCity.value?.cityStateName ?? 'City'} › ${controller.selectedArea.value?.areaName ?? 'Area'} › ${controller.selectedDoctor.value?.name ?? 'Doctor'}',
+                        style: GoogleFonts.inter(
+                          textStyle: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.medicalBlueDark,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 18),
                     Text(
                       'Choose Your Therapy Type',
                       style: GoogleFonts.inter(
@@ -51,8 +72,9 @@ class SessionTypeScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 24),
-                    ...controller.sessionTypes
-                        .map((sessionType) => _buildSessionCard(sessionType)),
+                    ...controller.sessionTypes.map(
+                      (sessionType) => _buildSessionCard(sessionType),
+                    ),
                   ],
                 ),
         ),
@@ -78,10 +100,7 @@ class SessionTypeScreen extends StatelessWidget {
             ),
           ],
           color: AppColors.surface,
-          border: Border.all(
-            color: AppColors.border,
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.border, width: 1),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -134,8 +153,10 @@ class SessionTypeScreen extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.medicalBlueLight,
                             borderRadius: BorderRadius.circular(20),
