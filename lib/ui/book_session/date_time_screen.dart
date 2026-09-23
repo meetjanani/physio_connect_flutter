@@ -8,6 +8,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:geocoding/geocoding.dart';
 
 import '../../route/route_module.dart';
+import '../../utils/view_extension.dart';
 import 'booking_controller.dart';
 
 class DateTimeScreen extends StatefulWidget {
@@ -396,6 +397,12 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                   onPressed: controller.selectedTimeSlot.value == null
                       ? null
                       : () {
+                          if (controller.selectedSessionType.value == null) {
+                            controller.showErrorSnackbar(
+                              'Please select a session type before proceeding.',
+                            );
+                            return;
+                          }
                           Get.toNamed(AppPage.performPayment);
                         },
                   style: ElevatedButton.styleFrom(

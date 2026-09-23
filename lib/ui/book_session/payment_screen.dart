@@ -38,9 +38,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    print('[Razorpay] PAYMENT SUCCESS callback invoked: paymentId=${response
-        .paymentId}, orderId=${response.orderId}, signature=${response
-        .signature}');
+    print(
+      '[Razorpay] PAYMENT SUCCESS callback invoked: paymentId=${response.paymentId}, orderId=${response.orderId}, signature=${response.signature}',
+    );
     // Store payment data and navigate to confirmation
     controller.razorpayPaymentId.value = response.paymentId!;
 
@@ -51,20 +51,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
     //     razorpayPaymentId: response.paymentId,
     //     razorpaySignature: response.signature);
 
-
-    controller.supabaseController.callVerifyRazorPayPaymentSBEdgeFunction(
-        bookingId: controller.bookingId.toString(),
-        userId: controller.userModelSupabase?.id!.toString(),
-        razorpayOrderId: response.orderId,
-        razorpayPaymentId: response.paymentId,
-        razorpaySignature: response.signature).then((_) {
-      Get.toNamed(AppPage.bookingConfirmation);
-    });
+    controller.supabaseController
+        .callVerifyRazorPayPaymentSBEdgeFunction(
+          bookingId: controller.bookingId.toString(),
+          userId: controller.userModelSupabase?.id!.toString(),
+          razorpayOrderId: response.orderId,
+          razorpayPaymentId: response.paymentId,
+          razorpaySignature: response.signature,
+        )
+        .then((_) {
+          Get.toNamed(AppPage.bookingConfirmation);
+        });
     // controller.updateBookingPaymentStatusAfterSuccess(paymentResponse: response);
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
-    print('[Razorpay] PAYMENT ERROR callback invoked: code=${response.code}, message=${response.message}');
+    print(
+      '[Razorpay] PAYMENT ERROR callback invoked: code=${response.code}, message=${response.message}',
+    );
     Get.snackbar(
       'Payment Failed',
       'Error: ${response.message}',
@@ -99,7 +103,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       'order_id': razorpayOrder.orderId,
       'currency': razorpayOrder.currency,
       'name': 'PhysioConnect',
-      'description': 'Payment for ${controller.selectedSessionType.value!.name}',
+      'description':
+          'Payment for ${controller.selectedSessionType.value?.name ?? 'Physiotherapy session'}',
       'prefill': {
         'contact': controller.userModelSupabase?.mobileNumber ?? '',
         // 'email': controller.userModelSupabase?.email ?? '',  // Recommended to include email
@@ -113,7 +118,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'upi': true,
         'paylater': false,
         'emi': false,
-        'card': true  // Only enable card payments
+        'card': true, // Only enable card payments
       },
       'config': {
         'display': {
@@ -122,14 +127,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
             // {'method': 'wallet', 'except': ['googlePay']},  // Hide all wallets except Google Pay
             // {'method': 'upi', 'flows': ['collect']},  // Hide UPI collect
             {'method': 'paylater'},
-            {'method': 'emi'}
-          ]
-        }
-      }
+            {'method': 'emi'},
+          ],
+        },
+      },
     };
 
     try {
-      print('[Razorpay] Opening checkout for order ${razorpayOrder.orderId} amount=${razorpayOrder.amount}');
+      print(
+        '[Razorpay] Opening checkout for order ${razorpayOrder.orderId} amount=${razorpayOrder.amount}',
+      );
       _razorpay.open(options);
     } catch (e, stackTrace) {
       print('[Razorpay] Error opening checkout: ${e.toString()}');
@@ -151,237 +158,257 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     return Scaffold(
       appBar: commonAppBar('Payment', isBackButtonVisible: true),
-      body: SafeArea(child: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.all(16),
-              children: [
-                // Booking summary card
-                Container(
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.shadowLight,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Booking Summary',
-                        style: GoogleFonts.inter(
-                          textStyle: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.all(16),
+                children: [
+                  // Booking summary card
+                  Container(
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadowLight,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
                         ),
-                      ),
-                      SizedBox(height: 20),
-
-                      // Session info
-                      Obx(() => _buildSummaryItem(
-                        icon: Icons.spa,
-                        title: 'Session Type',
-                        value: controller.selectedSessionType.value?.name ?? 'N/A',
-                      )),
-                      SizedBox(height: 16),
-
-                      // Date info
-                      Obx(() => _buildSummaryItem(
-                        icon: Icons.calendar_today,
-                        title: 'Date',
-                        value: dateFormatter.format(controller.selectedDate.value),
-                      )),
-                      SizedBox(height: 16),
-
-                      // Time info
-                      Obx(() => _buildSummaryItem(
-                        icon: Icons.access_time,
-                        title: 'Time',
-                        value: controller.selectedTimeSlot.value?.time ?? 'N/A',
-                      )),
-                      SizedBox(height: 16),
-
-                      // Duration info
-                      Obx(() => _buildSummaryItem(
-                        icon: Icons.timelapse,
-                        title: 'Duration',
-                        value: '${controller.selectedSessionType.value?.duration ?? 0}',
-                      )),
-
-                      SizedBox(height: 24),
-                      Divider(),
-                      SizedBox(height: 24),
-
-                      // Price info
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Total Amount',
-                            style: GoogleFonts.inter(
-                              textStyle: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Booking Summary',
+                          style: GoogleFonts.inter(
+                            textStyle: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
                             ),
                           ),
-                          Obx(() => Text(
-                            '₹${controller.selectedSessionType.value?.price.toStringAsFixed(0) ?? 0}',
-                            style: GoogleFonts.inter(
-                              textStyle: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.medicalBlueDark,
-                              ),
-                            ),
-                          )),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 24),
-
-                // Payment methods
-                Text(
-                  'Payment Method',
-                  style: GoogleFonts.inter(
-                    textStyle: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-
-                // Razorpay method
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.medicalBlue,
-                      width: 2,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.medicalBlueLight,
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Image.network(
-                          'https://razorpay.com/assets/razorpay-logo.png',
-                          height: 24,
-                          width: 24,
-                          errorBuilder: (context, error, stackTrace) => Icon(
-                            Icons.payment,
-                            color: AppColors.medicalBlueDark,
+                        SizedBox(height: 20),
+
+                        // Session info
+                        Obx(
+                          () => _buildSummaryItem(
+                            icon: Icons.spa,
+                            title: 'Session Type',
+                            value:
+                                controller.selectedSessionType.value?.name ??
+                                'N/A',
                           ),
                         ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        SizedBox(height: 16),
+
+                        // Date info
+                        Obx(
+                          () => _buildSummaryItem(
+                            icon: Icons.calendar_today,
+                            title: 'Date',
+                            value: dateFormatter.format(
+                              controller.selectedDate.value,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+
+                        // Time info
+                        Obx(
+                          () => _buildSummaryItem(
+                            icon: Icons.access_time,
+                            title: 'Time',
+                            value:
+                                controller.selectedTimeSlot.value?.time ??
+                                'N/A',
+                          ),
+                        ),
+                        SizedBox(height: 16),
+
+                        // Duration info
+                        Obx(
+                          () => _buildSummaryItem(
+                            icon: Icons.timelapse,
+                            title: 'Duration',
+                            value:
+                                '${controller.selectedSessionType.value?.duration ?? 0}',
+                          ),
+                        ),
+
+                        SizedBox(height: 24),
+                        Divider(),
+                        SizedBox(height: 24),
+
+                        // Price info
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Razorpay',
+                              'Total Amount',
                               style: GoogleFonts.inter(
                                 textStyle: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
                                 ),
                               ),
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Pay via Credit/Debit Card, UPI, or Net Banking',
-                              style: GoogleFonts.inter(
-                                textStyle: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textMuted,
+                            Obx(
+                              () => Text(
+                                '₹${controller.selectedSessionType.value?.price.toStringAsFixed(0) ?? 0}',
+                                style: GoogleFonts.inter(
+                                  textStyle: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.medicalBlueDark,
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      Icon(
-                        Icons.check_circle,
-                        color: AppColors.medicalBlue,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
 
-          // Bottom button
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadowLight,
-                  blurRadius: 10,
-                  offset: Offset(0, -5),
-                ),
-              ],
-            ),
-            child: Obx(() =>
-            controller.isLoading.value == true ? Center(
-              child: CircularProgressIndicator(
-                color: AppColors.medicalBlue,
-              ),
-            ) : ElevatedButton(
-              onPressed: () async {
-                var razorpayOrder = await controller.createPendingBookingBeforePayment();
-                if(razorpayOrder != null) {
-                  _openRazorpayCheckout(razorpayOrder);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.medicalBlue,
-                foregroundColor: AppColors.textOnDark,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-              ),
-              child: Text(
-                'Pay Now',
-                style: GoogleFonts.inter(
-                  textStyle: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  SizedBox(height: 24),
+
+                  // Payment methods
+                  Text(
+                    'Payment Method',
+                    style: GoogleFonts.inter(
+                      textStyle: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ),
-                ),
+                  SizedBox(height: 16),
+
+                  // Razorpay method
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.medicalBlue,
+                        width: 2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.medicalBlueLight,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Image.network(
+                            'https://razorpay.com/assets/razorpay-logo.png',
+                            height: 24,
+                            width: 24,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.payment,
+                              color: AppColors.medicalBlueDark,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Razorpay',
+                                style: GoogleFonts.inter(
+                                  textStyle: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Pay via Credit/Debit Card, UPI, or Net Banking',
+                                style: GoogleFonts.inter(
+                                  textStyle: TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.check_circle, color: AppColors.medicalBlue),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            )),
-          ),
-          SizedBox(height: 4,)
-        ],
-      )),
+            ),
+
+            // Bottom button
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadowLight,
+                    blurRadius: 10,
+                    offset: Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Obx(
+                () => controller.isLoading.value == true
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.medicalBlue,
+                        ),
+                      )
+                    : ElevatedButton(
+                        onPressed: () async {
+                          var razorpayOrder = await controller
+                              .createPendingBookingBeforePayment();
+                          if (razorpayOrder != null) {
+                            _openRazorpayCheckout(razorpayOrder);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.medicalBlue,
+                          foregroundColor: AppColors.textOnDark,
+                          minimumSize: Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: Text(
+                          'Pay Now',
+                          style: GoogleFonts.inter(
+                            textStyle: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+            SizedBox(height: 4),
+          ],
+        ),
+      ),
     );
   }
 
@@ -398,11 +425,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             color: AppColors.medicalBlueLight,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.medicalBlueDark,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppColors.medicalBlueDark, size: 20),
         ),
         SizedBox(width: 16),
         Expanded(

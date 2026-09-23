@@ -81,13 +81,20 @@ class BookingController extends GetxController {
     PaymentStatus paymentStatus,
   ) async {
     isLoading.value = true;
+    final sessionType = selectedSessionType.value;
+    if (sessionType == null) {
+      isLoading.value = false;
+      showErrorSnackbar(
+        'Please select a session type before completing payment.',
+      );
+      return;
+    }
+
     final doctorModel =
         selectedDoctor.value ?? await DoctorModel.getFromSecureStorage();
     final doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
     final timeslotJson = jsonEncode(selectedTimeSlot.value?.toJson() ?? {});
-    final sessionTypeJson = jsonEncode(
-      selectedSessionType.value?.toJson() ?? {},
-    );
+    final sessionTypeJson = jsonEncode(sessionType.toJson());
     final patientJson = jsonEncode(userModelSupabase?.toJson() ?? {});
 
     final notificationDoctorId =
@@ -110,8 +117,8 @@ class BookingController extends GetxController {
       cityStateJson: selectedCity.value?.toJson().toString(),
       areaJson: selectedArea.value?.toJson().toString(),
       doctorJson: doctorJson,
-      sessionTypeId: selectedSessionType.value?.id ?? 1,
-      price: selectedSessionType.value?.price ?? 1,
+      sessionTypeId: sessionType.id,
+      price: sessionType.price,
       sessionTypeJson: sessionTypeJson,
       patientJson: patientJson,
       paymentStatus: paymentStatus.name,
@@ -169,13 +176,19 @@ class BookingController extends GetxController {
     isLoading.value = true;
 
     try {
+      final sessionType = selectedSessionType.value;
+      if (sessionType == null) {
+        showErrorSnackbar(
+          'Please select a session type before proceeding to payment.',
+        );
+        return null;
+      }
+
       final doctorModel =
           selectedDoctor.value ?? await DoctorModel.getFromSecureStorage();
       final doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
       final timeslotJson = jsonEncode(selectedTimeSlot.value?.toJson() ?? {});
-      final sessionTypeJson = jsonEncode(
-        selectedSessionType.value?.toJson() ?? {},
-      );
+      final sessionTypeJson = jsonEncode(sessionType.toJson());
       final patientJson = jsonEncode(userModelSupabase?.toJson() ?? {});
 
       bookingsModel.value = BookingsModel(
@@ -188,8 +201,8 @@ class BookingController extends GetxController {
         cityStateJson: selectedCity.value?.toJson().toString(),
         areaJson: selectedArea.value?.toJson().toString(),
         doctorJson: doctorJson,
-        sessionTypeId: selectedSessionType.value?.id ?? 1,
-        price: selectedSessionType.value?.price ?? 1,
+        sessionTypeId: sessionType.id,
+        price: sessionType.price,
         sessionTypeJson: sessionTypeJson,
         patientJson: patientJson,
         paymentStatus: PaymentStatus.pending.name,
