@@ -11,7 +11,7 @@ import '../../utils/cached_network_image.dart';
 import 'booking_controller.dart';
 
 class SessionTypeScreen extends StatelessWidget {
-  final BookingController controller = Get.put(BookingController());
+  final BookingController controller = Get.find<BookingController>();
 
   SessionTypeScreen({Key? key}) : super(key: key);
 
