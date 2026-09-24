@@ -55,7 +55,7 @@ class BookingHistoryController extends GetxController {
   Future<void> updateDoctorNote(BookingsModel doctorNotes) async {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
-      var response = await supabaseController.updateBookingStatus(
+      var response = await supabaseController.updateDoctorNote(
         doctorNotes?.id ?? 0,
         doctorNotes,
       );
