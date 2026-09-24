@@ -4,16 +4,17 @@ import 'package:intl/intl.dart';
 import 'package:physio_connect/utils/view_extension.dart';
 
 import '../../model/bookings_model.dart';
+import '../../model/refund_response_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
 import '../../utils/constants.dart';
 import '../../utils/enum.dart';
+import '../../utils/theme/app_colors.dart';
 
 class BookingHistoryController extends GetxController {
   static BookingHistoryController get to => Get.put(BookingHistoryController());
 
   final isLoading = true.obs;
-  final isLoadingDetails = false.obs;
 
   // Date filter
   final fromDate = DateTime.now().subtract(Duration(days: 7)).obs;
@@ -140,6 +141,57 @@ class BookingHistoryController extends GetxController {
         "The appointment on ${bookingDate}. Reminder has been sent by the doctor: ${appointment?.aDoctor().name}.",);
     }
   }
+
+  Future<RefundResponseModel> processRefundForPatient(
+    String bookingId,
+    String doctorId,
+  ) async {
+    // 1. Show Loading State
+    isLoading.value = true;
+
+    // (Optional: Show a loading dialog here if you prefer that over a spinner)
+
+    // 2. Call the function
+    final result = await supabaseController.callInitiateRefundEdgeFunction(
+      bookingId: bookingId,
+      doctorId: doctorId,
+    );
+
+    // 3. Hide Loading State
+    isLoading.value = false;
+
+
+    // 4. Handle UI based on the smart model
+    if (result.success) {
+      // Show success using your existing view extensions / GetX snackbars
+      Get.snackbar(
+        'Refund Successful',
+        result.message ?? 'The money has been routed back to the patient.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.success.withOpacity(0.9),
+        colorText: AppColors.textOnDark,
+      );
+
+      print('Refund ID saved: ${result.refundId}');
+
+      // TODO: Update your local list of bookings to reflect "refunded" status
+
+    } else {
+      // Show the beautifully parsed error message directly to the doctor
+      Get.snackbar(
+        'Refund Failed',
+        result.errorMessage ?? 'Something went wrong. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error.withOpacity(0.9),
+        colorText: AppColors.textOnDark,
+        duration: const Duration(seconds: 4), // Give them time to read longer errors
+      );
+    }
+
+    return result;
+  }
+
+
     /*// Update local data
     final index = allAppointments.indexWhere((a) => a.appointmentId == appointmentId);
     if (index >= 0) {
