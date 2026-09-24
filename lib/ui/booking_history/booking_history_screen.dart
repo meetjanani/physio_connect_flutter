@@ -234,7 +234,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       itemBuilder: (context, index) {
         final appointment = controller.upComingBookings[index];
         final isUpcoming =
-            appointment.paymentStatus == BookingStatus.booked.name;
+            appointment.paymentStatus == BookingStatus.confirmed.name;
         return SessionBookingCard(appointment);
       },
     );

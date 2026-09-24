@@ -21,6 +21,7 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
   @override
   void initState() {
     super.initState();
+    controller.clearCoverageSelection();
     controller.loadServiceCities();
   }
 
