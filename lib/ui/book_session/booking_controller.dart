@@ -110,7 +110,7 @@ class BookingController extends GetxController {
     bookingsModel.value = BookingsModel(
       id: 0,
       userId: userModelSupabase?.id ?? 0,
-      bookingStatus: BookingStatus.booked.name,
+      bookingStatus: BookingStatus.confirmed.name,
       timeSlotId: selectedTimeSlot.value?.id ?? 1,
       timeSlotJson: timeslotJson,
       doctorId: doctorModel?.id ?? selectedDoctor.value?.id ?? 0,
@@ -234,44 +234,6 @@ class BookingController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  Future<void> updateBookingPaymentStatusAfterSuccess({
-    required PaymentSuccessResponse paymentResponse,
-  }) async {
-    if (bookingsModel.value == null) {
-      throw Exception('No pending booking exists to update.');
-    }
-
-    bookingsModel.value = BookingsModel(
-      id: bookingsModel.value!.id,
-      userId: bookingsModel.value!.userId,
-      bookingStatus: BookingStatus.booked.name,
-      timeSlotId: bookingsModel.value!.timeSlotId,
-      timeSlotJson: bookingsModel.value!.timeSlotJson,
-      doctorId: bookingsModel.value!.doctorId,
-      cityStateJson: selectedCity.value?.toJson().toString(),
-      areaJson: selectedArea.value?.toJson().toString(),
-      doctorJson: bookingsModel.value!.doctorJson,
-      sessionTypeId: bookingsModel.value!.sessionTypeId,
-      price: bookingsModel.value!.price,
-      sessionTypeJson: bookingsModel.value!.sessionTypeJson,
-      patientJson: bookingsModel.value!.patientJson,
-      paymentStatus: PaymentStatus.paid.name,
-      paymentId: paymentResponse.paymentId,
-      orderId: paymentResponse.orderId,
-      signature: paymentResponse.signature,
-      doctorNotes: bookingsModel.value!.doctorNotes,
-      address: bookingsModel.value!.address,
-      latLong: bookingsModel.value!.latLong,
-      bookingDate: bookingsModel.value!.bookingDate,
-      createdAt: bookingsModel.value!.createdAt,
-    );
-
-    await supabaseController.createNewBooking(
-      bookingsModel.value!,
-      bookingsModel.value!.doctorId,
-    );
   }
 
   Future<void> updateBookingPaymentStatusAfterFailure() async {

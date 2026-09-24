@@ -8,7 +8,6 @@ import '../../model/refund_response_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
 import '../../utils/constants.dart';
-import '../../utils/enum.dart';
 import '../../utils/theme/app_colors.dart';
 
 class BookingHistoryController extends GetxController {
@@ -23,8 +22,7 @@ class BookingHistoryController extends GetxController {
   // Appointments
   final selectedAppointment = Rx<BookingsModel?>(null);
 
-  SupabaseController supabaseController =
-      SupabaseController.to;
+  SupabaseController supabaseController = SupabaseController.to;
   UserModelSupabase? userModelSupabase;
   RxList<BookingsModel> upComingBookings = RxList();
   RxBool isDoctor = false.obs;
@@ -42,7 +40,12 @@ class BookingHistoryController extends GetxController {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
       upComingBookings.clear();
-      var response = await supabaseController.getFilteredBookings(userModelSupabase?.id ?? 0, fromDate.value, toDate.value, isDoctor.value);
+      var response = await supabaseController.getFilteredBookings(
+        userModelSupabase?.id ?? 0,
+        fromDate.value,
+        toDate.value,
+        isDoctor.value,
+      );
       upComingBookings.addAll(response);
       isLoading.value = false;
       showSuccessSnackbar("${upComingBookings.value.length}");
@@ -52,7 +55,10 @@ class BookingHistoryController extends GetxController {
   Future<void> updateDoctorNote(BookingsModel doctorNotes) async {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
-      var response = await supabaseController.updateBookingStatus(doctorNotes?.id ?? 0, doctorNotes);
+      var response = await supabaseController.updateBookingStatus(
+        doctorNotes?.id ?? 0,
+        doctorNotes,
+      );
       isLoading.value = false;
     }
   }
@@ -60,7 +66,38 @@ class BookingHistoryController extends GetxController {
   Future<void> updateAppointmentStatus(BookingsModel doctorNotes) async {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
-      var response = await supabaseController.updateBookingStatus(doctorNotes?.id ?? 0, doctorNotes);
+      var response = await supabaseController.updateBookingStatus(
+        doctorNotes?.id ?? 0,
+        doctorNotes,
+      );
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> rescheduleAppointment(
+    BookingsModel appointment,
+    DateTime newDate,
+  ) async {
+    isLoading.value = true;
+    try {
+      final bookingDate = DateFormat('yyyy-MM-dd').format(newDate);
+      await supabaseController.updateBookingDate(appointment.id, bookingDate);
+      appointment.bookingDate = bookingDate;
+      selectedAppointment.value = appointment;
+
+      final index = upComingBookings.indexWhere((booking) {
+        return booking.id == appointment.id;
+      });
+      if (index != -1) {
+        upComingBookings[index] = appointment;
+      }
+
+      Get.snackbar(
+        'Appointment Rescheduled',
+        'The appointment was moved to $bookingDate.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
       isLoading.value = false;
     }
   }
@@ -80,7 +117,7 @@ class BookingHistoryController extends GetxController {
     final fromDateStr = DateFormat('yyyy-MM-dd').format(fromDate.value);
     final toDateStr = DateFormat('yyyy-MM-dd').format(toDate.value);
 
-   /* filteredAppointments.value = allAppointments
+    /* filteredAppointments.value = allAppointments
         .where((appointment) {
           final appDate = appointment.date;
           return appDate.compareTo(fromDateStr) >= 0 &&
@@ -116,29 +153,25 @@ class BookingHistoryController extends GetxController {
     });
   }*/
 
-  void cancelAppointment(BookingsModel appointment) {
-    // In a real app, call your API to cancel the appointment
-    Get.snackbar(
-      'Appointment Cancelled',
-      'Your appointment has been successfully cancelled',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
   void sendReminderNotification() async {
     var appointment = selectedAppointment.value;
     var doctorId = appointment?.doctorId ?? 0;
     var userId = appointment?.userId ?? 0;
     var bookingDate = appointment?.bookingDate ?? "";
 
-    if(isDoctorTypeUser(userModelSupabase?.id ?? 0) == false) { // patient type user
+    if (isDoctorTypeUser(userModelSupabase?.id ?? 0) == false) {
+      // patient type user
       await supabaseController.sentNotification(
-        doctorId, "Patient: ${appointment?.aPatient().name} ",
-        "The appointment on ${bookingDate}, patient has requested a callback",);
+        doctorId,
+        "Patient: ${appointment?.aPatient().name} ",
+        "The appointment on ${bookingDate}, patient has requested a callback",
+      );
     } else {
       await supabaseController.sentNotification(
-        userId, "Appointment Reminder: ${appointment?.aPatient().name} ",
-        "The appointment on ${bookingDate}. Reminder has been sent by the doctor: ${appointment?.aDoctor().name}.",);
+        userId,
+        "Appointment Reminder: ${appointment?.aPatient().name} ",
+        "The appointment on ${bookingDate}. Reminder has been sent by the doctor: ${appointment?.aDoctor().name}.",
+      );
     }
   }
 
@@ -160,7 +193,6 @@ class BookingHistoryController extends GetxController {
     // 3. Hide Loading State
     isLoading.value = false;
 
-
     // 4. Handle UI based on the smart model
     if (result.success) {
       // Show success using your existing view extensions / GetX snackbars
@@ -175,7 +207,6 @@ class BookingHistoryController extends GetxController {
       print('Refund ID saved: ${result.refundId}');
 
       // TODO: Update your local list of bookings to reflect "refunded" status
-
     } else {
       // Show the beautifully parsed error message directly to the doctor
       Get.snackbar(
@@ -184,15 +215,16 @@ class BookingHistoryController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.error.withOpacity(0.9),
         colorText: AppColors.textOnDark,
-        duration: const Duration(seconds: 4), // Give them time to read longer errors
+        duration: const Duration(
+          seconds: 4,
+        ), // Give them time to read longer errors
       );
     }
 
     return result;
   }
 
-
-    /*// Update local data
+  /*// Update local data
     final index = allAppointments.indexWhere((a) => a.appointmentId == appointmentId);
     if (index >= 0) {
       allAppointments[index] = allAppointments[index].copyWith(status: 'cancelled');

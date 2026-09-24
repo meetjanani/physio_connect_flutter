@@ -8,13 +8,13 @@ import 'package:physio_connect/model/bookings_model.dart';
 import 'package:physio_connect/services/letter_head_service.dart';
 import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_note.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
-import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:physio_connect/utils/view_extension.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/invoice_service.dart';
 import '../../utils/constants.dart';
+import '../../utils/enum.dart';
 import 'booking_history_controller.dart';
 import '../../route/route_module.dart';
 
@@ -122,7 +122,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       isDoctorTypeUser(controller.userModelSupabase?.id ?? 0)
-                      /*appointment.aPatient().userType?.toLowerCase() ==
+                          /*appointment.aPatient().userType?.toLowerCase() ==
                               UserType.doctor.name*/
                           ? Obx(
                               () => controller.isLoading.value
@@ -171,19 +171,23 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                                 appointment.bookingStatus
                                                     .toLowerCase()) {
                                           appointment.bookingStatus = newValue;
-                                          controller.updateAppointmentStatus(
-                                            appointment,
-                                          ).then((value) {setState(() {
-
-                                          });});
+                                          controller
+                                              .updateAppointmentStatus(
+                                                appointment,
+                                              )
+                                              .then((value) {
+                                                setState(() {});
+                                              });
                                         }
                                       },
                                       items:
                                           [
-                                            'booked',
+                                            'pending',
+                                            'confirmed',
                                             'completed',
                                             'cancelled',
                                             'no-show',
+                                            'refunded',
                                           ].map<DropdownMenuItem<String>>((
                                             String value,
                                           ) {
@@ -463,40 +467,21 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ],
 
           // Actions
-          if (appointment.bookingStatus == BookingStatus.booked) ...[
+          if (controller.isDoctor.value &&
+              appointment.bookingStatus.toLowerCase() == BookingStatus.confirmed.name) ...[
             SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // Show reschedule dialog/screen
-                    },
-                    icon: Icon(Icons.edit_calendar),
-                    label: Text('Reschedule'),
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: AppColors.medicalBlue),
-                      foregroundColor: AppColors.medicalBlue,
-                    ),
-                  ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showRescheduleDialog(context, appointment),
+                icon: Icon(Icons.edit_calendar),
+                label: Text('Reschedule'),
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(color: AppColors.medicalBlue),
+                  foregroundColor: AppColors.medicalBlue,
                 ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      _showCancellationDialog(context);
-                    },
-                    icon: Icon(Icons.cancel_outlined),
-                    label: Text('Cancel'),
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: AppColors.error),
-                      foregroundColor: AppColors.error,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
 
@@ -726,100 +711,137 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               ],
             ),
             SizedBox(height: 12),
-            HtmlWidget(
-              notes,
-            ),
+            HtmlWidget(notes),
           ],
         ),
       ),
     );
   }
 
-  void _showCancellationDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showRescheduleDialog(
+    BuildContext context,
+    BookingsModel appointment,
+  ) async {
+    final currentDate =
+        DateTime.tryParse(appointment.bookingDate) ?? DateTime.now();
+    DateTime? selectedDate = currentDate;
+
+    final action = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Cancel Appointment',
-          style: GoogleFonts.inter(
-            textStyle: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Are you sure you want to cancel this appointment?',
-              style: GoogleFonts.inter(),
-            ),
-            SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.warningLight,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                'Reschedule Appointment',
+                style: GoogleFonts.inter(
+                  textStyle: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-              child: Row(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: AppColors.warningDark,
-                    size: 20,
+                  Text(
+                    'Please confirm a new date for this appointment.',
+                    style: GoogleFonts.inter(),
                   ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Cancellations within 24 hours may be subject to a fee.',
-                      style: GoogleFonts.inter(
-                        textStyle: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.warningDark,
-                        ),
+                  SizedBox(height: 12),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.warningLight,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.warning.withOpacity(0.3),
                       ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: AppColors.warningDark,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'The appointment date will be updated for the patient.',
+                            style: GoogleFonts.inter(
+                              textStyle: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.warningDark,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: dialogContext,
+                        initialDate: selectedDate!.isBefore(DateTime.now())
+                            ? DateTime.now()
+                            : selectedDate!,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          selectedDate = picked;
+                        });
+                      }
+                    },
+                    icon: Icon(Icons.calendar_month),
+                    label: Text(
+                      DateFormat('EEEE, MMMM d, yyyy').format(selectedDate!),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Keep Appointment',
-              style: GoogleFonts.inter(
-                textStyle: TextStyle(color: AppColors.textMuted),
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              controller.cancelAppointment(appointment);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: AppColors.textOnDark,
-            ),
-            child: Text('Cancel Appointment', style: GoogleFonts.inter()),
-          ),
-        ],
-      ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, 'keep'),
+                  child: Text('Keep Current Date'),
+                ),
+                ElevatedButton(
+                  onPressed: selectedDate == currentDate
+                      ? null
+                      : () => Navigator.pop(dialogContext, 'reschedule'),
+                  child: Text('Confirm Date'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
+
+    if (action == 'reschedule' && selectedDate != null) {
+      await controller.rescheduleAppointment(appointment, selectedDate!);
+      if (mounted) {
+        setState(() {});
+      }
+    }
   }
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
+      case 'pending':
+        return AppColors.warning;
+      case 'confirmed':
       case 'booked':
         return AppColors.wellnessGreen;
       case 'completed':
         return AppColors.medicalBlue;
       case 'cancelled':
         return AppColors.error;
+      case 'refunded':
       case 'no-show':
+      case 'no_show':
         return AppColors.warning;
       default:
         return AppColors.textMuted;
@@ -828,13 +850,19 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
+      case 'pending':
+        return Icons.hourglass_top;
+      case 'confirmed':
       case 'booked':
         return Icons.event_available;
       case 'completed':
         return Icons.check_circle;
       case 'cancelled':
         return Icons.cancel;
+      case 'refunded':
+        return Icons.currency_exchange;
       case 'no-show':
+      case 'no_show':
         return Icons.event_busy;
       default:
         return Icons.event_note;
@@ -843,13 +871,19 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
   String _getStatusText(String status) {
     switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Pending Payment';
+      case 'confirmed':
       case 'booked':
         return 'Upcoming Appointment';
       case 'completed':
         return 'Completed Session';
       case 'cancelled':
         return 'Cancelled Appointment';
+      case 'refunded':
+        return 'Refunded Appointment';
       case 'no-show':
+      case 'no_show':
         return 'Missed Appointment';
       default:
         return status.capitalize!;
@@ -858,13 +892,19 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
   String _getStatusDescription(String status) {
     switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Complete payment to confirm your session';
+      case 'confirmed':
       case 'booked':
         return 'Your session is scheduled and confirmed';
       case 'completed':
         return 'Your session has been successfully completed';
       case 'cancelled':
         return 'This appointment was cancelled';
+      case 'refunded':
+        return 'The payment for this appointment has been refunded';
       case 'no-show':
+      case 'no_show':
         return 'You did not attend this appointment';
       default:
         return '';
@@ -875,7 +915,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     switch (status.toLowerCase()) {
       case 'paid':
         return AppColors.wellnessGreen;
+      case 'created':
       case 'pending':
+        return AppColors.warning;
+      case 'refunded':
         return AppColors.warning;
       case 'failed':
         return AppColors.error;
@@ -896,10 +939,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         appointment.razorpayRefundId?.trim().isEmpty != false;
   }
 
-  Widget _buildRefundButton(
-    BuildContext context,
-    BookingsModel appointment,
-  ) {
+  Widget _buildRefundButton(BuildContext context, BookingsModel appointment) {
     final isProcessing = controller.isLoading.value;
     final isEnabled = _refundUnlocked && !isProcessing;
 
@@ -919,7 +959,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               });
 
               if (_refundUnlocked) {
-                showSuccessSnackbar('Refund unlocked. Tap the button to continue.');
+                showSuccessSnackbar(
+                  'Refund unlocked. Tap the button to continue.',
+                );
               } else {
                 showSnackbar(
                   'Refund Locked',

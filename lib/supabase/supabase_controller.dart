@@ -102,6 +102,16 @@ class SupabaseController {
     }
   }
 
+  Future<void> updateBookingDate(int bookingID, String bookingDate) async {
+    if (bookingID > 0 && bookingDate.isNotEmpty) {
+      await supabaseClient
+          .from(DatabaseSchema.bookingsTable)
+          .update({DatabaseSchema.bookingsDate: bookingDate})
+          .eq(DatabaseSchema.bookingsId, bookingID)
+          .select();
+    }
+  }
+
   // Get Master Data
   Future<List<SessionTypeModel>> getSessionTypeMaster() async {
     final response = await supabaseClient

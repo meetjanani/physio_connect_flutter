@@ -62,7 +62,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         .then((_) {
           Get.toNamed(AppPage.bookingConfirmation);
         });
-    // controller.updateBookingPaymentStatusAfterSuccess(paymentResponse: response);
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
