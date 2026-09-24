@@ -8,29 +8,31 @@ part of 'bookings_model.dart';
 
 BookingsModel _$BookingsModelFromJson(Map<String, dynamic> json) =>
     BookingsModel(
-      id: (json['id'] as num).toInt(),
-      userId: (json['userId'] as num).toInt(),
-      bookingStatus: json['bookingStatus'] as String,
-      price: (json['price'] as num).toInt(),
-      timeSlotId: (json['timeSlotId'] as num).toInt(),
-      timeSlotJson: json['timeSlotJson'] as String,
-      doctorId: (json['doctorId'] as num).toInt(),
-      cityStateJson: json['cityStateJson'] as String?,
-      areaJson: json['areaJson'] as String?,
-      doctorJson: json['doctorJson'] as String,
-      sessionTypeId: (json['sessionTypeId'] as num).toInt(),
-      sessionTypeJson: json['sessionTypeJson'] as String,
-      patientJson: json['patientJson'] as String,
-      paymentStatus: json['paymentStatus'] as String,
-      paymentId: json['paymentId'] as String?,
-      orderId: json['orderId'] as String?,
-      signature: json['signature'] as String?,
-      doctorNotes: json['doctorNotes'] as String?,
-      address: json['address'] as String?,
-      latLong: json['latLong'] as String?,
-      bookingDate: json['bookingDate'] as String,
-      createdAt: json['createdAt'] as String,
-    );
+        id: (json['id'] as num).toInt(),
+        userId: (json['userId'] as num).toInt(),
+        bookingStatus: json['bookingStatus'] as String,
+        price: (json['price'] as num).toInt(),
+        timeSlotId: (json['timeSlotId'] as num).toInt(),
+        timeSlotJson: json['timeSlotJson'] as String,
+        doctorId: (json['doctorId'] as num).toInt(),
+        cityStateJson: json['cityStateJson'] as String?,
+        areaJson: json['areaJson'] as String?,
+        doctorJson: json['doctorJson'] as String,
+        sessionTypeId: (json['sessionTypeId'] as num).toInt(),
+        sessionTypeJson: json['sessionTypeJson'] as String,
+        patientJson: json['patientJson'] as String,
+        paymentStatus: json['paymentStatus'] as String,
+        paymentId: json['paymentId'] as String?,
+        orderId: json['orderId'] as String?,
+        signature: json['signature'] as String?,
+        doctorNotes: json['doctorNotes'] as String?,
+        address: json['address'] as String?,
+        latLong: json['latLong'] as String?,
+        bookingDate: json['bookingDate'] as String,
+        createdAt: json['createdAt'] as String,
+      )
+      ..paymentVerifiedAt = json['paymentVerifiedAt'] as String?
+      ..razorpayRefundId = json['razorpayRefundId'] as String?;
 
 Map<String, dynamic> _$BookingsModelToJson(BookingsModel instance) =>
     <String, dynamic>{
@@ -54,6 +56,8 @@ Map<String, dynamic> _$BookingsModelToJson(BookingsModel instance) =>
       'doctorNotes': instance.doctorNotes,
       'address': instance.address,
       'latLong': instance.latLong,
+      'paymentVerifiedAt': instance.paymentVerifiedAt,
+      'razorpayRefundId': instance.razorpayRefundId,
       'bookingDate': instance.bookingDate,
       'createdAt': instance.createdAt,
     };

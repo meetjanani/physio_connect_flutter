@@ -30,13 +30,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       Get.find<BookingHistoryController>();
 
   final BookingsModel appointment = Get.arguments as BookingsModel;
+  int _refundLongPressCount = 0;
+  bool _refundUnlocked = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: commonAppBar("Appointment Details", isBackButtonVisible: true),
       body: Obx(
-        () => controller.isLoadingDetails.value
+        () => controller.isLoading.value
             ? Center(
                 child: CircularProgressIndicator(color: AppColors.medicalBlue),
               )
@@ -284,6 +286,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               }
             }, Icons.location_pin),
           ]),
+
+          if (_canAttemptRefund(appointment)) ...[
+            SizedBox(height: 16),
+            _buildRefundButton(context, appointment),
+          ],
 
           SizedBox(height: 24),
 
@@ -874,6 +881,121 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         return AppColors.error;
       default:
         return AppColors.textMuted;
+    }
+  }
+
+  bool _canAttemptRefund(BookingsModel appointment) {
+    final verifiedAt = DateTime.tryParse(appointment.paymentVerifiedAt ?? '');
+    if (verifiedAt == null ||
+        verifiedAt.isAfter(DateTime.now()) ||
+        DateTime.now().difference(verifiedAt) > const Duration(hours: 48)) {
+      return false;
+    }
+
+    return appointment.paymentStatus.toLowerCase() == 'paid' &&
+        appointment.razorpayRefundId?.trim().isEmpty != false;
+  }
+
+  Widget _buildRefundButton(
+    BuildContext context,
+    BookingsModel appointment,
+  ) {
+    final isProcessing = controller.isLoading.value;
+    final isEnabled = _refundUnlocked && !isProcessing;
+
+    return GestureDetector(
+      onLongPress: isProcessing
+          ? null
+          : () {
+              if (!_canAttemptRefund(appointment)) {
+                return;
+              }
+
+              setState(() {
+                _refundLongPressCount++;
+                if (_refundLongPressCount >= 2) {
+                  _refundUnlocked = true;
+                }
+              });
+
+              if (_refundUnlocked) {
+                showSuccessSnackbar('Refund unlocked. Tap the button to continue.');
+              } else {
+                showSnackbar(
+                  'Refund Locked',
+                  'Long press once more to enable the refund button.',
+                );
+              }
+            },
+      child: ElevatedButton.icon(
+        onPressed: isEnabled
+            ? () => _confirmAndProcessRefund(context, appointment)
+            : null,
+        icon: Icon(Icons.currency_exchange),
+        label: Text(
+          isProcessing
+              ? 'Processing Refund...'
+              : _refundUnlocked
+              ? 'Refund Payment'
+              : 'Long Press Twice to Unlock Refund',
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.error,
+          disabledBackgroundColor: AppColors.errorLight,
+          foregroundColor: AppColors.textOnDark,
+          disabledForegroundColor: AppColors.errorDark,
+          minimumSize: Size(double.infinity, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmAndProcessRefund(
+    BuildContext context,
+    BookingsModel appointment,
+  ) async {
+    final shouldRefund = await Get.dialog<bool>(
+      AlertDialog(
+        title: Text('Confirm Refund'),
+        content: Text(
+          'This payment can only be refunded once. Do you want to continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.textOnDark,
+            ),
+            child: Text('Refund Payment'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldRefund != true || !_canAttemptRefund(appointment)) {
+      return;
+    }
+
+    final result = await controller.processRefundForPatient(
+      appointment.id.toString(),
+      appointment.doctorId.toString(),
+    );
+
+    if (result.success && result.refundId?.trim().isNotEmpty == true) {
+      setState(() {
+        appointment.razorpayRefundId = result.refundId;
+        appointment.paymentStatus = 'refunded';
+        _refundUnlocked = false;
+        _refundLongPressCount = 0;
+      });
     }
   }
 

@@ -9,6 +9,7 @@ import '../model/bookings_model.dart';
 import '../model/create_razorpay_order_model.dart';
 import '../model/area_model.dart';
 import '../model/city_state_model.dart';
+import '../model/refund_response_model.dart';
 import '../model/session_type_model.dart';
 import '../model/user_model_supabase.dart';
 import '../model/verify_razorpay_payment_order_model.dart';
@@ -117,7 +118,7 @@ class SupabaseController {
         .from(DatabaseSchema.cityStateTable)
         .select('*')
         .eq(DatabaseSchema.cityStateIsActive, true);
-        // .order(DatabaseSchema.serviceStatesOrderBy, ascending: true);
+    // .order(DatabaseSchema.serviceStatesOrderBy, ascending: true);
     return CityStateModel.fromJsonList(response);
   }
 
@@ -146,7 +147,7 @@ class SupabaseController {
         .select('*')
         .eq(DatabaseSchema.areaCityStateId, cityId)
         .eq(DatabaseSchema.serviceAreasIsActive, true);
-        // .order(DatabaseSchema.serviceAreasOrderBy, ascending: true);
+    // .order(DatabaseSchema.serviceAreasOrderBy, ascending: true);
     return AreaModel.fromJsonList(response);
   }
 
@@ -320,6 +321,38 @@ class SupabaseController {
       // Catches network or parsing errors
       print('Unexpected Error verifying payment: $e');
       return VerifyPaymentResponseModel(success: false, error: e.toString());
+    }
+  }
+
+  Future<RefundResponseModel> callInitiateRefundEdgeFunction({
+    required String bookingId,
+    required String doctorId,
+  }) async {
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'initiate-refund',
+        body: {'bookingId': bookingId, 'doctorId': doctorId},
+      );
+
+      // This handles the 200 OK success response
+      return RefundResponseModel.fromJson(response.data);
+    } on FunctionException catch (e) {
+      // Supabase throws this for 400, 403, 404, 500 status codes.
+      // e.details contains the JSON body we sent from the Deno script.
+      if (e.details != null && e.details is Map<String, dynamic>) {
+        return RefundResponseModel.fromJson(e.details as Map<String, dynamic>);
+      }
+
+      return RefundResponseModel(
+        success: false,
+        errorMessage: e.reasonPhrase ?? 'A server error occurred.',
+      );
+    } catch (e) {
+      // This catches network drops, timeout issues, or parsing errors
+      return RefundResponseModel(
+        success: false,
+        errorMessage: 'An unexpected network error occurred.',
+      );
     }
   }
 

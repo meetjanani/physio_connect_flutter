@@ -30,6 +30,8 @@ class BookingsModel {
   String? doctorNotes = "";
   String? address = "";
   String? latLong = "";
+  String? paymentVerifiedAt = "";
+  String? razorpayRefundId = "";
   String bookingDate = DateTime.now().toString();
   String createdAt = DateTime.now().toString();
 
