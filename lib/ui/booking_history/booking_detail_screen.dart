@@ -248,6 +248,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             ),
           ),
           SizedBox(height: 16),
+          if (appointment.paymentStatus.toLowerCase() == 'refunded')
+            _buildRefundNotice(appointment),
+          if (appointment.paymentStatus.toLowerCase() == 'refunded')
+            SizedBox(height: 12),
           _buildInfoCard([
             _buildInfoRow(
               'Session Type',
@@ -337,14 +341,17 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             ),
             _buildInfoRow(
               'Status',
-              appointment.paymentStatus,
+              _getPaymentStatusText(appointment.paymentStatus),
               () {},
-              Icons.check_circle,
+              appointment.paymentStatus.toLowerCase() == 'refunded'
+                  ? Icons.replay
+                  : Icons.check_circle,
               valueColor: _getPaymentStatusColor(appointment.paymentStatus),
+              valueBold: true,
             ),
             if (appointment.paymentId?.isNotEmpty == true)
               _buildInfoRow(
-                'Transaction ID',
+                'Payment Reference',
                 appointment.paymentId ?? 'N/A',
                 () {},
                 Icons.receipt_long,
@@ -353,6 +360,55 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   color: AppColors.textMuted,
                   fontFamily: 'monospace',
                 ),
+              ),
+            if (appointment.orderId?.isNotEmpty == true)
+              _buildInfoRow(
+                'Order ID',
+                appointment.orderId!,
+                () {},
+                Icons.shopping_bag_outlined,
+                valueStyle: _referenceTextStyle,
+              ),
+            if (appointment.paymentVerifiedAt?.isNotEmpty == true)
+              _buildInfoRow(
+                'Payment Date',
+                _formatDateTime(appointment.paymentVerifiedAt!),
+                () {},
+                Icons.event_available,
+              ),
+            if (appointment.paymentStatus.toLowerCase() == 'refunded') ...[
+              _buildInfoRow(
+                'Refunded Amount',
+                '₹${appointment.price.toStringAsFixed(0)}',
+                () {},
+                Icons.currency_exchange,
+                valueColor: AppColors.warningDark,
+                valueBold: true,
+              ),
+              if (appointment.razorpayRefundId?.isNotEmpty == true)
+                _buildInfoRow(
+                  'Refund Reference',
+                  appointment.razorpayRefundId!,
+                  () {},
+                  Icons.receipt_long,
+                  valueStyle: _referenceTextStyle,
+                ),
+            ],
+            if (appointment.razorpayTransferId?.isNotEmpty == true)
+              _buildInfoRow(
+                'Transfer Reference',
+                appointment.razorpayTransferId!,
+                () {},
+                Icons.account_balance_outlined,
+                valueStyle: _referenceTextStyle,
+              ),
+            if (appointment.transferStatus?.isNotEmpty == true)
+              _buildInfoRow(
+                'Transfer Status',
+                _getPaymentStatusText(appointment.transferStatus!),
+                () {},
+                Icons.sync,
+                valueColor: _getPaymentStatusColor(appointment.transferStatus!),
               ),
           ]),
 
@@ -447,7 +503,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ],
 
           // Invoice Button
-          if (appointment.paymentStatus.toLowerCase() == 'paid') ...[
+          if ([
+            'paid',
+            'refunded',
+          ].contains(appointment.paymentStatus.toLowerCase())) ...[
             SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => _generateInvoice(context, appointment),
@@ -468,7 +527,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
           // Actions
           if (controller.isDoctor.value &&
-              appointment.bookingStatus.toLowerCase() == BookingStatus.confirmed.name) ...[
+              appointment.bookingStatus.toLowerCase() ==
+                  BookingStatus.confirmed.name) ...[
             SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -718,6 +778,52 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
   }
 
+  Widget _buildRefundNotice(BookingsModel appointment) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.warningLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.warning.withOpacity(0.45)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: AppColors.warningDark),
+          SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Payment refunded',
+                  style: GoogleFonts.inter(
+                    textStyle: TextStyle(
+                      color: AppColors.warningDark,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  '₹${appointment.price.toStringAsFixed(0)} has been refunded. '
+                  'Keep this receipt for your records.',
+                  style: GoogleFonts.inter(
+                    textStyle: TextStyle(
+                      color: AppColors.warningDark,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showRescheduleDialog(
     BuildContext context,
     BookingsModel appointment,
@@ -926,6 +1032,36 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         return AppColors.textMuted;
     }
   }
+
+  String _getPaymentStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'created':
+        return 'Payment Created';
+      case 'paid':
+        return 'Paid';
+      case 'refunded':
+        return 'Refunded';
+      case 'failed':
+        return 'Payment Failed';
+      case 'pending':
+        return 'Payment Pending';
+      default:
+        return status.capitalize ?? status;
+    }
+  }
+
+  String _formatDateTime(String value) {
+    final parsed = DateTime.tryParse(value);
+    return parsed == null
+        ? value
+        : DateFormat('dd MMM yyyy, hh:mm a').format(parsed.toLocal());
+  }
+
+  TextStyle get _referenceTextStyle => TextStyle(
+    fontSize: 12,
+    color: AppColors.textMuted,
+    fontFamily: 'monospace',
+  );
 
   bool _canAttemptRefund(BookingsModel appointment) {
     final verifiedAt = DateTime.tryParse(appointment.paymentVerifiedAt ?? '');

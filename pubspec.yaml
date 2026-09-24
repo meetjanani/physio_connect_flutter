@@ -67,6 +67,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   cloud_functions: ^6.0.0
   flutter_widget_from_html_core: ^0.8.5
+  html: ^0.15.4
 
 # dependency_overrides:
 #   csslib: ^0.17.2
