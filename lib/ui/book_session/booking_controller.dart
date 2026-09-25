@@ -274,7 +274,7 @@ class BookingController extends GetxController {
       final dates = appointmentDates.isEmpty
           ? [DateTime(selectedDate.value.year, selectedDate.value.month, selectedDate.value.day)]
           : appointmentDates.toList();
-      if (dates.length > 1 && bulkAppointmentId == null) {
+      if (dates.length > 1) {
         bulkAppointmentId = const Uuid().v4();
       }
       final groupId = dates.length > 1 ? bulkAppointmentId : null;
@@ -284,7 +284,7 @@ class BookingController extends GetxController {
         bookingStatus: BookingStatus.pending.name,
         timeSlotId: selectedTimeSlot.value?.id ?? 1,
         timeSlotJson: timeslotJson,
-        doctorId: doctorModel?.id ?? selectedDoctor.value?.id ?? 0,
+        doctorId: doctorModel?.userId ?? selectedDoctor.value?.userId ?? 0,
         cityStateJson: selectedCity.value?.toJson().toString(),
         areaJson: selectedArea.value?.toJson().toString(),
         doctorJson: doctorJson,
@@ -312,9 +312,10 @@ class BookingController extends GetxController {
       );
       pendingBookingIds.assignAll(bookingIds);
       bookingId = bookingIds.first;
-      var razorpayOrder = await supabaseController.callCreateRazorPayOrderForBookings(
-        bookingIds,
-        userModelSupabase?.id ?? 0,
+      var razorpayOrder = await supabaseController
+          .callCreateRazorPayOrderForBookings(
+          bookingIds,
+          userModelSupabase?.id ?? 0, groupId != null, groupId
       );
       createRazorPayOrderModel.value = razorpayOrder;
       return razorpayOrder;

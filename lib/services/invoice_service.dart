@@ -15,8 +15,21 @@ import 'package:printing/printing.dart';
 import '../utils/units_extensions.dart';
 
 class InvoiceService {
-  /// Generate a PDF invoice for the given appointment
-  static Future<File> generateInvoice(BookingsModel appointment) async {
+  /// Generate a PDF invoice for one appointment or a bulk appointment group.
+  static Future<File> generateInvoice(
+    BookingsModel appointment, {
+    List<BookingsModel>? appointments,
+  }) async {
+    final invoiceAppointments = appointments?.isNotEmpty == true
+        ? List<BookingsModel>.from(appointments!)
+        : <BookingsModel>[appointment];
+    invoiceAppointments.sort(
+      (a, b) => a.bookingDate.compareTo(b.bookingDate),
+    );
+    final totalAmount = invoiceAppointments.fold<double>(
+      0,
+      (total, item) => total + item.price,
+    );
     // Create a PDF document
     final pdf = pw.Document();
 
@@ -54,8 +67,9 @@ class InvoiceService {
     final PdfColor warningDark = PdfColor.fromHex(
       AppColors.warningDark.value.toRadixString(16).substring(2),
     );
-    final bool isRefunded =
-        appointment.paymentStatus.toLowerCase() == 'refunded';
+    final bool isRefunded = invoiceAppointments.every(
+      (item) => item.paymentStatus.toLowerCase() == 'refunded',
+    );
 
     // Format dates
     final dateFormatter = DateFormat('yyyy-MM-dd');
@@ -72,7 +86,10 @@ class InvoiceService {
         .aPatient(); // In this case, you'll need to get the patient details
 
     // Invoice number (you might want to generate this differently)
-    final invoiceNumber = 'Invoice No:${appointment.id}';
+    final invoiceNumber = appointment.isBulkAppointment &&
+            appointment.bulkAppointmentId?.isNotEmpty == true
+        ? 'Invoice No:${invoiceAppointments.first.id}_${invoiceAppointments.last.id}'
+        : 'Invoice No:${appointment.id}';
 
     // Add page to the PDF
     pdf.addPage(
@@ -223,11 +240,17 @@ class InvoiceService {
                     ),
                   ),
                   pw.SizedBox(height: 8),
-                  _buildInfoRow(
-                    'Session Type',
-                    appointment.aSessionType().name,
+                    _buildInfoRow(
+                      'Session Type',
+                      appointment.aSessionType().name,
+                    ),
+                  if (invoiceAppointments.length == 1) ...[
+                    _buildInfoRow('Date', appointmentDate),
+                  ] else _buildInfoRow(
+                      'Date',
+                      '${formatDateToReadable(invoiceAppointments.first.bookingDate)} to '
+                          '${formatDateToReadable(invoiceAppointments.last.bookingDate)}'
                   ),
-                  _buildInfoRow('Date', appointmentDate),
                   pw.Row(
                     children: [
                       pw.Expanded(
@@ -286,22 +309,24 @@ class InvoiceService {
                     ),
                   ],
                 ),
-                // Service item
-                pw.TableRow(
-                  children: [
-                    _buildTableCell(appointment.aSessionType().name),
-                    _buildTableCell(
-                      '1 Session',
-                      alignment: pw.Alignment.center,
-                    ),
-                    // _buildTableCell('INR ${appointment.price.toStringAsFixed(0)}', alignment: pw.Alignment.center),
-                    _buildTableCell(
-                      'INR ${appointment.price.toStringAsFixed(0)}',
-                      alignment: pw.Alignment.center,
-                    ),
-                  ],
+                ...invoiceAppointments.map(
+                  (item) => pw.TableRow(
+                    children: [
+                      _buildTableCell(
+                        '${formatDateToReadable(item.bookingDate)} - '
+                        '${item.aSessionType().name}',
+                      ),
+                      _buildTableCell(
+                        '1 Session',
+                        alignment: pw.Alignment.center,
+                      ),
+                      _buildTableCell(
+                        'INR ${item.price.toStringAsFixed(0)}',
+                        alignment: pw.Alignment.center,
+                      ),
+                    ],
+                  ),
                 ),
-                // Add more rows if there are additional charges
               ],
             ),
 
@@ -315,12 +340,12 @@ class InvoiceService {
                 children: [
                   _buildTotalRow(
                     'Subtotal',
-                    'INR ${appointment.price.toStringAsFixed(0)}',
+                    'INR ${totalAmount.toStringAsFixed(0)}',
                   ),
                   // _buildTotalRow('Tax (0%)', '₹0.00'),
                   _buildTotalRow(
                     'Total',
-                    'INR ${appointment.price.toStringAsFixed(0)}',
+                    'INR ${totalAmount.toStringAsFixed(0)}',
                     isBold: true,
                   ),
                 ],
@@ -427,7 +452,7 @@ class InvoiceService {
                         if (isRefunded) ...[
                           pw.SizedBox(height: 2),
                           pw.Text(
-                            'Refunded Amount: INR ${appointment.price.toStringAsFixed(0)}',
+                            'Refunded Amount: INR ${totalAmount.toStringAsFixed(0)}',
                             style: pw.TextStyle(
                               color: warningDark,
                               fontWeight: pw.FontWeight.bold,

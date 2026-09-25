@@ -1217,8 +1217,19 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
 
     try {
-      // Generate invoice
-      final pdfFile = await InvoiceService.generateInvoice(appointment);
+      var invoiceAppointments = <BookingsModel>[appointment];
+      if (appointment.isBulkAppointment &&
+          appointment.bulkAppointmentId?.trim().isNotEmpty == true) {
+        invoiceAppointments = await controller.supabaseController
+            .getBookingsByBulkAppointmentId(
+              appointment.userId,
+              appointment.bulkAppointmentId!,
+            );
+      }
+      final pdfFile = await InvoiceService.generateInvoice(
+        appointment,
+        appointments: invoiceAppointments,
+      );
       Get.back(); // Close loading dialog
 
       // Show and open PDF
