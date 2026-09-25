@@ -6,18 +6,21 @@ part of 'doctor_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-DoctorModel _$DoctorModelFromJson(Map<String, dynamic> json) => DoctorModel(
-  id: (json['id'] as num?)?.toInt(),
-  name: json['name'] as String?,
-  degree: json['degree'] as String?,
-  experience: json['experience'] as String?,
-  drRegNumber: json['drRegNumber'] as String?,
-  biodata: json['biodata'] as String?,
-  razorpayAccountId: json['razorpayAccountId'] as String?,
-  razorpayAccountStatus: json['razorpayAccountStatus'] as String?,
-  percentageSplit: (json['percentageSplit'] as num?)?.toInt(),
-  userId: (json['userId'] as num?)?.toInt(),
-);
+DoctorModel _$DoctorModelFromJson(Map<String, dynamic> json) =>
+    DoctorModel(
+        id: (json['id'] as num?)?.toInt(),
+        name: json['name'] as String?,
+        degree: json['degree'] as String?,
+        experience: json['experience'] as String?,
+        drRegNumber: json['drRegNumber'] as String?,
+        biodata: json['biodata'] as String?,
+        razorpayAccountId: json['razorpayAccountId'] as String?,
+        razorpayAccountStatus: json['razorpayAccountStatus'] as String?,
+        percentageSplit: (json['percentageSplit'] as num?)?.toInt(),
+        userId: (json['userId'] as num?)?.toInt(),
+      )
+      ..sessionTypeId = _sessionTypeIdFromJson(json['sessionTypeId'])
+      ..timeSlotId = _timeSlotIdFromJson(json['timeSlotId']);
 
 Map<String, dynamic> _$DoctorModelToJson(DoctorModel instance) =>
     <String, dynamic>{
@@ -30,5 +33,7 @@ Map<String, dynamic> _$DoctorModelToJson(DoctorModel instance) =>
       'razorpayAccountId': instance.razorpayAccountId,
       'razorpayAccountStatus': instance.razorpayAccountStatus,
       'percentageSplit': instance.percentageSplit,
+      'sessionTypeId': instance.sessionTypeId,
+      'timeSlotId': instance.timeSlotId,
       'userId': instance.userId,
     };

@@ -113,12 +113,20 @@ class SupabaseController {
   }
 
   // Get Master Data
-  Future<List<SessionTypeModel>> getSessionTypeMaster() async {
-    final response = await supabaseClient
+  Future<List<SessionTypeModel>> getSessionTypeMaster({
+    List<int>? sessionTypeIds,
+  }) async {
+    var query = supabaseClient
         .from(DatabaseSchema.sessionTypeTable)
         .select('*')
-        .eq(DatabaseSchema.sessionTypeIsActive, true)
-        .order(DatabaseSchema.sessionTypeOrderBy, ascending: true);
+        .eq(DatabaseSchema.sessionTypeIsActive, true);
+    if (sessionTypeIds != null && sessionTypeIds.isNotEmpty) {
+      query = query.inFilter(DatabaseSchema.sessionTypeId, sessionTypeIds);
+    }
+    final response = await query.order(
+      DatabaseSchema.sessionTypeOrderBy,
+      ascending: true,
+    );
     var bookingList = SessionTypeModel.fromJsonList(response);
     return bookingList;
   }
@@ -196,18 +204,29 @@ class SupabaseController {
     return DoctorModel.fromJsonList(response);
   }
 
-  Future<List<TimeSlotModel>> getTimeSlotsMaster(DateTime bookingDate) async {
+  Future<List<TimeSlotModel>> getTimeSlotsMaster(
+    DateTime bookingDate,
+    int doctorUserId, {
+    List<int>? timeSlotIds,
+  }) async {
     final String formattedDate = bookingDate.toIso8601String().split('T')[0];
-    final response = await supabaseClient
+    var query = supabaseClient
         .from(DatabaseSchema.timeSlotTable)
         .select('*')
-        .eq(DatabaseSchema.timeSlotIsActive, true)
-        .order(DatabaseSchema.timeSlotOrderBy, ascending: true);
+        .eq(DatabaseSchema.timeSlotIsActive, true);
+    if (timeSlotIds != null && timeSlotIds.isNotEmpty) {
+      query = query.inFilter(DatabaseSchema.timeSlotId, timeSlotIds);
+    }
+    final response = await query.order(
+      DatabaseSchema.timeSlotOrderBy,
+      ascending: true,
+    );
     var timeSlotList = TimeSlotModel.fromJsonList(response);
 
     final bookingsResponse = await supabaseClient
         .from(DatabaseSchema.bookingsTable)
         .select('timeSlotId')
+        .eq(DatabaseSchema.bookingsDoctorId, doctorUserId)
         .eq(DatabaseSchema.bookingsDate, formattedDate);
 
     var bookedTimeslotList = bookingsResponse

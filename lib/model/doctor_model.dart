@@ -6,6 +6,9 @@ import '../utils/app_shared_preference.dart';
 import '../utils/secure_storage/secure_storage_repository.dart';
 part 'doctor_model.g.dart';
 
+String? _sessionTypeIdFromJson(Object? value) => value?.toString();
+String? _timeSlotIdFromJson(Object? value) => value?.toString();
+
 @JsonSerializable()
 class DoctorModel {
   int? id = 0;
@@ -17,6 +20,10 @@ class DoctorModel {
   String? razorpayAccountId = "";
   String? razorpayAccountStatus = "";
   int? percentageSplit = 0;
+  @JsonKey(fromJson: _sessionTypeIdFromJson)
+  String? sessionTypeId = '0';
+  @JsonKey(fromJson: _timeSlotIdFromJson)
+  String? timeSlotId = '0';
   int? userId = 0;
 
   DoctorModel({
@@ -48,12 +55,17 @@ class DoctorModel {
   Future<void> saveToSecureStorage() async {
     final jsonMap = this.toJson();
     final jsonString = jsonEncode(jsonMap);
-    await SecureStorageRepository.to.write(SecureStorage.doctorJson, jsonString);
+    await SecureStorageRepository.to.write(
+      SecureStorage.doctorJson,
+      jsonString,
+    );
   }
 
   // Static method to retrieve model from secure storage
   static Future<DoctorModel?> getFromSecureStorage() async {
-    final jsonString = await SecureStorageRepository.to.read(SecureStorage.doctorJson);
+    final jsonString = await SecureStorageRepository.to.read(
+      SecureStorage.doctorJson,
+    );
     if (jsonString == null || jsonString.isEmpty) {
       return null;
     }
