@@ -36,6 +36,8 @@ class BookingsModel {
   double? platformFeeAmount;
   double? doctorAmount;
   String? razorpayRefundId = "";
+  bool isBulkAppointment = false;
+  String? bulkAppointmentId;
   String bookingDate = DateTime.now().toString();
   String createdAt = DateTime.now().toString();
 
@@ -62,6 +64,8 @@ class BookingsModel {
     required this.latLong,
     required this.bookingDate,
     required this.createdAt,
+    this.isBulkAppointment = false,
+    this.bulkAppointmentId,
   });
 
   static List<BookingsModel> fromJsonList(List<dynamic> dataList) {
