@@ -54,26 +54,52 @@ class BookingController extends GetxController {
     super.onInit();
     isLoading.value = true;
     userModelSupabase = await UserModelSupabase.getFromSecureStorage();
-    await getSessionTypesMaster();
-    await getTimeSlotsMaster();
     isLoading.value = false;
   }
 
   // Load master data
   Future<void> getSessionTypesMaster() async {
+    isLoading.value = true;
     sessionTypes.clear();
-    var response = await supabaseController.getSessionTypeMaster();
-    sessionTypes.addAll(response);
+    try {
+      final configuredSessionTypeIds = selectedDoctor.value?.sessionTypeId
+          ?.split(',')
+          .map((value) => int.tryParse(value.trim()))
+          .whereType<int>()
+          .where((id) => id > 0)
+          .toSet()
+          .toList();
+      final response = await supabaseController.getSessionTypeMaster(
+        sessionTypeIds: configuredSessionTypeIds,
+      );
+      sessionTypes.addAll(response);
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // Load master data
   Future<void> getTimeSlotsMaster() async {
+    isLoading.value = true;
     timeSlots.clear();
     selectedTimeSlot.value = null;
-    var response = await supabaseController.getTimeSlotsMaster(
-      selectedDate.value,
-    );
-    timeSlots.addAll(response);
+    try {
+      final configuredTimeSlotIds = selectedDoctor.value?.timeSlotId
+          ?.split(',')
+          .map((value) => int.tryParse(value.trim()))
+          .whereType<int>()
+          .where((id) => id > 0)
+          .toSet()
+          .toList();
+      final response = await supabaseController.getTimeSlotsMaster(
+        selectedDate.value,
+        selectedDoctor.value?.userId ?? 0,
+        timeSlotIds: configuredTimeSlotIds,
+      );
+      timeSlots.addAll(response);
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void createAppointment(

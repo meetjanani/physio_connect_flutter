@@ -83,7 +83,8 @@ class _ServiceAreaScreenState extends State<ServiceAreaScreen> {
                                 separatorBuilder: (_, __) =>
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  final area = controller.serviceAreas.value[index];
+                                  final area =
+                                      controller.serviceAreas.value[index];
                                   final isSelected =
                                       controller.selectedArea.value?.id ==
                                       area.id;
@@ -92,10 +93,14 @@ class _ServiceAreaScreenState extends State<ServiceAreaScreen> {
                                       controller.selectedArea.value = area;
                                       // await controller.loadDoctorsForSelectedArea();
                                       controller.selectedDoctor.value =
-                                      await controller.supabaseController
-                                          .getDoctorById(area.doctorId ??
-                                          controller.userModelSupabase!
-                                              .doctorId!);
+                                          await controller.supabaseController
+                                              .getDoctorById(
+                                                area.doctorId ??
+                                                    controller
+                                                        .userModelSupabase!
+                                                        .doctorId!,
+                                              );
+                                      await controller.getSessionTypesMaster();
                                       Get.back();
                                       Get.back();
                                       Get.toNamed(AppPage.selectSessionType);
@@ -163,7 +168,7 @@ class _ServiceAreaScreenState extends State<ServiceAreaScreen> {
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.w300,
                                                     color:
-                                                    AppColors.textPrimary,
+                                                        AppColors.textPrimary,
                                                   ),
                                                 ),
                                                 // const SizedBox(height: 4),

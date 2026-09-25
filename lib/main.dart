@@ -13,8 +13,7 @@ import 'package:physio_connect/supabase/firebase_notification.dart';
 import 'package:physio_connect/ui/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // SECURITY WARNING: Only use this in development/testing
   HttpOverrides.global = MyHttpOverrides();
@@ -24,7 +23,7 @@ void main() async{
   await FirebaseAppCheck.instance.activate(
     webProvider: ReCaptchaV3Provider(
       // '6LdG3acrAAAAALq9f54S9uWGrRZPyqVFVQCH0onf',
-      '6LdG3acrAAAAAH_QL4vEhTZ_zqs2ZZ0vgqNlnLIx'
+      '6LdG3acrAAAAAH_QL4vEhTZ_zqs2ZZ0vgqNlnLIx',
     ),
     androidProvider: AndroidProvider.debug,
   );
@@ -43,7 +42,7 @@ void main() async{
   await Supabase.initialize(
     url: 'https://cjnxrkzrmeetzragwrlm.supabase.co',
     anonKey:
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqbnhya3pybWVldHpyYWd3cmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTc3NjAsImV4cCI6MjA3MDgzMzc2MH0.5lPvv9Hj60NMvPE6IrI6hw6ZhrzqjeV6KUp65tHDJmo',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqbnhya3pybWVldHpyYWd3cmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTc3NjAsImV4cCI6MjA3MDgzMzc2MH0.5lPvv9Hj60NMvPE6IrI6hw6ZhrzqjeV6KUp65tHDJmo',
   );
 
   //await FirebaseApi().initNotification();
@@ -78,7 +77,10 @@ Future<void> requestPermission() async {
   Stream<RemoteMessage> _messageStreamController = Stream.empty();
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    FirebaseNotification().createNotification(message.notification?.title ?? "Physio Connect", message.notification?.body ??"Physio Connect");
+    FirebaseNotification().createNotification(
+      message.notification?.title ?? "Physio Connect",
+      message.notification?.body ?? "Physio Connect",
+    );
     if (kDebugMode) {
       print('Handling a foreground message: ${message.messageId}');
       print('Message data: ${message.data}');
@@ -111,17 +113,19 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) => SimpleBuilder(
-      builder: (_) => GetMaterialApp(
-          key: UniqueKey(),
-          debugShowCheckedModeBanner: false,
-          enableLog: true,
-          // supportedLocales: flc.supportedLocales.map((e) => Locale(e)),
-          // localizationsDelegates: const [
-          //   flc.CountryLocalizations.delegate,
-          // ],
-          initialRoute: AppPage.splashScreen,
-          routes: {AppPage.splashScreen: (context) => const SplashScreen()},
-          getPages: AppPage.routes));
+    builder: (_) => GetMaterialApp(
+      key: UniqueKey(),
+      debugShowCheckedModeBanner: false,
+      enableLog: true,
+      // supportedLocales: flc.supportedLocales.map((e) => Locale(e)),
+      // localizationsDelegates: const [
+      //   flc.CountryLocalizations.delegate,
+      // ],
+      initialRoute: AppPage.splashScreen,
+      routes: {AppPage.splashScreen: (context) => const SplashScreen()},
+      getPages: AppPage.routes,
+    ),
+  );
 }
 
 class MyHomePage extends StatefulWidget {
@@ -215,6 +219,7 @@ class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
   }
 }
