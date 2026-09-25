@@ -52,9 +52,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     //     razorpaySignature: response.signature);
 
     controller.supabaseController
-        .callVerifyRazorPayPaymentSBEdgeFunction(
-          bookingId: controller.bookingId.toString(),
-          userId: controller.userModelSupabase?.id!.toString(),
+        .callVerifyRazorPayPaymentForBookings(
+          bookingIds: controller.pendingBookingIds.toList(),
+          userId: controller.userModelSupabase?.id ?? 0,
           razorpayOrderId: response.orderId,
           razorpayPaymentId: response.paymentId,
           razorpaySignature: response.signature,
@@ -163,6 +163,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Expanded(
               child: ListView(
                 padding: EdgeInsets.all(16),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   // Booking summary card
                   Container(
@@ -201,6 +204,32 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             value:
                                 controller.selectedSessionType.value?.name ??
                                 'N/A',
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Obx(
+                          () => Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Appointments (${controller.appointmentDates.length})',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              ...controller.appointmentDates.map(
+                                (date) => Text(
+                                  DateFormat('dd-MMM-yyyy').format(date),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         SizedBox(height: 16),
@@ -259,7 +288,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             ),
                             Obx(
                               () => Text(
-                                '₹${controller.selectedSessionType.value?.price.toStringAsFixed(0) ?? 0}',
+                                '₹${((controller.selectedSessionType.value?.price ?? 0) * controller.appointmentDates.length).toStringAsFixed(0)}',
                                 style: GoogleFonts.inter(
                                   textStyle: TextStyle(
                                     fontSize: 22,

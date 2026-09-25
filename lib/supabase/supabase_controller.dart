@@ -258,6 +258,26 @@ class SupabaseController {
     return newId;
   }
 
+  Future<List<int>> createNewBookings(
+    List<BookingsModel> bookings,
+    int notificationUserId,
+  ) async {
+    if (bookings.isEmpty) {
+      throw ArgumentError('At least one booking is required.');
+    }
+    final request = bookings.map((booking) {
+      final json = booking.toJson()..remove('id');
+      return json;
+    }).toList();
+    final response = await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .insert(request)
+        .select(DatabaseSchema.bookingsId);
+    return response
+        .map<int>((row) => (row[DatabaseSchema.bookingsId] as num).toInt())
+        .toList();
+  }
+
   Future<void> updatePaymentStatus(
     int bookingID,
     String? bookingStatus,
@@ -300,6 +320,20 @@ class SupabaseController {
       print('Existing order returned');
     }
     return orderModel;
+  }
+
+  Future<CreateRazorPayOrderModel?> callCreateRazorPayOrderForBookings(
+    List<int> bookingIds,
+    int userId,
+  ) async {
+    if (bookingIds.isEmpty) {
+      throw ArgumentError('At least one booking ID is required.');
+    }
+    final response = await Supabase.instance.client.functions.invoke(
+      'create-razorpay-order',
+      body: {'bookingIds': bookingIds, 'userId': userId},
+    );
+    return CreateRazorPayOrderModel.fromJson(response.data);
   }
 
   Future<VerifyPaymentResponseModel?> callVerifyRazorPayPaymentSBEdgeFunction({
@@ -351,6 +385,29 @@ class SupabaseController {
       print('Unexpected Error verifying payment: $e');
       return VerifyPaymentResponseModel(success: false, error: e.toString());
     }
+  }
+
+  Future<VerifyPaymentResponseModel?> callVerifyRazorPayPaymentForBookings({
+    required List<int> bookingIds,
+    required int userId,
+    required String? razorpayOrderId,
+    required String? razorpayPaymentId,
+    required String? razorpaySignature,
+  }) async {
+    if (bookingIds.isEmpty) {
+      throw ArgumentError('At least one booking ID is required.');
+    }
+    final response = await Supabase.instance.client.functions.invoke(
+      'verify-razorpay-payment',
+      body: {
+        'bookingIds': bookingIds,
+        'userId': userId,
+        'razorpayOrderId': razorpayOrderId,
+        'razorpayPaymentId': razorpayPaymentId,
+        'razorpaySignature': razorpaySignature,
+      },
+    );
+    return VerifyPaymentResponseModel.fromJson(response.data);
   }
 
   Future<RefundResponseModel> callInitiateRefundEdgeFunction({

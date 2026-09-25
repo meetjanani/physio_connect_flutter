@@ -6,6 +6,7 @@ import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:intl/intl.dart';
 
 import '../../route/route_module.dart';
 import '../../utils/view_extension.dart';
@@ -20,11 +21,19 @@ class DateTimeScreen extends StatefulWidget {
 
 class _DateTimeScreenState extends State<DateTimeScreen> {
   final BookingController controller = Get.find<BookingController>();
+  final appointmentCountController = TextEditingController(text: '2');
 
   @override
   void initState() {
     super.initState();
+    controller.configureAppointmentDates();
     fetchAndSetCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    appointmentCountController.dispose();
+    super.dispose();
   }
 
   @override
@@ -37,6 +46,9 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
             Expanded(
               child: ListView(
                 padding: EdgeInsets.all(16),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   // Session type info
                   Container(
@@ -69,8 +81,8 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                             '${controller.selectedCity.value?.cityStateName ?? 'City'} › ${controller.selectedArea.value?.areaName ?? 'Area'} › ${controller.selectedDoctor.value?.name ?? 'Doctor'}',
                             style: GoogleFonts.inter(
                               textStyle: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.textPrimary,
                               ),
                             ),
@@ -136,7 +148,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                   ),
                   Obx(
                     () => TableCalendar(
-                      rowHeight: 40,
+                      rowHeight: 35,
                       startingDayOfWeek: StartingDayOfWeek.monday,
                       firstDay: DateTime.now(),
                       lastDay: DateTime.now().add(Duration(days: 60)),
@@ -146,6 +158,9 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                       },
                       onDaySelected: (selectedDay, focusedDay) {
                         controller.selectedDate.value = selectedDay;
+                        if (!controller.isBulkAppointment.value) {
+                          controller.configureAppointmentDates();
+                        }
                         controller.getTimeSlotsMaster();
                       },
                       calendarStyle: CalendarStyle(
@@ -157,7 +172,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                           color: AppColors.medicalBlueLight,
                           border: Border.all(
                             color: AppColors.medicalBlue,
-                            width: 1.5,
+                            width: 1,
                           ),
                           shape: BoxShape.circle,
                         ),
@@ -310,6 +325,8 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                           ),
                   ),
                   SizedBox(height: 12),
+                  _buildAppointmentPlanner(),
+                  SizedBox(height: 12),
 
                   // Time slots
                   Text(
@@ -403,7 +420,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                             );
                             return;
                           }
-                          Get.toNamed(AppPage.performPayment);
+                          _confirmAppointments();
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: controller.selectedTimeSlot.value == null
@@ -434,6 +451,114 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildAppointmentPlanner() {
+    return Obx(() {
+      final bulk = controller.isBulkAppointment.value;
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Book multiple appointments'),
+              subtitle: const Text('Create one payment for multiple dates'),
+              value: bulk,
+              onChanged: controller.setBulkAppointmentEnabled,
+            ),
+            if (bulk) ...[
+              TextField(
+                controller: appointmentCountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Number of appointments (2–100)',
+                ),
+                onChanged: controller.setBulkAppointmentCount,
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _recurrenceChip('Every day', 'every_day'),
+                  _recurrenceChip('Alternate day', 'alternative_day'),
+                  _recurrenceChip('Every 2 days', 'every_2_day'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'You can change any appointment date before payment. Dates can also be changed individually after booking.',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 10),
+              ...controller.appointmentDates.asMap().entries.map(
+                (entry) => ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    radius: 14,
+                    child: Text('${entry.key + 1}'),
+                  ),
+                  title: Text(
+                    DateFormat('dd-MMM-yyyy').format(entry.value),
+                  ),
+                  trailing: const Icon(Icons.edit_calendar),
+                  onTap: () => _editAppointmentDate(entry.key, entry.value),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _recurrenceChip(String label, String value) {
+    return Obx(
+      () => ChoiceChip(
+        label: Text(label),
+        selected: controller.recurrence.value == value,
+        onSelected: (_) => controller.setRecurrence(value),
+      ),
+    );
+  }
+
+  Future<void> _editAppointmentDate(int index, DateTime current) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date != null) {
+      controller.updateAppointmentDate(index, date);
+    }
+  }
+
+  Future<void> _confirmAppointments() async {
+    final dates = controller.appointmentDates;
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Confirm appointments'),
+        content: Text(
+          '${dates.length} appointment${dates.length == 1 ? '' : 's'} will be created. '
+          'You will make one payment for the total amount.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(result: false), child: const Text('Review')),
+          ElevatedButton(onPressed: () => Get.back(result: true), child: const Text('Confirm')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      Get.toNamed(AppPage.performPayment);
+    }
   }
 
   Future<void> fetchAndSetCurrentLocation() async {

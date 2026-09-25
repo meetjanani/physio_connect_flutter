@@ -41,7 +41,7 @@ PreferredSizeWidget commonAppBar(String appBarTitle, {bool isBackButtonVisible =
                   style: GoogleFonts.fugazOne(
                     textStyle: TextStyle(
                       color: Colors.black,
-                      fontSize: 26,
+                      fontSize: 18,
                       fontWeight: FontWeight.w400,
                     ),
                   ),

@@ -44,9 +44,63 @@ class BookingController extends GetxController {
   final timeSlots = <TimeSlotModel>[].obs;
 
   final selectedDate = DateTime.now().obs;
+  final isBulkAppointment = false.obs;
+  final bulkAppointmentCount = 1.obs;
+  final recurrence = 'every_day'.obs;
+  final appointmentDates = <DateTime>[].obs;
+  String? bulkAppointmentId;
   final razorpayPaymentId = ''.obs;
   var bookingId = 0;
+  final pendingBookingIds = <int>[].obs;
   final createRazorPayOrderModel = Rx<CreateRazorPayOrderModel?>(null);
+
+  void configureAppointmentDates() {
+    final count = isBulkAppointment.value ? bulkAppointmentCount.value : 1;
+    final step = recurrence.value == 'alternative_day'
+        ? 2
+        : recurrence.value == 'every_2_day'
+        ? 3
+        : 1;
+    appointmentDates.assignAll(
+      List.generate(
+        count,
+        (index) => DateTime(
+          selectedDate.value.year,
+          selectedDate.value.month,
+          selectedDate.value.day + (index * step),
+        ),
+      ),
+    );
+  }
+
+  void setBulkAppointmentEnabled(bool enabled) {
+    isBulkAppointment.value = enabled;
+    if (!enabled) {
+      bulkAppointmentCount.value = 1;
+      recurrence.value = 'every_day';
+    }
+    configureAppointmentDates();
+  }
+
+  void setBulkAppointmentCount(String value) {
+    final count = int.tryParse(value);
+    if (count == null || count < 2 || count > 100) return;
+    bulkAppointmentCount.value = count;
+    configureAppointmentDates();
+  }
+
+  void setRecurrence(String value) {
+    recurrence.value = value;
+    configureAppointmentDates();
+  }
+
+  void updateAppointmentDate(int index, DateTime date) {
+    if (index < 0 || index >= appointmentDates.length) return;
+    final normalized = DateTime(date.year, date.month, date.day);
+    if (normalized.isBefore(DateTime.now())) return;
+    final dates = appointmentDates.toList()..[index] = normalized;
+    appointmentDates.assignAll(dates);
+  }
 
   UserModelSupabase? userModelSupabase;
   @override
@@ -217,13 +271,20 @@ class BookingController extends GetxController {
       final sessionTypeJson = jsonEncode(sessionType.toJson());
       final patientJson = jsonEncode(userModelSupabase?.toJson() ?? {});
 
-      bookingsModel.value = BookingsModel(
+      final dates = appointmentDates.isEmpty
+          ? [DateTime(selectedDate.value.year, selectedDate.value.month, selectedDate.value.day)]
+          : appointmentDates.toList();
+      if (dates.length > 1 && bulkAppointmentId == null) {
+        bulkAppointmentId = const Uuid().v4();
+      }
+      final groupId = dates.length > 1 ? bulkAppointmentId : null;
+      final bookings = dates.map((date) => BookingsModel(
         id: 0,
         userId: userModelSupabase?.id ?? 0,
         bookingStatus: BookingStatus.pending.name,
         timeSlotId: selectedTimeSlot.value?.id ?? 1,
         timeSlotJson: timeslotJson,
-        doctorId: doctorModel?.userId ?? selectedDoctor.value?.id ?? 0,
+        doctorId: doctorModel?.id ?? selectedDoctor.value?.id ?? 0,
         cityStateJson: selectedCity.value?.toJson().toString(),
         areaJson: selectedArea.value?.toJson().toString(),
         doctorJson: doctorJson,
@@ -236,65 +297,30 @@ class BookingController extends GetxController {
         orderId: null,
         signature: null,
         doctorNotes: 'No additional notes provided.',
-        address:
-            "${houseNameBlockNumberController.text}\n${addressController.text}",
-        latLong:
-            "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
-        bookingDate: DateFormat('yyyy-MM-dd').format(selectedDate.value),
+        address: "${houseNameBlockNumberController.text}\n${addressController.text}",
+        latLong: "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
+        bookingDate: DateFormat('yyyy-MM-dd').format(date),
         createdAt: DateTime.now().toString(),
-      );
-
-      final notificationDoctorId =
-          doctorModel?.userId ?? selectedDoctor.value?.userId ?? 0;
-      bookingId = await supabaseController.createNewBooking(
-        bookingsModel.value!,
+        isBulkAppointment: groupId != null,
+        bulkAppointmentId: groupId,
+      )).toList();
+      bookingsModel.value = bookings.first;
+      final notificationDoctorId = doctorModel?.userId ?? selectedDoctor.value?.userId ?? 0;
+      final bookingIds = await supabaseController.createNewBookings(
+        bookings,
         notificationDoctorId,
       );
-      var razorpayOrder = await supabaseController
-          .callCreateRazorPayOrderSBEdgeFunction(
-            bookingId,
-            userModelSupabase?.id ?? 0,
-          );
+      pendingBookingIds.assignAll(bookingIds);
+      bookingId = bookingIds.first;
+      var razorpayOrder = await supabaseController.callCreateRazorPayOrderForBookings(
+        bookingIds,
+        userModelSupabase?.id ?? 0,
+      );
       createRazorPayOrderModel.value = razorpayOrder;
       return razorpayOrder;
     } finally {
       isLoading.value = false;
     }
-  }
-
-  Future<void> updateBookingPaymentStatusAfterFailure() async {
-    if (bookingsModel.value == null) {
-      return;
-    }
-
-    bookingsModel.value = BookingsModel(
-      id: bookingsModel.value!.id,
-      userId: bookingsModel.value!.userId,
-      bookingStatus: BookingStatus.cancelled.name,
-      timeSlotId: bookingsModel.value!.timeSlotId,
-      timeSlotJson: bookingsModel.value!.timeSlotJson,
-      doctorId: bookingsModel.value!.doctorId,
-      areaJson: bookingsModel.value!.areaJson,
-      doctorJson: bookingsModel.value!.doctorJson,
-      sessionTypeId: bookingsModel.value!.sessionTypeId,
-      price: bookingsModel.value!.price,
-      sessionTypeJson: bookingsModel.value!.sessionTypeJson,
-      patientJson: bookingsModel.value!.patientJson,
-      paymentStatus: PaymentStatus.failed.name,
-      paymentId: null,
-      orderId: null,
-      signature: null,
-      doctorNotes: bookingsModel.value!.doctorNotes,
-      address: bookingsModel.value!.address,
-      latLong: bookingsModel.value!.latLong,
-      bookingDate: bookingsModel.value!.bookingDate,
-      createdAt: bookingsModel.value!.createdAt,
-    );
-
-    await supabaseController.createNewBooking(
-      bookingsModel.value!,
-      bookingsModel.value!.doctorId,
-    );
   }
 
   String calculateEndTime(String startTime, int durationMinutes) {

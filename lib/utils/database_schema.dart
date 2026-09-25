@@ -68,6 +68,8 @@ class DatabaseSchema extends GetxController {
   static const String bookingsOrderId = "orderId";
   static const String bookingsSignature = "signature";
   static const String bookingsCreatedAt = "createdAt";
+  static const String bookingsIsBulkAppointment = "isBulkAppointment";
+  static const String bookingsBulkAppointmentId = "bulkAppointmentId";
 
   // Session Types table
   static const String sessionTypeTable = "session_type";
