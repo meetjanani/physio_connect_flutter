@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 
@@ -27,6 +26,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
   void initState() {
     super.initState();
     controller.configureAppointmentDates();
+    controller.getTimeSlotsMaster();
     fetchAndSetCurrentLocation();
   }
 
@@ -135,7 +135,6 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                     ),
                   ),
                   SizedBox(height: 12),
-                  // Calendar
                   Text(
                     'Select Date',
                     style: GoogleFonts.inter(
@@ -146,65 +145,35 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 10),
                   Obx(
-                    () => TableCalendar(
-                      rowHeight: 35,
-                      startingDayOfWeek: StartingDayOfWeek.monday,
-                      firstDay: DateTime.now(),
-                      lastDay: DateTime.now().add(Duration(days: 60)),
-                      focusedDay: controller.selectedDate.value,
-                      selectedDayPredicate: (day) {
-                        return isSameDay(controller.selectedDate.value, day);
-                      },
-                      onDaySelected: (selectedDay, focusedDay) {
-                        controller.selectedDate.value = selectedDay;
-                        if (!controller.isBulkAppointment.value) {
-                          controller.configureAppointmentDates();
-                        }
-                        controller.getTimeSlotsMaster();
-                      },
-                      calendarStyle: CalendarStyle(
-                        selectedDecoration: BoxDecoration(
-                          color: AppColors.medicalBlue,
-                          shape: BoxShape.circle,
-                        ),
-                        todayDecoration: BoxDecoration(
-                          color: AppColors.medicalBlueLight,
-                          border: Border.all(
+                    () => InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: _selectDate,
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Appointment date',
+                          prefixIcon: Icon(
+                            Icons.calendar_today,
                             color: AppColors.medicalBlue,
-                            width: 1,
                           ),
-                          shape: BoxShape.circle,
+                          suffixIcon: Icon(
+                            Icons.arrow_drop_down,
+                            color: AppColors.medicalBlueDark,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        todayTextStyle: TextStyle(
-                          color: AppColors.medicalBlueDark,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        defaultTextStyle: TextStyle(
-                          color: AppColors.textPrimary,
-                        ),
-                        weekendTextStyle: TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
-                        outsideTextStyle: TextStyle(color: AppColors.textMuted),
-                      ),
-                      headerStyle: HeaderStyle(
-                        formatButtonVisible: false,
-                        titleCentered: true,
-                        titleTextStyle: GoogleFonts.inter(
-                          textStyle: TextStyle(
+                        child: Text(
+                          DateFormat(
+                            'dd-MMM-yyyy',
+                          ).format(controller.selectedDate.value),
+                          style: GoogleFonts.inter(
                             fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
-                        ),
-                        leftChevronIcon: Icon(
-                          Icons.chevron_left,
-                          color: AppColors.medicalBlue,
-                        ),
-                        rightChevronIcon: Icon(
-                          Icons.chevron_right,
-                          color: AppColors.medicalBlue,
                         ),
                       ),
                     ),
@@ -559,6 +528,26 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
     if (confirmed == true) {
       Get.toNamed(AppPage.performPayment);
     }
+  }
+
+  Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final current = controller.selectedDate.value;
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: current.isBefore(now) ? now : current,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 60)),
+    );
+    if (pickedDate == null) return;
+
+    controller.selectedDate.value = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+    );
+    controller.configureAppointmentDates();
+    await controller.getTimeSlotsMaster();
   }
 
   Future<void> fetchAndSetCurrentLocation() async {

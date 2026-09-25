@@ -34,6 +34,23 @@ class SupabaseController {
     return bookingList;
   }
 
+  Future<List<BookingsModel>> getBookingsByBulkAppointmentId(
+    int userId,
+    String bulkAppointmentId,
+  ) async {
+    if (userId <= 0 || bulkAppointmentId.trim().isEmpty) {
+      throw ArgumentError('A valid user and bulk appointment ID are required.');
+    }
+    final response = await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .select('*')
+        .eq(DatabaseSchema.bookingsUserId, userId)
+        .eq(DatabaseSchema.bookingsBulkAppointmentId, bulkAppointmentId)
+        .eq(DatabaseSchema.bookingsIsBulkAppointment, true)
+        .order(DatabaseSchema.bookingsDate, ascending: true);
+    return BookingsModel.fromJsonList(response);
+  }
+
   Future<List<BookingsModel>> getFilteredBookings(
     int userId,
     DateTime from,
@@ -269,13 +286,19 @@ class SupabaseController {
       final json = booking.toJson()..remove('id');
       return json;
     }).toList();
-    final response = await supabaseClient
-        .from(DatabaseSchema.bookingsTable)
-        .insert(request)
-        .select(DatabaseSchema.bookingsId);
-    return response
-        .map<int>((row) => (row[DatabaseSchema.bookingsId] as num).toInt())
-        .toList();
+    try {
+      final response = await supabaseClient
+          .from(DatabaseSchema.bookingsTable)
+          .insert(request)
+          .select(DatabaseSchema.bookingsId);
+      return response
+          .map<int>((row) => (row[DatabaseSchema.bookingsId] as num).toInt())
+          .toList();
+    }
+    on Exception catch (e) {
+      print('Error creating bookings: $e');
+      rethrow;
+    }
   }
 
   Future<void> updatePaymentStatus(
@@ -325,15 +348,25 @@ class SupabaseController {
   Future<CreateRazorPayOrderModel?> callCreateRazorPayOrderForBookings(
     List<int> bookingIds,
     int userId,
+  bool isBulkAppointment,
+  String? bulkAppointmentId
   ) async {
-    if (bookingIds.isEmpty) {
-      throw ArgumentError('At least one booking ID is required.');
+    try {
+      if (bookingIds.isEmpty) {
+        throw ArgumentError('At least one booking ID is required.');
+      }
+      final response = await Supabase.instance.client.functions.invoke(
+        'create-razorpay-order',
+        body: {'bookingIds': bookingIds, 'userId': userId
+          ,'isBulkAppointment': isBulkAppointment,
+          'bulkAppointmentId': bulkAppointmentId
+        },
+      );
+      return CreateRazorPayOrderModel.fromJson(response.data);
+    } on Exception catch (e) {
+      print('Error creating RazorPay order for bookings: $e');
+      return null;
     }
-    final response = await Supabase.instance.client.functions.invoke(
-      'create-razorpay-order',
-      body: {'bookingIds': bookingIds, 'userId': userId},
-    );
-    return CreateRazorPayOrderModel.fromJson(response.data);
   }
 
   Future<VerifyPaymentResponseModel?> callVerifyRazorPayPaymentSBEdgeFunction({
@@ -394,20 +427,25 @@ class SupabaseController {
     required String? razorpayPaymentId,
     required String? razorpaySignature,
   }) async {
-    if (bookingIds.isEmpty) {
-      throw ArgumentError('At least one booking ID is required.');
+    try {
+      if (bookingIds.isEmpty) {
+        throw ArgumentError('At least one booking ID is required.');
+      }
+      final response = await Supabase.instance.client.functions.invoke(
+        'verify-razorpay-payment',
+        body: {
+          'bookingIds': bookingIds,
+          'userId': userId,
+          'razorpayOrderId': razorpayOrderId,
+          'razorpayPaymentId': razorpayPaymentId,
+          'razorpaySignature': razorpaySignature,
+        },
+      );
+      return VerifyPaymentResponseModel.fromJson(response.data);
+    } on Exception catch (e) {
+      print('Error verifying RazorPay payment for bookings: $e');
+      return null;
     }
-    final response = await Supabase.instance.client.functions.invoke(
-      'verify-razorpay-payment',
-      body: {
-        'bookingIds': bookingIds,
-        'userId': userId,
-        'razorpayOrderId': razorpayOrderId,
-        'razorpayPaymentId': razorpayPaymentId,
-        'razorpaySignature': razorpaySignature,
-      },
-    );
-    return VerifyPaymentResponseModel.fromJson(response.data);
   }
 
   Future<RefundResponseModel> callInitiateRefundEdgeFunction({
