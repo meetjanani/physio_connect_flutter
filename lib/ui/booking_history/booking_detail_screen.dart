@@ -94,6 +94,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
   Widget _buildDetailsContent(BuildContext context) {
     final appointment = controller.selectedAppointment.value!;
+    final isAppointmentRefunded =
+        appointment.razorpayRefundId?.trim().isNotEmpty == true ||
+        appointment.paymentStatus.toLowerCase() == 'refunded';
     final dateFormatter = DateFormat('EEEE, MMMM d, yyyy');
     final dateObj = DateFormat('yyyy-MM-dd').parse(appointment.bookingDate);
 
@@ -107,13 +110,19 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             width: double.infinity,
             padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: _getStatusColor(appointment.bookingStatus),
+              color: _getStatusColor(
+                isAppointmentRefunded ? 'refunded' : appointment.bookingStatus,
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 Icon(
-                  _getStatusIcon(appointment.bookingStatus),
+                  _getStatusIcon(
+                    isAppointmentRefunded
+                        ? 'refunded'
+                        : appointment.bookingStatus,
+                  ),
                   color: AppColors.textOnDark,
                 ),
                 SizedBox(width: 12),
@@ -121,7 +130,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      isDoctorTypeUser(controller.userModelSupabase?.id ?? 0)
+                      isDoctorTypeUser(controller.userModelSupabase?.id ?? 0) &&
+                              !isAppointmentRefunded
                           /*appointment.aPatient().userType?.toLowerCase() ==
                               UserType.doctor.name*/
                           ? Obx(
@@ -208,7 +218,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                     ),
                             )
                           : Text(
-                              _getStatusText(appointment.bookingStatus),
+                              _getStatusText(
+                                isAppointmentRefunded
+                                    ? 'refunded'
+                                    : appointment.bookingStatus,
+                              ),
                               style: GoogleFonts.inter(
                                 textStyle: TextStyle(
                                   color: AppColors.textOnDark,
@@ -219,7 +233,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             ),
                       SizedBox(height: 4),
                       Text(
-                        _getStatusDescription(appointment.bookingStatus),
+                        _getStatusDescription(
+                          isAppointmentRefunded
+                              ? 'refunded'
+                              : appointment.bookingStatus,
+                        ),
                         style: GoogleFonts.inter(
                           textStyle: TextStyle(
                             color: AppColors.textOnDark.withOpacity(0.9),
@@ -1171,9 +1189,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       setState(() {
         appointment.razorpayRefundId = result.refundId;
         appointment.paymentStatus = 'refunded';
+        appointment.bookingStatus = 'refunded';
         _refundUnlocked = false;
         _refundLongPressCount = 0;
       });
+      await controller.updateAppointmentStatus(appointment);
     }
   }
 

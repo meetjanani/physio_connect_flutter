@@ -66,11 +66,21 @@ class BookingHistoryController extends GetxController {
   Future<void> updateAppointmentStatus(BookingsModel bookingModel) async {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
-      var response = await supabaseController.updateBookingStatus(
-        bookingModel?.id ?? 0,
-        bookingModel,
-      );
-      isLoading.value = false;
+      try {
+        final isRefunded =
+            bookingModel.razorpayRefundId?.trim().isNotEmpty == true ||
+            bookingModel.paymentStatus.toLowerCase() == 'refunded' ||
+            bookingModel.bookingStatus.toLowerCase() == 'refunded';
+        if (isRefunded) {
+          bookingModel.bookingStatus = 'refunded';
+        }
+        await supabaseController.updateBookingStatus(
+          bookingModel.id,
+          bookingModel,
+        );
+      } finally {
+        isLoading.value = false;
+      }
     }
   }
 
