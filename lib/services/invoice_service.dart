@@ -30,6 +30,16 @@ class InvoiceService {
       0,
       (total, item) => total + item.price,
     );
+    final refundedAppointments = invoiceAppointments
+        .where((item) => item.razorpayRefundId?.trim().isNotEmpty == true)
+        .toList();
+    final refundedAmount = refundedAppointments.fold<double>(
+      0,
+      (total, item) => total + item.price,
+    );
+    final paidAmount = totalAmount - refundedAmount;
+    final hasPartialRefund = refundedAppointments.isNotEmpty &&
+        refundedAppointments.length < invoiceAppointments.length;
     // Create a PDF document
     final pdf = pw.Document();
 
@@ -67,9 +77,8 @@ class InvoiceService {
     final PdfColor warningDark = PdfColor.fromHex(
       AppColors.warningDark.value.toRadixString(16).substring(2),
     );
-    final bool isRefunded = invoiceAppointments.every(
-      (item) => item.paymentStatus.toLowerCase() == 'refunded',
-    );
+    final bool isRefunded = refundedAppointments.length ==
+        invoiceAppointments.length;
 
     // Format dates
     final dateFormatter = DateFormat('yyyy-MM-dd');
@@ -295,7 +304,7 @@ class InvoiceService {
                 pw.TableRow(
                   decoration: pw.BoxDecoration(color: medicalBlue),
                   children: [
-                    _buildTableCell('Description', isHeader: true),
+                    _buildTableCell('Description / Status', isHeader: true),
                     _buildTableCell(
                       'Quantity',
                       isHeader: true,
@@ -314,7 +323,11 @@ class InvoiceService {
                     children: [
                       _buildTableCell(
                         '${formatDateToReadable(item.bookingDate)} - '
-                        '${item.aSessionType().name}',
+                        '${item.aSessionType().name}\n'
+                        '${item.razorpayRefundId?.trim().isNotEmpty == true ? "REFUNDED" : "PAID"}',
+                        textColor: item.razorpayRefundId?.trim().isNotEmpty == true
+                            ? warningDark
+                            : null,
                       ),
                       _buildTableCell(
                         '1 Session',
@@ -346,6 +359,19 @@ class InvoiceService {
                   _buildTotalRow(
                     'Total',
                     'INR ${totalAmount.toStringAsFixed(0)}',
+                    isBold: true,
+                  ),
+                  _buildTotalRow(
+                    'Paid by customer',
+                    'INR ${totalAmount.toStringAsFixed(0)}',
+                  ),
+                  _buildTotalRow(
+                    'Refunded',
+                    'INR ${refundedAmount.toStringAsFixed(0)}',
+                  ),
+                  _buildTotalRow(
+                    'Net amount retained',
+                    'INR ${paidAmount.toStringAsFixed(0)}',
                     isBold: true,
                   ),
                 ],
@@ -408,10 +434,14 @@ class InvoiceService {
             pw.Container(
               decoration: pw.BoxDecoration(
                 border: pw.Border.all(
-                  color: isRefunded ? warning : wellnessGreen,
+                  color: isRefunded || hasPartialRefund
+                      ? warning
+                      : wellnessGreen,
                   width: 1,
                 ),
-                color: isRefunded ? PdfColor.fromHex('FFFBEB') : null,
+                color: isRefunded || hasPartialRefund
+                    ? PdfColor.fromHex('FFFBEB')
+                    : null,
                 borderRadius: pw.BorderRadius.circular(8),
               ),
               padding: pw.EdgeInsets.all(12),
@@ -422,9 +452,15 @@ class InvoiceService {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text(
-                          isRefunded ? 'PAYMENT REFUNDED' : 'PAYMENT RECEIVED',
+                          isRefunded
+                              ? 'PAYMENT FULLY REFUNDED'
+                              : hasPartialRefund
+                              ? 'PAYMENT PARTIALLY REFUNDED'
+                              : 'PAYMENT RECEIVED',
                           style: pw.TextStyle(
-                            color: isRefunded ? warningDark : wellnessGreen,
+                            color: isRefunded || hasPartialRefund
+                                ? warningDark
+                                : wellnessGreen,
                             fontWeight: pw.FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -436,7 +472,11 @@ class InvoiceService {
                         ),
                         pw.SizedBox(height: 2),
                         pw.Text(
-                          'Payment Status: ${isRefunded ? "Refunded" : "Paid"}',
+                          'Payment Status: ${isRefunded
+                              ? "Fully refunded"
+                              : hasPartialRefund
+                              ? "Partially refunded"
+                              : "Paid"}',
                           style: pw.TextStyle(fontSize: 12),
                         ),
                         if (appointment.orderId?.isNotEmpty == true)
@@ -449,21 +489,38 @@ class InvoiceService {
                             'Payment Date: ${_formatDate(appointment.paymentVerifiedAt!)}',
                             style: pw.TextStyle(fontSize: 12),
                           ),
-                        if (isRefunded) ...[
+                        pw.Text(
+                          'Original amount paid by customer: INR ${totalAmount.toStringAsFixed(0)}',
+                          style: pw.TextStyle(fontSize: 12),
+                        ),
+                        pw.Text(
+                          'Total refunded: INR ${refundedAmount.toStringAsFixed(0)}',
+                          style: pw.TextStyle(
+                            color: refundedAmount > 0 ? warningDark : null,
+                            fontSize: 12,
+                          ),
+                        ),
+                        pw.Text(
+                          'Refunded appointments: ${refundedAppointments.length} of ${invoiceAppointments.length}',
+                          style: pw.TextStyle(fontSize: 12),
+                        ),
+                        if (refundedAmount > 0) ...[
                           pw.SizedBox(height: 2),
                           pw.Text(
-                            'Refunded Amount: INR ${totalAmount.toStringAsFixed(0)}',
+                            'Net amount retained: INR ${paidAmount.toStringAsFixed(0)}',
                             style: pw.TextStyle(
-                              color: warningDark,
+                              color: wellnessGreen,
                               fontWeight: pw.FontWeight.bold,
                               fontSize: 12,
                             ),
                           ),
-                          if (appointment.razorpayRefundId?.isNotEmpty == true)
-                            pw.Text(
-                              'Refund Reference: ${appointment.razorpayRefundId}',
+                          ...refundedAppointments.map(
+                            (item) => pw.Text(
+                              'Refund reference (${formatDateToReadable(item.bookingDate)}): '
+                              '${item.razorpayRefundId}',
                               style: pw.TextStyle(fontSize: 12),
                             ),
+                          ),
                         ],
                         if (appointment.razorpayTransferId?.isNotEmpty == true)
                           pw.Text(
@@ -569,6 +626,7 @@ class InvoiceService {
     String text, {
     bool isHeader = false,
     pw.Alignment alignment = pw.Alignment.centerLeft,
+    PdfColor? textColor,
   }) {
     return pw.Container(
       padding: pw.EdgeInsets.all(8),
@@ -576,7 +634,7 @@ class InvoiceService {
       child: pw.Text(
         text,
         style: pw.TextStyle(
-          color: isHeader ? PdfColors.white : PdfColors.black,
+          color: textColor ?? (isHeader ? PdfColors.white : PdfColors.black),
           fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
           fontSize: 12,
         ),

@@ -22,6 +22,15 @@ class SupabaseController {
   final notificationService = NotificationService();
   final SupabaseClient supabaseClient = Supabase.instance.client;
 
+  Future<BookingsModel?> getBookingById(String bookingId) async {
+    final response = await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .select('*')
+        .eq(DatabaseSchema.bookingsId, bookingId);
+    var bookingList = BookingsModel.fromJsonList(response);
+    return bookingList.firstOrNull;
+  }
+
   Future<List<BookingsModel>> getUpComingBookings(int userId) async {
     final String today = DateTime.now().toIso8601String().split('T')[0];
     final response = await supabaseClient
