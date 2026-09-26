@@ -52,23 +52,23 @@ class BookingHistoryController extends GetxController {
     }
   }
 
-  Future<void> updateDoctorNote(BookingsModel doctorNotes) async {
+  Future<void> updateDoctorNote(BookingsModel bookingModel) async {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
       var response = await supabaseController.updateDoctorNote(
-        doctorNotes?.id ?? 0,
-        doctorNotes,
+        bookingModel?.id ?? 0,
+        bookingModel,
       );
       isLoading.value = false;
     }
   }
 
-  Future<void> updateAppointmentStatus(BookingsModel doctorNotes) async {
+  Future<void> updateAppointmentStatus(BookingsModel bookingModel) async {
     if (userModelSupabase?.id != null) {
       isLoading.value = true;
       var response = await supabaseController.updateBookingStatus(
-        doctorNotes?.id ?? 0,
-        doctorNotes,
+        bookingModel?.id ?? 0,
+        bookingModel,
       );
       isLoading.value = false;
     }
@@ -102,30 +102,6 @@ class BookingHistoryController extends GetxController {
     }
   }
 
-  /*void loadAppointments() {
-    isLoading.value = true;
-
-    // In a real app, fetch data from your API or database
-    Future.delayed(Duration(milliseconds: 800), () {
-      allAppointments.value = _getMockAppointments();
-      filterAppointments();
-      isLoading.value = false;
-    });
-  }*/
-
-  void filterAppointments() {
-    final fromDateStr = DateFormat('yyyy-MM-dd').format(fromDate.value);
-    final toDateStr = DateFormat('yyyy-MM-dd').format(toDate.value);
-
-    /* filteredAppointments.value = allAppointments
-        .where((appointment) {
-          final appDate = appointment.date;
-          return appDate.compareTo(fromDateStr) >= 0 &&
-                 appDate.compareTo(toDateStr) <= 0;
-        })
-        .toList();*/
-  }
-
   void applyQuickFilter(int days) {
     toDate.value = DateTime.now();
     fromDate.value = DateTime.now().subtract(Duration(days: days));
@@ -140,18 +116,6 @@ class BookingHistoryController extends GetxController {
     toDate.value = now;
     getFilteredBookings();
   }
-
-  /*void loadAppointmentDetails(String appointmentId) {
-    isLoadingDetails.value = true;
-    selectedAppointment.value = null;
-
-    // In a real app, fetch data from your API or database
-    Future.delayed(Duration(milliseconds: 800), () {
-      final appointment = _getMockAppointmentDetails(appointmentId);
-      selectedAppointment.value = appointment;
-      isLoadingDetails.value = false;
-    });
-  }*/
 
   void sendReminderNotification() async {
     var appointment = selectedAppointment.value;
@@ -189,6 +153,8 @@ class BookingHistoryController extends GetxController {
       bookingId: bookingId,
       doctorId: doctorId,
     );
+    selectedAppointment.value = await supabaseController.getBookingById(bookingId);
+
 
     // 3. Hide Loading State
     isLoading.value = false;
@@ -223,16 +189,4 @@ class BookingHistoryController extends GetxController {
 
     return result;
   }
-
-  /*// Update local data
-    final index = allAppointments.indexWhere((a) => a.appointmentId == appointmentId);
-    if (index >= 0) {
-      allAppointments[index] = allAppointments[index].copyWith(status: 'cancelled');
-      filterAppointments();
-    }
-
-    // Update selected appointment if viewing details
-    if (selectedAppointment.value?.appointmentId == appointmentId) {
-      selectedAppointment.value = selectedAppointment.value!.copyWith(status: 'cancelled');
-    }*/
 }

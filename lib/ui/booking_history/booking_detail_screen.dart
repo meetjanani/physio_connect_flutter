@@ -511,7 +511,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             ElevatedButton.icon(
               onPressed: () => _generateInvoice(context, appointment),
               icon: Icon(Icons.receipt_long),
-              label: Text('Generate Invoice'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.medicalBlue,
                 foregroundColor: AppColors.textOnDark,
@@ -521,6 +520,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 ),
                 elevation: 2,
               ),
+              label: Text('Generate Invoice'),
             ),
             SizedBox(height: 16),
           ],

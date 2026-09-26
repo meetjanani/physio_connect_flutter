@@ -69,26 +69,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         // Add this after your appointment container
                         SizedBox(height: 24),
-                        Text(
-                          "Health & Recovery Tips",
-                          style: GoogleFonts.inter(
-                            textStyle: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 16),
-                        SizedBox(
-                          height: 230,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            physics: BouncingScrollPhysics(),
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            children: _buildHealthTipCards(),
-                          ),
-                        ),
+                        // Text(
+                        //   "Health & Recovery Tips",
+                        //   style: GoogleFonts.inter(
+                        //     textStyle: TextStyle(
+                        //       fontSize: 20,
+                        //       fontWeight: FontWeight.w600,
+                        //       color: AppColors.textPrimary,
+                        //     ),
+                        //   ),
+                        // ),
+                        // SizedBox(height: 16),
+                        // SizedBox(
+                        //   height: 230,
+                        //   child: ListView(
+                        //     scrollDirection: Axis.horizontal,
+                        //     physics: BouncingScrollPhysics(),
+                        //     padding: EdgeInsets.symmetric(horizontal: 8),
+                        //     children: _buildHealthTipCards(),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
@@ -110,7 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         label: Text(
           'Book Appointment',
           style: GoogleFonts.inter(
-            textStyle: TextStyle(fontWeight: FontWeight.w600),
+            textStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
           ),
         ),
       ),
