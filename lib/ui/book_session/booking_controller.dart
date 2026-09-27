@@ -312,6 +312,11 @@ class BookingController extends GetxController {
       );
       pendingBookingIds.assignAll(bookingIds);
       bookingId = bookingIds.first;
+      await supabaseController.sentNotification(
+        notificationDoctorId,
+        "Yippee!!!, New Booking...",
+        "New booking placed successfully.",
+      );
       var razorpayOrder = await supabaseController
           .callCreateRazorPayOrderForBookings(
           bookingIds,
