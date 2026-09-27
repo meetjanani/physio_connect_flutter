@@ -481,7 +481,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () async {
-                final file = await LetterHeadService.generateLetterHead();
+                final doctor = appointment.aDoctor();
+                final file = await LetterHeadService.generateLetterHead(
+                  doctorName: doctor.name,
+                  doctorRegNumber: doctor.drRegNumber,
+                  doctorDegree: doctor.degree,
+                );
                 await LetterHeadService.openPdf(file);
               },
               icon: Icon(Icons.description_outlined),
