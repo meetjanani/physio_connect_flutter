@@ -28,8 +28,8 @@ class BookingDetailScreen extends StatefulWidget {
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
   final BookingHistoryController controller =
       Get.isRegistered<BookingHistoryController>()
-          ? Get.find<BookingHistoryController>()
-          : Get.put(BookingHistoryController());
+      ? Get.find<BookingHistoryController>()
+      : Get.put(BookingHistoryController());
 
   final BookingsModel appointment = Get.arguments as BookingsModel;
   int _refundLongPressCount = 0;
