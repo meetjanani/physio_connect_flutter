@@ -570,9 +570,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             ),
           ],
 
-          SizedBox(height: 32),
-        ],
-      ),
+  Widget _buildRefundAction(BuildContext context, BookingsModel appointment) {
+    if (!_canAttemptRefund(appointment)) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: _buildRefundButton(context, appointment),
     );
   }
 
