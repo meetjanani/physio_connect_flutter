@@ -68,6 +68,11 @@ dependencies:
   cloud_functions: ^6.0.0
   flutter_widget_from_html_core: ^0.8.5
   html: ^0.15.4
+  timezone: ^0.10.0
+  flutter_timezone: ^4.1.0
+  firebase_analytics: ^12.0.0
+  firebase_crashlytics: ^5.0.0
+  uuid: ^4.5.1
 
 # dependency_overrides:
 #   csslib: ^0.17.2

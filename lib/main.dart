@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -11,12 +9,18 @@ import 'package:get/get.dart';
 import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/supabase/firebase_notification.dart';
 import 'package:physio_connect/ui/splash_screen.dart';
+import 'package:physio_connect/services/app_analytics.dart';
+import 'package:physio_connect/services/appointment_reminder_service.dart';
+import 'package:physio_connect/utils/theme/app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // SECURITY WARNING: Only use this in development/testing
-  HttpOverrides.global = MyHttpOverrides();
+  // Only bypass TLS in debug — never in Play Store / release builds.
+  if (kDebugMode) {
+    HttpOverrides.global = MyHttpOverrides();
+  }
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp();
@@ -44,6 +48,13 @@ void main() async {
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqbnhya3pybWVldHpyYWd3cmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTc3NjAsImV4cCI6MjA3MDgzMzc2MH0.5lPvv9Hj60NMvPE6IrI6hw6ZhrzqjeV6KUp65tHDJmo',
   );
+
+  try {
+    await AppAnalytics.instance.init();
+  } catch (_) {}
+  try {
+    await AppointmentReminderService.instance.ensureInitialized();
+  } catch (_) {}
 
   //await FirebaseApi().initNotification();
   runApp(const MyApp());
@@ -117,6 +128,7 @@ class _MyAppState extends State<MyApp> {
       key: UniqueKey(),
       debugShowCheckedModeBanner: false,
       enableLog: true,
+      theme: AppTheme.lightTheme,
       // supportedLocales: flc.supportedLocales.map((e) => Locale(e)),
       // localizationsDelegates: const [
       //   flc.CountryLocalizations.delegate,
