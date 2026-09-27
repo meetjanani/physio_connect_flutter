@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
-PreferredSizeWidget commonAppBar(String appBarTitle, {bool isBackButtonVisible = false}) {
+PreferredSizeWidget commonAppBar(
+  String appBarTitle, {
+  bool isBackButtonVisible = false,
+}) {
   return PreferredSize(
     preferredSize: Size.fromHeight(kToolbarHeight),
     child: Container(
@@ -26,7 +29,7 @@ PreferredSizeWidget commonAppBar(String appBarTitle, {bool isBackButtonVisible =
                 maintainAnimation: true,
                 maintainState: true,
                 child: IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.black, size: 28,),
+                  icon: Icon(Icons.arrow_back, color: Colors.white, size: 28),
                   onPressed: () {
                     Get.back();
                   },
@@ -38,11 +41,11 @@ PreferredSizeWidget commonAppBar(String appBarTitle, {bool isBackButtonVisible =
                 child: Text(
                   appBarTitle,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.fugazOne(
+                  style: GoogleFonts.inter(
                     textStyle: TextStyle(
-                      color: Colors.black,
+                      color: Colors.white,
                       fontSize: 18,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

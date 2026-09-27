@@ -40,7 +40,11 @@ class LetterHeadData {
 }
 
 class LetterHeadService {
-  static Future<File> generateLetterHead() async {
+  static Future<File> generateLetterHead({
+    String? doctorName,
+    String? doctorRegNumber,
+    String? doctorDegree,
+  }) async {
     final pdf = pw.Document();
 
     final ByteData logoBytes = await rootBundle.load('assets/app_icon.png');
@@ -56,6 +60,16 @@ class LetterHeadService {
     final PdfColor medicalBlueDark = PdfColor.fromHex(
       AppColors.medicalBlueDark.toARGB32().toRadixString(16).padLeft(8, '0').substring(2),
     );
+
+    final displayName = (doctorName?.trim().isNotEmpty == true)
+        ? doctorName!.trim()
+        : 'Physiotherapist';
+    final reg = (doctorRegNumber?.trim().isNotEmpty == true)
+        ? doctorRegNumber!.trim()
+        : '';
+    final credentialLine = reg.isNotEmpty
+        ? '$displayName | $reg'
+        : displayName;
 
     pdf.addPage(
       pw.MultiPage(
@@ -73,7 +87,7 @@ class LetterHeadService {
                       crossAxisAlignment: pw.CrossAxisAlignment.end,
                       children: [
                         pw.Text(
-                          'Physio Connect',
+                          'PhysioConnect',
                           style: pw.TextStyle(
                             color: medicalBlueDark,
                             fontWeight: pw.FontWeight.bold,
@@ -82,12 +96,14 @@ class LetterHeadService {
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
-                          'Physiotherapy | Fitness | Rehab',
+                          doctorDegree?.trim().isNotEmpty == true
+                              ? doctorDegree!
+                              : 'Physiotherapy | Fitness | Rehab',
                           style: const pw.TextStyle(fontSize: 14),
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
-                          'Dr. Parul Desai | GPC-2345',
+                          credentialLine,
                           style: const pw.TextStyle(fontSize: 14),
                         ),
                       ],

@@ -19,14 +19,3 @@ class SplashController extends GetxController {
     }
   }
 }
-
-// TODO NOTE
-/*
-* Add some bullet points here about what session type
-* Lower back pain, neck pain, knee pain, shoulder pain, headache, arthritis, sports injuries, post-surgical rehabilitation, general fitness and wellness, prenatal and postnatal care
-* CURA leasor, machine type , photo
-*
-* Reminder notification upon booking placed. & remind then 1 hour before session
-*
-* invoice share option
-* */
