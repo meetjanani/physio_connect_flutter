@@ -39,7 +39,7 @@ class SupabaseController {
     final response = await supabaseClient
         .from(DatabaseSchema.bookingsTable)
         .select('*')
-        .eq(DatabaseSchema.bookingsUserId, userId)
+        .eq(userColumn, userId)
         .gte(DatabaseSchema.bookingsDate, today)
         .order(DatabaseSchema.bookingsId, ascending: true);
     var bookingList = BookingsModel.fromJsonList(response);
