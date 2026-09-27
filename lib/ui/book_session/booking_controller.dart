@@ -18,7 +18,8 @@ import '../../model/session_type_model.dart';
 import '../../model/time_slots_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
-import '../../utils/app_shared_preference.dart';
+import '../../services/appointment_reminder_service.dart';
+import '../../services/app_analytics.dart';
 import '../../utils/constants.dart';
 
 class BookingController extends GetxController {
@@ -256,6 +257,9 @@ class BookingController extends GetxController {
     isLoading.value = true;
 
     try {
+      try {
+        await AppAnalytics.instance.bookingStarted();
+      } catch (_) {}
       final sessionType = selectedSessionType.value;
       if (sessionType == null) {
         showErrorSnackbar(
@@ -409,5 +413,45 @@ class BookingController extends GetxController {
     selectedDoctor.value = null;
     serviceAreas.clear();
     areaDoctors.clear();
+  }
+
+  Future<void> scheduleRemindersForPendingBookings() async {
+    final dates = appointmentDates.isEmpty
+        ? [selectedDate.value]
+        : appointmentDates.toList();
+    final slotTime = selectedTimeSlot.value?.time ?? '09:00';
+    final sessionName = selectedSessionType.value?.name ?? 'Physio session';
+
+    for (var i = 0; i < pendingBookingIds.length; i++) {
+      final bookingId = pendingBookingIds[i];
+      final date = i < dates.length ? dates[i] : dates.last;
+      final start = _combineDateAndSlot(date, slotTime);
+      try {
+        await AppointmentReminderService.instance.scheduleSessionReminders(
+          bookingId: bookingId,
+          sessionStart: start,
+          sessionLabel: sessionName,
+        );
+      } catch (e) {
+        print('Reminder schedule failed: $e');
+      }
+    }
+  }
+
+  DateTime _combineDateAndSlot(DateTime date, String slotTime) {
+    final cleaned = slotTime.trim().toUpperCase();
+    final match = RegExp(
+      r'(\d{1,2}):(\d{2})\s*(AM|PM)?',
+    ).firstMatch(cleaned);
+    var hour = 9;
+    var minute = 0;
+    if (match != null) {
+      hour = int.tryParse(match.group(1) ?? '9') ?? 9;
+      minute = int.tryParse(match.group(2) ?? '0') ?? 0;
+      final ampm = match.group(3);
+      if (ampm == 'PM' && hour < 12) hour += 12;
+      if (ampm == 'AM' && hour == 12) hour = 0;
+    }
+    return DateTime(date.year, date.month, date.day, hour, minute);
   }
 }
