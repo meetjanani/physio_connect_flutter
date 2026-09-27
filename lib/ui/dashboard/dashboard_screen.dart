@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:physio_connect/ui/booking_history/booking_history_controller.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_controller.dart';
 
 import '../../route/route_module.dart';
@@ -28,7 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: commonAppBar("Physio Connect"),
+      appBar: commonAppBar("PhysioConnect"),
       body: SafeArea(
         child: Center(
           child: Obx(
@@ -286,7 +287,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             OutlinedButton.icon(
               onPressed: () {
-                // Handle reschedule
+                Get.put(BookingHistoryController()).selectedAppointment.value = appointment;
+                Get.toNamed(
+                  AppPage.bookingDetail,
+                  arguments: appointment,
+                );
               },
               icon: Icon(Icons.edit_calendar, color: AppColors.medicalBlueDark),
               label: Text(
@@ -299,7 +304,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             ElevatedButton.icon(
               onPressed: () {
-                // Handle view details
+                Get.put(BookingHistoryController()).selectedAppointment.value = appointment;
+                Get.toNamed(
+                  AppPage.bookingDetail,
+                  arguments: appointment,
+                );
               },
               icon: Icon(Icons.visibility, color: AppColors.textOnDark),
               label: Text("View Details"),
