@@ -132,7 +132,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      isDoctorTypeUser(controller.userModelSupabase?.id ?? 0) &&
+                      isDoctorTypeUser(controller.userModelSupabase) &&
                               !isAppointmentRefunded
                           /*appointment.aPatient().userType?.toLowerCase() ==
                               UserType.doctor.name*/
