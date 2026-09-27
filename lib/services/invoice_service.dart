@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:physio_connect/model/bookings_model.dart';
+import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:printing/printing.dart';
 
@@ -355,7 +356,6 @@ class InvoiceService {
                     'Subtotal',
                     'INR ${totalAmount.toStringAsFixed(0)}',
                   ),
-                  // _buildTotalRow('Tax (0%)', '₹0.00'),
                   _buildTotalRow(
                     'Total',
                     'INR ${totalAmount.toStringAsFixed(0)}',
@@ -927,7 +927,16 @@ class InvoiceService {
         .trim();
   }
 
-  static pw.Widget buildDoctorStamp() {
+  static pw.Widget buildDoctorStamp(DoctorModel? doctor) {
+    final name = (doctor?.name?.trim().isNotEmpty == true)
+        ? doctor!.name!
+        : 'Physiotherapist';
+    final reg = (doctor?.drRegNumber?.trim().isNotEmpty == true)
+        ? doctor!.drRegNumber!
+        : '—';
+    final degree = (doctor?.degree?.trim().isNotEmpty == true)
+        ? doctor!.degree!
+        : 'Physiotherapist';
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: pw.BoxDecoration(
@@ -938,12 +947,12 @@ class InvoiceService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
-            'Dr. Parul Desai',
+            name,
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12),
           ),
-          pw.Text('Reg. No. 123456', style: const pw.TextStyle(fontSize: 10)),
+          pw.Text('Reg. No. $reg', style: const pw.TextStyle(fontSize: 10)),
           pw.Text(
-            'Degree: Physiotherapist',
+            'Degree: $degree',
             style: const pw.TextStyle(fontSize: 10),
           ),
         ],

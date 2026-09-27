@@ -7,12 +7,9 @@ import 'package:physio_connect/ui/booking_history/session_booking_card.dart';
 import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_note.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../model/bookings_model.dart';
 import '../../route/route_module.dart';
 import '../../utils/common_appbar.dart';
-import '../../utils/units_extensions.dart';
 import '../../utils/view_extension.dart';
 import 'booking_history_controller.dart';
 
@@ -31,24 +28,27 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: commonAppBar("Booking Details"),
-      body: Column(
-        children: [
-          _buildDateFilter(context),
-          Expanded(
-            child: Obx(
-              () => controller.isLoading.value
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.medicalBlue,
-                      ),
-                    )
-                  : controller.upComingBookings.isEmpty
-                  ? _buildEmptyState()
-                  : _buildAppointmentsList(),
+      appBar: commonAppBar(controller.isDoctor.value ? "Doctor Dashboard" : "My Bookings"),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildDateFilter(context),
+            Expanded(
+              child: Obx(
+                    () =>
+                controller.isLoading.value
+                    ? Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.medicalBlue,
+                  ),
+                )
+                    : (controller.upComingBookings.isEmpty
+                    ? _buildEmptyState()
+                    : _buildAppointmentsList()),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_controller.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
 import 'package:physio_connect/ui/dashboard/doctor_dashboard_screen.dart';
+import 'package:physio_connect/ui/dashboard/doctor_earnings_screen.dart';
 import 'package:physio_connect/ui/generate_prescription/generate_prescription_screen.dart';
-import 'package:physio_connect/utils/app_shared_preference.dart';
-import 'package:physio_connect/utils/enum.dart';
+import 'package:physio_connect/ui/help/help_support_screen.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import '../../model/user_model_supabase.dart';
 import '../../utils/constants.dart';
@@ -17,13 +16,16 @@ class DashboardBottomNavigationScreen extends StatefulWidget {
   int currentIndex;
 
   @override
-  State<DashboardBottomNavigationScreen> createState() => _DashboardBottomNavigationScreenState();
+  State<DashboardBottomNavigationScreen> createState() =>
+      _DashboardBottomNavigationScreenState();
 }
 
-class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigationScreen> {
+class _DashboardBottomNavigationScreenState
+    extends State<DashboardBottomNavigationScreen> {
   final DashboardController controller = DashboardController.to;
 
-  late List<Widget> _buildScreens = [];
+  List<Widget> _buildScreens = [];
+  bool _isDoctor = false;
 
   @override
   void initState() {
@@ -31,20 +33,31 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
     UserModelSupabase.getFromSecureStorage().then((value) {
       setState(() {
         controller.userModelSupabase = value;
+        _isDoctor = isDoctorTypeUser(value);
         _initializeScreens();
+        // Doctors land on their appointments tab (index 0).
+        if (_isDoctor && widget.currentIndex == 0) {
+          widget.currentIndex = 0;
+        }
       });
     });
   }
 
+  // GeneratePrescriptionScreen // Make it on_Demand from doctor side, and only show if doctor is allowed to generate prescription.
+  // DoctorEarningsScreen // Make it on_Demand from doctor side, and only show if doctor is allowed to generate prescription.
   void _initializeScreens() {
-    final isDoctor = isDoctorTypeUser(controller.userModelSupabase?.id ?? 0);
-
     _buildScreens = [
       DashboardScreen(),
-      isDoctor == true ? DoctorDashboardScreen() :BookingHistoryScreen(),
+      BookingHistoryScreen(),
       ProfileAboutUsScreen(),
-      isDoctor == true ? GeneratePrescriptionScreen() : Container(),
+      HelpSupportScreen()
     ];
+    // if (_isDoctor) {
+    //   _buildScreens = [
+    //     // const DoctorEarningsScreen(),
+    //     GeneratePrescriptionScreen(),
+    //   ];
+    // }
   }
 
   void onTapped(int index) {
@@ -55,12 +68,34 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
 
   @override
   Widget build(BuildContext context) {
-    final isDoctor = isDoctorTypeUser(controller.userModelSupabase?.id ?? 0);
+    final items = [
+      BottomNavigationBarItem(
+        icon: Icon(Icons.home_outlined),
+        activeIcon: Icon(Icons.home),
+        label: 'Home',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.history),
+        activeIcon: Icon(Icons.history),
+        label: 'Bookings',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.person_outline),
+        activeIcon: Icon(Icons.person),
+        label: 'Profile',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.medical_information_outlined),
+        activeIcon: Icon(Icons.medical_information),
+        label: 'About Us',
+      ),
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: (_buildScreens != null && _buildScreens.length > 0)
-          ? _buildScreens[widget.currentIndex]
-          : Center(child: CircularProgressIndicator()),
+      body: _buildScreens.isNotEmpty
+          ? _buildScreens[widget.currentIndex.clamp(0, _buildScreens.length - 1)]
+          : const Center(child: CircularProgressIndicator()),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -72,53 +107,24 @@ class _DashboardBottomNavigationScreenState extends State<DashboardBottomNavigat
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
           ),
           child: BottomNavigationBar(
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home, color: AppColors.medicalBlue),
-                activeIcon: Icon(Icons.home, color: AppColors.wellnessGreen),
-                label: "Home"
-              ),
-              /*BottomNavigationBarItem(
-                icon: Icon(Icons.home, color: AppColors.medicalBlue),
-                activeIcon: Icon(Icons.home, color: AppColors.wellnessGreen),
-                label: "Home"
-              ),*/
-              BottomNavigationBarItem(
-                icon: Icon(Icons.history, color: AppColors.medicalBlue),
-                activeIcon: Icon(Icons.history, color: AppColors.wellnessGreen),
-                label: "Bookings"
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings, color: AppColors.medicalBlue),
-                activeIcon: Icon(Icons.settings, color: AppColors.wellnessGreen),
-                label: "About-Us"
-              ),
-            ]..addAll(isDoctor == true ? [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.note_add_outlined, color: AppColors.medicalBlue),
-                  activeIcon: Icon(Icons.history, color: AppColors.wellnessGreen),
-                  label: "Prescriptions"
-              )
-            ] : []),
-            currentIndex: widget.currentIndex,
+            items: items,
+            currentIndex: widget.currentIndex.clamp(0, items.length - 1),
             onTap: onTapped,
             selectedItemColor: AppColors.wellnessGreen,
             unselectedItemColor: AppColors.textMuted,
-            selectedLabelStyle: TextStyle(
+            selectedLabelStyle: const TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
-            unselectedLabelStyle: TextStyle(
-              fontSize: 12,
-            ),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
             showUnselectedLabels: true,
             backgroundColor: AppColors.surface,
-            elevation: 0, // No elevation here since we're using a custom shadow
+            elevation: 0,
             type: BottomNavigationBarType.fixed,
           ),
         ),

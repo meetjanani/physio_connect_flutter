@@ -45,4 +45,20 @@ class ProfileAboutUsController extends GetxController {
   void logout() async {
     authController.signOutUser(navigateUser: true);
   }
+
+  Future<void> updateDisplayName(String name) async {
+    final user = userModelSupabase.value;
+    if (user == null || user.id <= 0) return;
+    isLoading.value = true;
+    try {
+      await supabaseController.updateUserName(user.id, name);
+      user.name = name;
+      await user.saveToSecureStorage();
+      userModelSupabase.value = user;
+      userModelSupabase.refresh();
+      Get.snackbar('Updated', 'Your name was saved.');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
