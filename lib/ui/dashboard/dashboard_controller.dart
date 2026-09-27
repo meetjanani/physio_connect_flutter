@@ -8,6 +8,7 @@ import 'package:physio_connect/utils/view_extension.dart';
 import '../../model/bookings_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../utils/app_shared_preference.dart';
+import '../../utils/constants.dart';
 
 class DashboardController extends GetxController {
   static DashboardController get to => Get.find();
@@ -50,7 +51,7 @@ class DashboardController extends GetxController {
     if (userModelSupabase?.id != null) {
       upComingBookings.clear();
       isLoading.value = true;
-      var response = await supabaseController.getUpComingBookings(userModelSupabase?.id ?? 0);
+      var response = await supabaseController.getUpComingBookings(userModelSupabase?.id ?? 0, (isDoctorTypeUser(userModelSupabase)));
       upComingBookings.addAll(response);
       isLoading.value = false;
     }
