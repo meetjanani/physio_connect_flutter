@@ -32,7 +32,7 @@ class BookingHistoryController extends GetxController {
   Future<void> onInit() async {
     super.onInit();
     userModelSupabase = await UserModelSupabase.getFromSecureStorage();
-    isDoctor.value = isDoctorTypeUser(userModelSupabase?.id ?? 0);
+    isDoctor.value = isDoctorTypeUser(userModelSupabase);
     getFilteredBookings();
   }
 
