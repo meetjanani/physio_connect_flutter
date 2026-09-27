@@ -183,8 +183,10 @@ class BookingController extends GetxController {
     if (notificationDoctorId > 0) {
       await supabaseController.sentNotification(
         notificationDoctorId,
-        "Yippee!!!, New Booking...",
-        "New booking placed successfully.",
+        'Booking confirmed',
+        '${userModelSupabase?.name ?? 'A patient'} booked ${sessionType.name} '
+            'for ${DateFormat('MMM d, yyyy').format(selectedDate.value)} '
+            'at ${selectedTimeSlot.value?.time ?? 'the selected time'}.',
       );
     }
 
@@ -318,8 +320,11 @@ class BookingController extends GetxController {
       bookingId = bookingIds.first;
       await supabaseController.sentNotification(
         notificationDoctorId,
-        "Yippee!!!, New Booking...",
-        "New booking placed successfully.",
+        'Booking placed',
+        '${userModelSupabase?.name ?? 'A patient'} requested a '
+            '${sessionType.name} session for '
+            '${DateFormat('MMM d, yyyy').format(dates.first)} '
+            'at ${selectedTimeSlot.value?.time ?? 'the selected time'}.',
       );
       var razorpayOrder = await supabaseController
           .callCreateRazorPayOrderForBookings(

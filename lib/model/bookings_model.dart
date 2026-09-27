@@ -38,6 +38,8 @@ class BookingsModel {
   String? razorpayRefundId = "";
   bool isBulkAppointment = false;
   String? bulkAppointmentId;
+  int? rating;
+  String? ratingComment;
   String bookingDate = DateTime.now().toString();
   String createdAt = DateTime.now().toString();
 

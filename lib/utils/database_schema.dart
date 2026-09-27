@@ -70,6 +70,8 @@ class DatabaseSchema extends GetxController {
   static const String bookingsCreatedAt = "createdAt";
   static const String bookingsIsBulkAppointment = "isBulkAppointment";
   static const String bookingsBulkAppointmentId = "bulkAppointmentId";
+  static const String bookingsRating = "rating";
+  static const String bookingsRatingComment = "ratingComment";
 
   // Session Types table
   static const String sessionTypeTable = "session_type";
@@ -99,6 +101,8 @@ class DatabaseSchema extends GetxController {
   static const String doctorDrRegNumber = "drRegNumber";
   static const String doctorBiodata = "biodata";
   static const String doctorIsActive = "isActive";
+  static const String doctorUserId = "userId";
+  static const String doctorPercentageSplit = "percentageSplit";
 
   // common string
   static const String projectName = "PHYSIO CONNECT";

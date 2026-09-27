@@ -78,9 +78,118 @@ class BookingHistoryController extends GetxController {
           bookingModel.id,
           bookingModel,
         );
+        final doctor = bookingModel.aDoctor();
+        final patient = bookingModel.aPatient();
+        final sessionType = bookingModel.aSessionType();
+        final timeSlot = bookingModel.aTimeslot();
+        final parsedDate = DateTime.tryParse(bookingModel.bookingDate);
+        final appointmentDate = parsedDate == null
+            ? bookingModel.bookingDate
+            : DateFormat('MMM d, yyyy').format(parsedDate);
+        final appointmentDetails =
+            '${sessionType.name} session on $appointmentDate at ${timeSlot.time}';
+        final notification = _bookingStatusNotification(
+          bookingModel.bookingStatus,
+          patient.name ?? 'The patient',
+          doctor.name ?? 'your doctor',
+          appointmentDetails,
+        );
+        final doctorUserId = doctor.userId ?? 0;
+        final patientUserId = bookingModel.userId;
+
+        if (patientUserId > 0) {
+          await supabaseController.sentNotification(
+            patientUserId,
+            notification.$1,
+            notification.$2,
+          );
+        }
+        if (doctorUserId > 0) {
+          await supabaseController.sentNotification(
+            doctorUserId,
+            notification.$1,
+            notification.$3,
+          );
+        }
       } finally {
         isLoading.value = false;
       }
+    }
+  }
+
+  (String, String, String) _bookingStatusNotification(
+    String bookingStatus,
+    String patientName,
+    String doctorName,
+    String appointmentDetails,
+  ) {
+    final status = bookingStatus.toLowerCase().replaceAll(RegExp(r'[-_\s]'), '');
+    final title = switch (status) {
+      'pending' => 'Booking pending',
+      'confirmed' => 'Booking confirmed',
+      'completed' => 'Session completed',
+      'cancelled' || 'canceled' => 'Booking cancelled',
+      'noshow' => 'Missed appointment',
+      'refunded' => 'Refund processed',
+      _ => 'Booking updated',
+    };
+    final patientMessage = switch (status) {
+      'pending' =>
+        'Your $appointmentDetails with $doctorName is awaiting confirmation.',
+      'confirmed' =>
+        'Your $appointmentDetails with $doctorName is confirmed.',
+      'completed' =>
+        'Your $appointmentDetails with $doctorName has been marked completed.',
+      'cancelled' || 'canceled' =>
+        'Your $appointmentDetails with $doctorName has been cancelled.',
+      'noshow' =>
+        'Your $appointmentDetails with $doctorName has been marked as a no-show.',
+      'refunded' =>
+        'The refund for your $appointmentDetails with $doctorName has been processed.',
+      _ =>
+        'The status of your $appointmentDetails with $doctorName has been updated to $bookingStatus.',
+    };
+    final doctorMessage = switch (status) {
+      'pending' =>
+        '$patientName has a $appointmentDetails booking awaiting confirmation.',
+      'confirmed' =>
+        '$patientName has a confirmed $appointmentDetails booking.',
+      'completed' =>
+        '$patientName\'s $appointmentDetails session is completed.',
+      'cancelled' || 'canceled' =>
+        '$patientName\'s $appointmentDetails booking has been cancelled.',
+      'noshow' =>
+        '$patientName was marked as a no-show for the $appointmentDetails booking.',
+      'refunded' =>
+        'The refund for $patientName\'s $appointmentDetails booking has been processed.',
+      _ =>
+        '$patientName\'s $appointmentDetails booking status was updated to $bookingStatus.',
+    };
+    return (title, patientMessage, doctorMessage);
+  }
+
+  Future<void> submitRating(
+    BookingsModel appointment,
+    int rating,
+    String comment,
+  ) async {
+    isLoading.value = true;
+    try {
+      await supabaseController.submitBookingRating(
+        appointment.id,
+        rating: rating,
+        comment: comment,
+      );
+      appointment.rating = rating;
+      appointment.ratingComment = comment;
+      Get.snackbar('Thank you', 'Your rating was saved.');
+    } catch (e) {
+      Get.snackbar(
+        'Rating unavailable',
+        'Could not save rating yet. Please try again later.',
+      );
+    } finally {
+      isLoading.value = false;
     }
   }
 
