@@ -102,11 +102,8 @@ class BookingHistoryController extends GetxController {
         upComingBookings[index] = appointment;
       }
 
-      Get.snackbar(
-        'Appointment Rescheduled',
-        'The appointment was moved to $bookingDate.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      showSuccessSnackbar('Appointment Rescheduled' + "\n" +
+        'The appointment was moved to $bookingDate.',);
     } finally {
       isLoading.value = false;
     }
