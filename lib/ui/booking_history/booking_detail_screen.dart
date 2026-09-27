@@ -526,6 +526,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             ),
             SizedBox(height: 8),
           ],
+          _buildInvoiceButton(context, appointment),
+          _buildRescheduleButton(context, appointment),
+
 
           // Invoice Button
           if ([
