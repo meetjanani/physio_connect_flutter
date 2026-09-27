@@ -1235,6 +1235,151 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       ],
     );
   }
+
+  Widget _buildRescheduleButton(
+      BuildContext context,
+      BookingsModel appointment,
+      ) {
+    final canRescheduleUserRoleWise = controller.isDoctor.value
+        ? true
+        : _isAfterToday(appointment.bookingDate);
+    final canReschedule =
+        (appointment.paymentStatus.toLowerCase() == PaymentStatus.paid.name ||
+            appointment.paymentStatus.toLowerCase() == PaymentStatus.refunded.name) &&
+            (appointment.bookingStatus.toLowerCase() != BookingStatus.completed.name) &&
+            (canRescheduleUserRoleWise);
+    if (!canReschedule) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _showRescheduleDialog(context, appointment),
+            icon: Icon(Icons.edit_calendar),
+            label: Text('Reschedule'),
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              side: BorderSide(color: AppColors.medicalBlue),
+              foregroundColor: AppColors.medicalBlue,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showRescheduleDialog(
+      BuildContext context,
+      BookingsModel appointment,
+      ) async {
+    final currentDate =
+        DateTime.tryParse(appointment.bookingDate) ?? DateTime.now();
+    DateTime? selectedDate = currentDate;
+
+    final action = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                'Reschedule Appointment',
+                style: GoogleFonts.inter(
+                  textStyle: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Please confirm a new date for this appointment.',
+                    style: GoogleFonts.inter(),
+                  ),
+                  SizedBox(height: 12),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.warningLight,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.warning.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: AppColors.warningDark,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'The appointment date will be updated for the patient.',
+                            style: GoogleFonts.inter(
+                              textStyle: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.warningDark,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: dialogContext,
+                        initialDate: selectedDate!.isBefore(DateTime.now())
+                            ? DateTime.now()
+                            : selectedDate!,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          selectedDate = picked;
+                        });
+                      }
+                    },
+                    icon: Icon(Icons.calendar_month),
+                    label: Text(
+                      DateFormat('EEEE, MMMM d, yyyy').format(selectedDate!),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, 'keep'),
+                  child: Text('Keep Current Date'),
+                ),
+                ElevatedButton(
+                  onPressed: selectedDate == currentDate
+                      ? null
+                      : () => Navigator.pop(dialogContext, 'reschedule'),
+                  child: Text('Confirm Date'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (action == 'reschedule' && selectedDate != null) {
+      await controller.rescheduleAppointment(appointment, selectedDate!);
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
+
   // Add this new method for invoice generation
   void _generateInvoice(BuildContext context, BookingsModel appointment) async {
     // Show loading indicator
