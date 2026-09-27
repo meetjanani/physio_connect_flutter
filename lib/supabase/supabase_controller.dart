@@ -33,6 +33,9 @@ class SupabaseController {
 
   Future<List<BookingsModel>> getUpComingBookings(int userId) async {
     final String today = DateTime.now().toIso8601String().split('T')[0];
+    final userColumn = isDoctor
+        ? DatabaseSchema.bookingsDoctorId
+        : DatabaseSchema.bookingsUserId;
     final response = await supabaseClient
         .from(DatabaseSchema.bookingsTable)
         .select('*')
