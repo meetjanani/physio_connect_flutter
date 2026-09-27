@@ -40,11 +40,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               // Date selection row
               _buildDateFilter(context),
 
-              // Tabs for Today, Tomorrow, This Week
-              // _buildTabSelector(),
-
               // Stats cards
-              // _buildStatsCards(),
+              _buildStatsCards(),
 
               // Appointment list
               _buildAppointmentsList(),
@@ -228,15 +225,13 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
   Widget _buildAppointmentsList() {
     return Obx(() {
-      var upcomingAppointments = bookingHistoryController.upComingBookings;
+      final upcomingAppointments =
+          bookingHistoryController.upComingBookings.toList();
 
-      // Sort by time
       upcomingAppointments.sort((a, b) {
-        // First by date
         final dateComparison = a.bookingDate.compareTo(b.bookingDate);
         if (dateComparison != 0) return dateComparison;
 
-        // Then by time
         return a.aTimeslot().time.compareTo(b.aTimeslot().time);
       });
 
@@ -325,4 +320,3 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     }
   }
 }
-
