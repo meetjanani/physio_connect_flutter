@@ -1204,6 +1204,37 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     }
   }
 
+  Widget _buildInvoiceButton(BuildContext context, BookingsModel appointment) {
+    final canGenerateInvoice =
+        appointment.bookingStatus.toLowerCase() ==
+            BookingStatus.completed.name &&
+            [
+              PaymentStatus.paid.name,
+              PaymentStatus.refunded.name,
+            ].contains(appointment.paymentStatus.toLowerCase());
+    if (!canGenerateInvoice) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        SizedBox(height: 16),
+        ElevatedButton.icon(
+          onPressed: () => _generateInvoice(context, appointment),
+          icon: Icon(Icons.receipt_long),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.medicalBlue,
+            foregroundColor: AppColors.textOnDark,
+            minimumSize: Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
+          ),
+          label: Text('Generate Invoice'),
+        ),
+        SizedBox(height: 16),
+      ],
+    );
+  }
   // Add this new method for invoice generation
   void _generateInvoice(BuildContext context, BookingsModel appointment) async {
     // Show loading indicator
