@@ -219,7 +219,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
               ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildActionButton(
                     label: "View Details",
@@ -239,19 +239,19 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                     },
                     onLongPress: (){}
                 ),
-                if(isDoctorTypeUser(controller.userModelSupabase?.id ?? 0)) // patient.userType?.toLowerCase() == UserType.doctor.name
+                if(isDoctorTypeUser(controller.userModelSupabase))
                   _buildActionButton(
                     label: "Call Patient",
                     icon: Icons.call,
                     color: AppColors.wellnessGreen,
-                    onTap: () async {
+                    onLongPress: () async {
                       final phone = patient.mobileNumber ?? "";
                       final uri = Uri(scheme: 'tel', path: phone);
                       if (await canLaunchUrl(uri)) {
                         await launchUrl(uri);
                       }
                     },
-                    onLongPress: () async {
+                    onTap: () async {
                       final phone = patient.mobileNumber ?? "";
                       final whatsappUrl = Uri.parse("https://wa.me/$phone");
                       if (await canLaunchUrl(whatsappUrl)) {
@@ -261,20 +261,33 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                     },
                   ),
                 // TODO: Add Doctor number & whatsapp.
-                if(isDoctorTypeUser(patient?.id ?? 0) == false ) // patient
+                if(isDoctorTypeUser(controller.userModelSupabase) == false)
                   _buildActionButton(
                     label: "Call Doctor",
                     icon: Icons.call,
                     color: AppColors.wellnessGreen,
                     onTap: () async {
-                      final phone = doctor.name ?? "";
+                      final doctorUser = await controller.supabaseController
+                          .getUserById(doctor.userId ?? 0);
+                      final phone = doctorUser?.mobileNumber ?? '';
+                      if (phone.isEmpty) {
+                        Get.snackbar('Unavailable', 'Doctor phone not on file.');
+                        return;
+                      }
                       final uri = Uri(scheme: 'tel', path: phone);
                       if (await canLaunchUrl(uri)) {
                         await launchUrl(uri);
                       }
                     },
                     onLongPress: () async {
-                      final phone = doctor.name ?? "";
+                      final doctorUser = await controller.supabaseController
+                          .getUserById(doctor.userId ?? 0);
+                      final phone = (doctorUser?.mobileNumber ?? '')
+                          .replaceAll(RegExp(r'[^0-9+]'), '');
+                      if (phone.isEmpty) {
+                        Get.snackbar('Unavailable', 'Doctor phone not on file.');
+                        return;
+                      }
                       final whatsappUrl = Uri.parse("https://wa.me/$phone");
                       if (await canLaunchUrl(whatsappUrl)) {
                         await launchUrl(
@@ -282,7 +295,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                       }
                     },
                   ),
-                if(doctor.userId == controller.userModelSupabase?.id) // patient.userType?.toLowerCase() == UserType.doctor.name
+                if(isDoctorTypeUser(controller.userModelSupabase))
                   _buildActionButton(
                       label: "Add Notes",
                       icon: Icons.note_add,
