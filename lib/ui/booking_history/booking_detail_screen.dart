@@ -1088,6 +1088,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     fontFamily: 'monospace',
   );
 
+  // TODO: Test Refund properly form doctor & patient side. Refund is only allowed for doctor role, and only within 48 hours of payment verification.
   bool _canAttemptRefund(BookingsModel appointment) {
     if (!controller.isDoctor.value) return false;
 
