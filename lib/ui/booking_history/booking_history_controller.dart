@@ -69,8 +69,8 @@ class BookingHistoryController extends GetxController {
       try {
         final isRefunded =
             bookingModel.razorpayRefundId?.trim().isNotEmpty == true ||
-            bookingModel.paymentStatus.toLowerCase() == 'refunded' ||
-            bookingModel.bookingStatus.toLowerCase() == 'refunded';
+                bookingModel.paymentStatus.toLowerCase() == 'refunded' ||
+                bookingModel.bookingStatus.toLowerCase() == 'refunded';
         if (isRefunded) {
           bookingModel.bookingStatus = 'refunded';
         }
