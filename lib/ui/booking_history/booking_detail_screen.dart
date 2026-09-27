@@ -1089,6 +1089,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   );
 
   bool _canAttemptRefund(BookingsModel appointment) {
+    if (!controller.isDoctor.value) return false;
+
     final verifiedAt = DateTime.tryParse(appointment.paymentVerifiedAt ?? '');
     if (verifiedAt == null ||
         verifiedAt.isAfter(DateTime.now()) ||
