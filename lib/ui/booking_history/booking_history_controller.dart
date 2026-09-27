@@ -133,7 +133,7 @@ class BookingHistoryController extends GetxController {
     var userId = appointment?.userId ?? 0;
     var bookingDate = appointment?.bookingDate ?? "";
 
-    if (isDoctorTypeUser(userModelSupabase?.id ?? 0) == false) {
+    if (isDoctorTypeUser(userModelSupabase) == false) {
       // patient type user
       await supabaseController.sentNotification(
         doctorId,
