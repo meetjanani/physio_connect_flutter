@@ -1,14 +1,15 @@
-// lib/ui/booking/payment_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:physio_connect/utils/common_appbar.dart';
+import 'package:physio_connect/utils/constants.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
+import 'package:intl/intl.dart';
 
 import '../../model/create_razorpay_order_model.dart';
 import '../../route/route_module.dart';
+import '../../services/app_analytics.dart';
 import '../../utils/enum.dart';
 import 'booking_controller.dart';
 
@@ -59,7 +60,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
           razorpayPaymentId: response.paymentId,
           razorpaySignature: response.signature,
         )
-        .then((_) {
+        .then((_) async {
+          try {
+            await AppAnalytics.instance.paymentSuccess(
+              amount: controller.selectedSessionType.value?.price ?? 0,
+            );
+          } catch (_) {}
+          await controller.scheduleRemindersForPendingBookings();
           Get.toNamed(AppPage.bookingConfirmation);
         });
   }
@@ -378,6 +385,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                         Icon(Icons.check_circle, color: AppColors.medicalBlue),
                       ],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.medicalBlueLight.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.medicalBlueLight),
+                    ),
+                    child: Text(
+                      'Cancellation policy: Free cancel if more than '
+                          '$FREE_CANCEL_HOURS hours before the session. '
+                          'If the doctor cancels, you get a full refund. '
+                          'Support: $SUPPORT_EMAIL',
+                      style: GoogleFonts.inter(
+                        textStyle: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          height: 1.35,
+                        ),
+                      ),
                     ),
                   ),
                 ],
