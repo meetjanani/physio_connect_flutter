@@ -194,12 +194,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                       },
                                       items:
                                           [
-                                            'pending',
-                                            'confirmed',
-                                            'completed',
-                                            'cancelled',
-                                            'no-show',
-                                            'refunded',
+                                            BookingStatus.pending.name,
+                                            BookingStatus.confirmed.name,
+                                            BookingStatus.completed.name,
+                                            BookingStatus.cancelled.name,
+                                            BookingStatus.noShow.name,
+                                            BookingStatus.refunded.name,
                                           ].map<DropdownMenuItem<String>>((
                                             String value,
                                           ) {
@@ -314,11 +314,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               }
             }, Icons.location_pin),
           ]),
-
-          if (_canAttemptRefund(appointment)) ...[
-            SizedBox(height: 16),
-            _buildRefundButton(context, appointment),
-          ],
 
           SizedBox(height: 24),
 
@@ -435,27 +430,24 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           SizedBox(height: 24),
 
           // Notes
-          if (appointment.doctorNotes?.isNotEmpty == true) ...[
-            Text(
-              'Doctor\'s Notes',
-              style: GoogleFonts.inter(
-                textStyle: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+          Text(
+            'Doctor\'s Notes',
+            style: GoogleFonts.inter(
+              textStyle: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
-            SizedBox(height: 16),
-            _buildNotesCard(
-              appointment.doctorNotes ?? 'No additional notes provided.',
-            ),
-            SizedBox(height: 24),
-          ],
+          ),
+          SizedBox(height: 16),
+          _buildNotesCard(
+            appointment.doctorNotes ?? 'No additional notes provided.',
+          ),
+          SizedBox(height: 24),
 
           // Prescription Button
           if (controller.isDoctor.value) ...[
-            SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => Get.toNamed(
                 AppPage.generatePrescription,
@@ -473,11 +465,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 elevation: 2,
               ),
             ),
-            SizedBox(height: 8),
-          ],
-
-          // Letter Head Button
-          if (controller.isDoctor.value) ...[
             SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () async {
@@ -501,77 +488,19 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 elevation: 2,
               ),
             ),
-            SizedBox(height: 8),
-          ],
-
-          // Prescription Button
-          if (controller.isDoctor.value) ...[
             SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => Get.toNamed(
-                AppPage.generatePrescription,
-                arguments: appointment,
-              ),
-              icon: Icon(Icons.description_outlined),
-              label: Text('Generate Prescription'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.medicalBlueDark,
-                foregroundColor: AppColors.textOnDark,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-              ),
-            ),
-            SizedBox(height: 8),
           ],
+          _buildRefundAction(context, appointment),
           _buildInvoiceButton(context, appointment),
           _buildRescheduleButton(context, appointment),
+          _buildPatientCancelButton(context, appointment),
+          _buildPatientRating(appointment),
 
-
-          // Invoice Button
-          if ([
-            'paid',
-            'refunded',
-          ].contains(appointment.paymentStatus.toLowerCase())) ...[
-            SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => _generateInvoice(context, appointment),
-              icon: Icon(Icons.receipt_long),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.medicalBlue,
-                foregroundColor: AppColors.textOnDark,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-              ),
-              label: Text('Generate Invoice'),
-            ),
-            SizedBox(height: 16),
-          ],
-
-          // Actions
-          if (controller.isDoctor.value &&
-              appointment.bookingStatus.toLowerCase() ==
-                  BookingStatus.confirmed.name) ...[
-            SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _showRescheduleDialog(context, appointment),
-                icon: Icon(Icons.edit_calendar),
-                label: Text('Reschedule'),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(color: AppColors.medicalBlue),
-                  foregroundColor: AppColors.medicalBlue,
-                ),
-              ),
-            ),
-          ],
+          SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
 
   Widget _buildRefundAction(BuildContext context, BookingsModel appointment) {
     if (!_canAttemptRefund(appointment)) {
@@ -747,7 +676,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Widget _buildNotesCard(String notes) {
     return InkWell(
       onTap: () {
-        if (isDoctorTypeUser(controller.userModelSupabase?.id ?? 0))
+        if (isDoctorTypeUser(controller.userModelSupabase))
           showHtmlEditorForDoctorNote(
             context: Get.context!,
             initialHtml: appointment.doctorNotes ?? "",
@@ -854,116 +783,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _showRescheduleDialog(
-    BuildContext context,
-    BookingsModel appointment,
-  ) async {
-    final currentDate =
-        DateTime.tryParse(appointment.bookingDate) ?? DateTime.now();
-    DateTime? selectedDate = currentDate;
-
-    final action = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(
-                'Reschedule Appointment',
-                style: GoogleFonts.inter(
-                  textStyle: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Please confirm a new date for this appointment.',
-                    style: GoogleFonts.inter(),
-                  ),
-                  SizedBox(height: 12),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.warningLight,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.warning.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.warning_amber_rounded,
-                          color: AppColors.warningDark,
-                          size: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'The appointment date will be updated for the patient.',
-                            style: GoogleFonts.inter(
-                              textStyle: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.warningDark,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: dialogContext,
-                        initialDate: selectedDate!.isBefore(DateTime.now())
-                            ? DateTime.now()
-                            : selectedDate!,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(Duration(days: 365)),
-                      );
-                      if (picked != null) {
-                        setDialogState(() {
-                          selectedDate = picked;
-                        });
-                      }
-                    },
-                    icon: Icon(Icons.calendar_month),
-                    label: Text(
-                      DateFormat('EEEE, MMMM d, yyyy').format(selectedDate!),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, 'keep'),
-                  child: Text('Keep Current Date'),
-                ),
-                ElevatedButton(
-                  onPressed: selectedDate == currentDate
-                      ? null
-                      : () => Navigator.pop(dialogContext, 'reschedule'),
-                  child: Text('Confirm Date'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (action == 'reschedule' && selectedDate != null) {
-      await controller.rescheduleAppointment(appointment, selectedDate!);
-      if (mounted) {
-        setState(() {});
-      }
-    }
   }
 
   Color _getStatusColor(String status) {
@@ -1390,6 +1209,109 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     }
   }
 
+  Widget _buildPatientCancelButton(
+      BuildContext context,
+      BookingsModel appointment,
+      ) {
+    if (controller.isDoctor.value ||
+        !_canPatientCancel(appointment)) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _confirmPatientCancel(context, appointment),
+            icon: Icon(Icons.cancel_outlined),
+            label: Text('Cancel Appointment'),
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              side: BorderSide(color: AppColors.error),
+              foregroundColor: AppColors.error,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            'Free cancel if more than $FREE_CANCEL_HOURS hours before the session. '
+                'Later cancels may need a refund only 70% appointment',
+            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool _canPatientCancel(BookingsModel appointment) {
+    final status = appointment.bookingStatus.toLowerCase();
+    return (status == BookingStatus.pending.name ||
+        status == BookingStatus.confirmed.name) &&
+        _isAfterToday(appointment.bookingDate);
+  }
+
+  bool _isAfterToday(String date) {
+    final bookingDate = DateTime.tryParse(date);
+    if (bookingDate == null) return false;
+
+    final today = DateTime.now();
+    final appointmentDay = DateTime(
+      bookingDate.year,
+      bookingDate.month,
+      bookingDate.day,
+    );
+    final todayDay = DateTime(today.year, today.month, today.day);
+    return appointmentDay.isAfter(todayDay);
+  }
+
+  Future<void> _confirmPatientCancel(
+      BuildContext context,
+      BookingsModel appointment,
+      ) async {
+    final bookingDate = DateTime.tryParse(appointment.bookingDate);
+    final hoursAhead = bookingDate == null
+        ? 0
+        : bookingDate.difference(DateTime.now()).inHours;
+    final freeCancel = hoursAhead >= FREE_CANCEL_HOURS;
+
+    final shouldCancel = await Get.dialog<bool>(
+      AlertDialog(
+        title: Text('Cancel appointment?'),
+        content: Text(
+          freeCancel
+              ? 'You are cancelling more than $FREE_CANCEL_HOURS hours ahead. '
+              'If payment was collected, request a refund from Help if it does not reverse automatically.'
+              : 'This cancellation is within $FREE_CANCEL_HOURS hours of the session. '
+              'Cancellation is allowed, but 30% of the payment will be deducted as a cancellation fee. ',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text('Keep'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Cancel booking'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldCancel != true) return;
+
+    appointment.bookingStatus = BookingStatus.cancelled.name;
+    await controller.updateAppointmentStatus(appointment);
+    setState(() {});
+    Get.snackbar('Cancelled', 'Your appointment was cancelled.');
+  }
+
   // Add this new method for invoice generation
   void _generateInvoice(BuildContext context, BookingsModel appointment) async {
     // Show loading indicator
@@ -1457,5 +1379,96 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
+  }
+
+  Widget _buildPatientRating(BookingsModel appointment) {
+    if (controller.isDoctor.value ||
+        [
+          BookingStatus.pending.name,
+          BookingStatus.confirmed.name,
+          BookingStatus.noShow.name,
+        ].contains(appointment.bookingStatus.toLowerCase())) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: _buildRatingSection(appointment),
+    );
+  }
+
+  Widget _buildRatingSection(BookingsModel appointment) {
+    final existing = appointment.rating ?? 0;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            existing > 0 ? 'Your rating' : 'Rate your session',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 8),
+          Row(
+            children: List.generate(5, (index) {
+              final star = index + 1;
+              return IconButton(
+                onPressed: existing > 0
+                    ? null
+                    : () => _submitRating(appointment, star),
+                icon: Icon(
+                  star <= existing ? Icons.star : Icons.star_border,
+                  color: AppColors.ratingGold,
+                ),
+              );
+            }),
+          ),
+          if (appointment.ratingComment?.isNotEmpty == true)
+            Text(
+              appointment.ratingComment!,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitRating(BookingsModel appointment, int stars) async {
+    final commentController = TextEditingController();
+    final comment = await Get.dialog<String>(
+      AlertDialog(
+        title: Text('Thanks! Add a short note?'),
+        content: TextField(
+          controller: commentController,
+          maxLines: 3,
+          decoration: InputDecoration(hintText: 'How was your physio session?'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: ''),
+            child: Text('Skip'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: commentController.text.trim()),
+            child: Text('Submit'),
+          ),
+        ],
+      ),
+    );
+    await controller.submitRating(appointment, stars, comment ?? '');
+    setState(() {
+      appointment.rating = stars;
+      appointment.ratingComment = comment;
+    });
   }
 }

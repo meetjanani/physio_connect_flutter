@@ -31,7 +31,10 @@ class SupabaseController {
     return bookingList.firstOrNull;
   }
 
-  Future<List<BookingsModel>> getUpComingBookings(int userId, bool isDoctor) async {
+  Future<List<BookingsModel>> getUpComingBookings(
+    int userId,
+    bool isDoctor,
+  ) async {
     final String today = DateTime.now().toIso8601String().split('T')[0];
     final userColumn = isDoctor
         ? DatabaseSchema.bookingsDoctorId
@@ -73,10 +76,15 @@ class SupabaseController {
     final String toDate = to.toIso8601String().split('T')[0];
     var response;
     if (isDoctor) {
+      final doctor = await getDoctorByUserId(userId);
+      final doctorTableId = doctor?.userId ?? 0;
+      if (doctorTableId <= 0) {
+        return [];
+      }
       response = await supabaseClient
           .from(DatabaseSchema.bookingsTable)
           .select('*')
-          // .eq(DatabaseSchema.bookingsDoctorId, userId)
+          .eq(DatabaseSchema.bookingsDoctorId, doctorTableId)
           .gte(DatabaseSchema.bookingsDate, fromDate)
           .lte(DatabaseSchema.bookingsDate, toDate)
           .order(DatabaseSchema.bookingsId, ascending: false);
@@ -360,8 +368,8 @@ class SupabaseController {
   Future<CreateRazorPayOrderModel?> callCreateRazorPayOrderForBookings(
     List<int> bookingIds,
     int userId,
-  bool isBulkAppointment,
-  String? bulkAppointmentId
+    bool isBulkAppointment,
+    String? bulkAppointmentId,
   ) async {
     try {
       if (bookingIds.isEmpty) {
@@ -369,9 +377,11 @@ class SupabaseController {
       }
       final response = await Supabase.instance.client.functions.invoke(
         'create-razorpay-order',
-        body: {'bookingIds': bookingIds, 'userId': userId
-          ,'isBulkAppointment': isBulkAppointment,
-          'bulkAppointmentId': bulkAppointmentId
+        body: {
+          'bookingIds': bookingIds,
+          'userId': userId,
+          'isBulkAppointment': isBulkAppointment,
+          'bulkAppointmentId': bulkAppointmentId,
         },
       );
       return CreateRazorPayOrderModel.fromJson(response.data);
@@ -505,6 +515,55 @@ class SupabaseController {
     } else {
       return null;
     }
+  }
+
+  Future<DoctorModel?> getDoctorByUserId(int userId) async {
+    if (userId <= 0) return null;
+    final response = await supabaseClient
+        .from(DatabaseSchema.doctorTable)
+        .select('*')
+        .eq(DatabaseSchema.doctorUserId, userId)
+        .limit(1);
+    if (response.isNotEmpty) {
+      final doctor = DoctorModel.fromJson(response.first);
+      await doctor.saveToSecureStorage();
+      return doctor;
+    }
+    return null;
+  }
+
+  Future<UserModelSupabase?> getUserById(int userId) async {
+    if (userId <= 0) return null;
+    final response = await supabaseClient
+        .from(DatabaseSchema.usersTable)
+        .select('*')
+        .eq(DatabaseSchema.usersId, userId)
+        .limit(1);
+    if (response.isEmpty) return null;
+    return UserModelSupabase.fromJson(response.first);
+  }
+
+  Future<void> updateUserName(int userId, String name) async {
+    if (userId <= 0 || name.trim().isEmpty) return;
+    await supabaseClient
+        .from(DatabaseSchema.usersTable)
+        .update({DatabaseSchema.userName: name.trim()})
+        .eq(DatabaseSchema.usersId, userId);
+  }
+
+  Future<void> submitBookingRating(
+    int bookingId, {
+    required int rating,
+    String? comment,
+  }) async {
+    if (bookingId <= 0 || rating < 1 || rating > 5) return;
+    await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .update({
+          DatabaseSchema.bookingsRating: rating,
+          DatabaseSchema.bookingsRatingComment: comment ?? '',
+        })
+        .eq(DatabaseSchema.bookingsId, bookingId);
   }
 
   Future<void> sentNotification(
