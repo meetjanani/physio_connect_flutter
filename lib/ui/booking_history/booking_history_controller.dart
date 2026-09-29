@@ -237,21 +237,32 @@ class BookingHistoryController extends GetxController {
     var doctorId = appointment?.doctorId ?? 0;
     var userId = appointment?.userId ?? 0;
     var bookingDate = appointment?.bookingDate ?? "";
+    final doctor = appointment?.aDoctor();
+    final patient = appointment?.aPatient();
+    final timeSlot = appointment?.aTimeslot();
+    final parsedDate = DateTime.tryParse(appointment!.bookingDate);
+    final appointmentDate = parsedDate == null
+        ? appointment.bookingDate
+        : DateFormat('MMM d, yyyy').format(parsedDate);
 
     if (isDoctorTypeUser(userModelSupabase) == false) {
-      // patient type user
+      // Patient is sending a reminder to the doctor
       await supabaseController.sentNotification(
         doctorId,
-        "Patient: ${appointment?.aPatient().name} ",
-        "The appointment on ${bookingDate}, patient has requested a callback",
+        '${patient?.name ?? 'A patient'} would like you to call back about the '
+            'appointment on $appointmentDate at ${timeSlot?.time}.',
+        'Patient callback request',
       );
     } else {
+      // Doctor is sending a reminder to the patient
       await supabaseController.sentNotification(
         userId,
-        "Appointment Reminder: ${appointment?.aPatient().name} ",
-        "The appointment on ${bookingDate}. Reminder has been sent by the doctor: ${appointment?.aDoctor().name}.",
+        "The appointment on ${bookingDate}. Reminder has been sent by the doctor: ${doctor?.name}.",
+        "Appointment Reminder for ${patient?.name} ",
       );
     }
+    Get.showSuccessSnackbar("Notification was sent successfully to the ${isDoctorTypeUser(userModelSupabase) == false ? "doctor" : "patient"}."
+        "${isDoctorTypeUser(userModelSupabase) == false ? "doctor" : "patient"} will be notified about the appointment.");
   }
 
   Future<RefundResponseModel> processRefundForPatient(

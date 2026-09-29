@@ -676,12 +676,12 @@ class SupabaseController {
     };
   }
 
-  Future<void> sentNotification(
+  Future<bool> sentNotification(
     int userIdOfDoctor,
     String title,
     String messageBody,
   ) async {
-    print("${userIdOfDoctor}");
+    if (userIdOfDoctor <= 0) return false;
     try {
       var response = await supabaseClient
           .from(DatabaseSchema.usersTable)
@@ -695,8 +695,10 @@ class SupabaseController {
           messageBody,
         );
       }
+      return true;
     } catch (e) {
       print('Error in send notification: $e');
+      return false;
     }
   }
 }
