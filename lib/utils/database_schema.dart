@@ -105,6 +105,8 @@ class DatabaseSchema extends GetxController {
   static const String doctorIsActive = "isActive";
   static const String doctorUserId = "userId";
   static const String doctorPercentageSplit = "percentageSplit";
+  /// Comma-separated master time_slot ids enabled for this doctor (e.g. "1,2,5").
+  static const String doctorTimeSlotId = "timeSlotId";
 
   // common string
   static const String projectName = "PHYSIO CONNECT";
