@@ -283,6 +283,28 @@ class SupabaseController {
     return timeSlotList;
   }
 
+  /// Active master time slots (no booking occupancy filter).
+  Future<List<TimeSlotModel>> getActiveTimeSlots() async {
+    final response = await supabaseClient
+        .from(DatabaseSchema.timeSlotTable)
+        .select('*')
+        .eq(DatabaseSchema.timeSlotIsActive, true)
+        .order(DatabaseSchema.timeSlotOrderBy, ascending: true);
+    return TimeSlotModel.fromJsonList(response);
+  }
+
+  /// Persists comma-separated time slot ids on the doctor row (e.g. "1,2,5").
+  Future<void> updateDoctorTimeSlotIds(
+    int doctorTableId,
+    String timeSlotIdsCsv,
+  ) async {
+    if (doctorTableId <= 0) return;
+    await supabaseClient
+        .from(DatabaseSchema.doctorTable)
+        .update({DatabaseSchema.doctorTimeSlotId: timeSlotIdsCsv})
+        .eq(DatabaseSchema.doctorId, doctorTableId);
+  }
+
   Future<int> createNewBooking(
     BookingsModel bookingsModel,
     int notificationUserId,
