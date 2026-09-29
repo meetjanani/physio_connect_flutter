@@ -260,39 +260,18 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                       }
                     },
                   ),
-                // TODO: Add Doctor number & whatsapp.
                 if(isDoctorTypeUser(controller.userModelSupabase) == false)
                   _buildActionButton(
                     label: "Call Doctor",
                     icon: Icons.call,
                     color: AppColors.wellnessGreen,
                     onTap: () async {
-                      final doctorUser = await controller.supabaseController
-                          .getUserById(doctor.userId ?? 0);
-                      final phone = doctorUser?.mobileNumber ?? '';
-                      if (phone.isEmpty) {
-                        Get.snackbar('Unavailable', 'Doctor phone not on file.');
-                        return;
-                      }
-                      final uri = Uri(scheme: 'tel', path: phone);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri);
-                      }
+                      controller.selectedAppointment.value = widget.appointment;
+                      controller.sendReminderNotification();
                     },
                     onLongPress: () async {
-                      final doctorUser = await controller.supabaseController
-                          .getUserById(doctor.userId ?? 0);
-                      final phone = (doctorUser?.mobileNumber ?? '')
-                          .replaceAll(RegExp(r'[^0-9+]'), '');
-                      if (phone.isEmpty) {
-                        Get.snackbar('Unavailable', 'Doctor phone not on file.');
-                        return;
-                      }
-                      final whatsappUrl = Uri.parse("https://wa.me/$phone");
-                      if (await canLaunchUrl(whatsappUrl)) {
-                        await launchUrl(
-                            whatsappUrl, mode: LaunchMode.externalApplication);
-                      }
+                      controller.selectedAppointment.value = widget.appointment;
+                      controller.sendReminderNotification();
                     },
                   ),
                 if(isDoctorTypeUser(controller.userModelSupabase))
