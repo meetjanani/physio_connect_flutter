@@ -23,5 +23,7 @@ const int FREE_CANCEL_HOURS = 24;
 const String SUPPORT_WHATSAPP = '919510443624';
 const String SUPPORT_EMAIL = 'physioconnect.app@gmail.com';
 const String APP_SHARE_MESSAGE =
-    'Book home physiotherapy with PhysioConnect — trusted physios near you. '
+    'Better movement starts with the right care. PhysioConnect connects you '
+    'with trusted physiotherapists for personalized care at home. Share the '
+    'journey to feeling stronger with someone you care about!\n\n'
     'Download: http://play.google.com/store/apps/details?id=com.physio.connect.physio_connect&hl=en_IN';
