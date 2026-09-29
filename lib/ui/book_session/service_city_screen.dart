@@ -34,15 +34,6 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.serviceCities.length == 1 &&
-          controller.selectedCity.value == null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          controller.selectedCity.value = controller.serviceCities.first;
-          controller.loadServiceAreasForSelectedCity();
-          Get.toNamed(AppPage.selectServiceArea);
-        });
-      }
-
       final filteredCities = controller.serviceCities.where((city) {
         final query = searchController.text.trim().toLowerCase();
         if (query.isEmpty) return true;
