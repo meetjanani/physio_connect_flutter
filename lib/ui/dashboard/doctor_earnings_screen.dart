@@ -197,8 +197,8 @@ class _DoctorEarningsScreenState extends State<DoctorEarningsScreen> {
                   _infoTile(
                     Icons.schedule,
                     'Slot management',
-                    'Active slots are configured on your doctor profile '
-                        '(timeSlotId). Contact admin to add or block slots.',
+                    'Enable or disable your booking slots from Profile → '
+                        'Manage Time Slot. At least 2 slots must stay active.',
                   ),
                   _infoTile(
                     Icons.account_balance,
