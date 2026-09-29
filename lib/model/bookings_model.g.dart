@@ -33,6 +33,7 @@ BookingsModel _$BookingsModelFromJson(Map<String, dynamic> json) =>
         isBulkAppointment: json['isBulkAppointment'] as bool? ?? false,
         bulkAppointmentId: json['bulkAppointmentId'] as String?,
       )
+      ..paymentFailureReason = json['paymentFailureReason'] as String?
       ..paymentVerifiedAt = json['paymentVerifiedAt'] as String?
       ..razorpayTransferId = json['razorpayTransferId'] as String?
       ..transferStatus = json['transferStatus'] as String?
@@ -58,6 +59,8 @@ Map<String, dynamic> _$BookingsModelToJson(BookingsModel instance) =>
       'sessionTypeJson': instance.sessionTypeJson,
       'patientJson': instance.patientJson,
       'paymentStatus': instance.paymentStatus,
+      if (instance.paymentFailureReason != null)
+        'paymentFailureReason': instance.paymentFailureReason,
       'paymentId': instance.paymentId,
       'orderId': instance.orderId,
       'signature': instance.signature,

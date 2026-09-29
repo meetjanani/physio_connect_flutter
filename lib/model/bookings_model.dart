@@ -24,6 +24,7 @@ class BookingsModel {
   String sessionTypeJson = "";
   String patientJson = "";
   String paymentStatus = "";
+  String? paymentFailureReason;
   String? paymentId = "";
   String? orderId = "";
   String? signature = "";

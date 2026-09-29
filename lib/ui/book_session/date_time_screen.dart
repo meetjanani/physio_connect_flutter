@@ -25,8 +25,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
   @override
   void initState() {
     super.initState();
-    controller.configureAppointmentDates();
-    controller.getTimeSlotsMaster();
+    _fetchTimeSlotAfterDateSelection(DateTime.now());
     fetchAndSetCurrentLocation();
   }
 
@@ -438,8 +437,19 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Book multiple appointments'),
-              subtitle: const Text('Create one payment for multiple dates'),
+              subtitle: Text(
+                bulk
+                    ? 'Create one payment for multiple dates'
+                    : 'Book a single appointment',
+              ),
               value: bulk,
+              activeTrackColor: AppColors.medicalBlue,
+              activeThumbColor: AppColors.surface,
+              inactiveTrackColor: AppColors.borderDark,
+              inactiveThumbColor: AppColors.surface,
+              trackOutlineColor: WidgetStatePropertyAll(
+                bulk ? AppColors.medicalBlue : AppColors.borderDark,
+              ),
               onChanged: controller.setBulkAppointmentEnabled,
             ),
             if (bulk) ...[
@@ -541,13 +551,17 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
     );
     if (pickedDate == null) return;
 
-    controller.selectedDate.value = DateTime(
-      pickedDate.year,
-      pickedDate.month,
-      pickedDate.day,
-    );
+    await _fetchTimeSlotAfterDateSelection(pickedDate);
+  }
+
+  Future<void> _fetchTimeSlotAfterDateSelection(DateTime selectedDate) async {
+    controller.selectedDate.value = selectedDate;
     controller.configureAppointmentDates();
-    await controller.getTimeSlotsMaster();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        controller.getTimeSlotsMaster();
+      }
+    });
   }
 
   Future<void> fetchAndSetCurrentLocation() async {
