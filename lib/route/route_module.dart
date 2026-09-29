@@ -22,6 +22,7 @@ import '../ui/signUp/signup_screen.dart';
 import '../ui/splash_binding.dart';
 import '../ui/splash_screen.dart';
 import '../ui/generate_prescription/generate_prescription_screen.dart';
+import '../ui/manage_time_slot/manage_time_slot_screen.dart';
 
 class AppPage {
   AppPage._();
@@ -42,6 +43,7 @@ class AppPage {
   static const String bookingDetail = '/booking-detail';
   static const String userProfile = '/user-profile';
   static const String generatePrescription = '/generate-prescription';
+  static const String manageTimeSlot = '/manage-time-slot';
 
   static final routes = [
     GetPage(
@@ -111,6 +113,10 @@ class AppPage {
     GetPage(
       name: AppPage.generatePrescription,
       page: () => const GeneratePrescriptionScreen(),
+    ),
+    GetPage(
+      name: AppPage.manageTimeSlot,
+      page: () => const ManageTimeSlotScreen(),
     ),
     GetPage(name: AppPage.userProfile, page: () => ProfileAboutUsScreen()),
   ];

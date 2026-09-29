@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/ui/profile/profile_about_us_controller.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/enum.dart';
@@ -565,7 +566,34 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                     //     ),
                     //   ),
 
-                    const SizedBox(height: 24),
+
+                    if (isDoctorTypeUser(controller.userModelSupabase.value))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.medicalBlueDark,
+                            side: const BorderSide(
+                              color: AppColors.medicalBlue,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            minimumSize: const Size(double.infinity, 56),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          icon: const Icon(Icons.schedule, size: 22),
+                          label: const Text(
+                            'Manage Time Slot',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          onPressed: () =>
+                              Get.toNamed(AppPage.manageTimeSlot),
+                        ),
+                      ),
 
                     // Logout button
                     ElevatedButton.icon(
