@@ -100,6 +100,7 @@ class DatabaseSchema extends GetxController {
   static const String doctorExperience = "experience";
   static const String doctorDrRegNumber = "drRegNumber";
   static const String doctorBiodata = "biodata";
+  static const String doctorProfilePhotoUrl = "profilePhotoUrl";
   static const String doctorIsActive = "isActive";
   static const String doctorUserId = "userId";
   static const String doctorPercentageSplit = "percentageSplit";

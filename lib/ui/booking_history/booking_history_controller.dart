@@ -48,7 +48,6 @@ class BookingHistoryController extends GetxController {
       );
       upComingBookings.addAll(response);
       isLoading.value = false;
-      showSuccessSnackbar("${upComingBookings.value.length}");
     }
   }
 

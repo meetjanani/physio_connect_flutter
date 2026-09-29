@@ -445,9 +445,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             appointment.doctorNotes ?? 'No additional notes provided.',
           ),
           SizedBox(height: 24),
+          _buildRefundAction(context, appointment),
+          _buildInvoiceButton(context, appointment),
+          _buildRescheduleButton(context, appointment),
+          _buildPatientCancelButton(context, appointment),
+          _buildPatientRating(appointment),
 
           // Prescription Button
           if (controller.isDoctor.value) ...[
+            SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => Get.toNamed(
                 AppPage.generatePrescription,
@@ -490,13 +496,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             ),
             SizedBox(height: 16),
           ],
-          _buildRefundAction(context, appointment),
-          _buildInvoiceButton(context, appointment),
-          _buildRescheduleButton(context, appointment),
-          _buildPatientCancelButton(context, appointment),
-          _buildPatientRating(appointment),
-
-          SizedBox(height: 32),
         ],
       ),
     );

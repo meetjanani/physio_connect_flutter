@@ -205,6 +205,17 @@ class SupabaseController {
     // .order(DatabaseSchema.serviceAreasOrderBy, ascending: true);
     return AreaModel.fromJsonList(response);
   }
+  /// Batch-fetch doctors by primary keys (used for area list doctor cards).
+  Future<List<DoctorModel>> getDoctorsByIds(List<int> doctorIds) async {
+    final ids = doctorIds.where((id) => id > 0).toSet().toList();
+    if (ids.isEmpty) return <DoctorModel>[];
+    final response = await supabaseClient
+        .from(DatabaseSchema.doctorTable)
+        .select('*')
+        .inFilter(DatabaseSchema.doctorId, ids)
+        .eq('isActive', true);
+    return DoctorModel.fromJsonList(response);
+  }
 
   Future<List<DoctorModel>> getDoctorsForArea(int areaId) async {
     final areaDoctorLinks = await supabaseClient
@@ -232,13 +243,7 @@ class SupabaseController {
       return <DoctorModel>[];
     }
 
-    final response = await supabaseClient
-        .from(DatabaseSchema.doctorTable)
-        .select('*')
-        .inFilter(DatabaseSchema.doctorId, doctorIds)
-        .eq('isActive', true);
-
-    return DoctorModel.fromJsonList(response);
+    return getDoctorsByIds(doctorIds);
   }
 
   Future<List<TimeSlotModel>> getTimeSlotsMaster(
@@ -564,6 +569,111 @@ class SupabaseController {
           DatabaseSchema.bookingsRatingComment: comment ?? '',
         })
         .eq(DatabaseSchema.bookingsId, bookingId);
+  }
+
+  Future<Map<String, dynamic>> getDoctorEarningsSummary(
+    int doctorTableId,
+  ) async {
+    if (doctorTableId <= 0) {
+      return {
+        'todayCount': 0,
+        'pendingCount': 0,
+        'weekEarnings': 0.0,
+        'settledCount': 0,
+        'upcomingCount': 0,
+        'completedCount': 0,
+        'cancelledNoShowCount': 0,
+        'totalCount': 0,
+      };
+    }
+    final now = DateTime.now();
+    final today = now.toIso8601String().split('T')[0];
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final weekStartStr = weekStart.toIso8601String().split('T')[0];
+
+    final response = await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .select(
+          '${DatabaseSchema.bookingsDate},'
+          '${DatabaseSchema.bookingsStatus},'
+          '${DatabaseSchema.bookingsPaymentStatus},'
+          '${DatabaseSchema.bookingsPrice},'
+          '${DatabaseSchema.bookingsDoctorAmount},'
+          '${DatabaseSchema.bookingsTransferStatus}',
+        )
+        .eq(DatabaseSchema.bookingsDoctorId, doctorTableId);
+
+    final bookings = response;
+    String normalizedStatus(Map<String, dynamic> booking) {
+      return (booking[DatabaseSchema.bookingsStatus] as String? ?? '')
+          .toLowerCase()
+          .replaceAll(RegExp(r'[-_\s]'), '');
+    }
+
+    final weekBookings = bookings
+        .where(
+          (booking) =>
+              (booking[DatabaseSchema.bookingsDate] as String? ?? '').compareTo(
+                weekStartStr,
+              ) >=
+              0,
+        )
+        .toList();
+    final todayCount = weekBookings
+        .where(
+          (booking) => (booking[DatabaseSchema.bookingsDate] as String? ?? '')
+              .startsWith(today),
+        )
+        .length;
+    final pendingCount = weekBookings.where((booking) {
+      final status = normalizedStatus(booking);
+      return status == 'confirmed' || status == 'pending';
+    }).length;
+    final weekEarnings = weekBookings
+        .where(
+          (booking) =>
+              (booking[DatabaseSchema.bookingsPaymentStatus] as String? ?? '')
+                  .toLowerCase() ==
+              'paid',
+        )
+        .fold<double>(0, (sum, booking) {
+          final doctorAmount = booking[DatabaseSchema.bookingsDoctorAmount];
+          final price = booking[DatabaseSchema.bookingsPrice];
+          final amount = doctorAmount is num
+              ? doctorAmount.toDouble()
+              : (price is num ? price.toDouble() * 0.85 : 0.0);
+          return sum + amount;
+        });
+    final settledCount = weekBookings.where((booking) {
+      final transferStatus =
+          (booking[DatabaseSchema.bookingsTransferStatus] as String? ?? '')
+              .toLowerCase();
+      return transferStatus == 'processed' || transferStatus == 'settled';
+    }).length;
+    final upcomingCount = bookings.where((booking) {
+      final status = normalizedStatus(booking);
+      return status == 'pending' || status == 'confirmed';
+    }).length;
+    final completedCount = bookings
+        .where((booking) => normalizedStatus(booking) == 'completed')
+        .length;
+    final cancelledNoShowCount = bookings.where((booking) {
+      final status = normalizedStatus(booking);
+      return status == 'cancelled' ||
+          status == 'canceled' ||
+          status == 'noshow';
+    }).length;
+
+    return {
+      'todayCount': todayCount,
+      'pendingCount': pendingCount,
+      'weekEarnings': weekEarnings,
+      'settledCount': settledCount,
+      'upcomingCount': upcomingCount,
+      'completedCount': completedCount,
+      'cancelledNoShowCount': cancelledNoShowCount,
+      'totalCount': bookings.length,
+    };
   }
 
   Future<void> sentNotification(

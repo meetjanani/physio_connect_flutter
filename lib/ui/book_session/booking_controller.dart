@@ -355,6 +355,8 @@ class BookingController extends GetxController {
   final serviceCities = <CityStateModel>[].obs;
   final serviceAreas = <AreaModel>[].obs;
   final areaDoctors = <DoctorModel>[].obs;
+  /// areaId -> assigned doctor (one doctor per area for list UI).
+  final areaDoctorByAreaId = <int, DoctorModel>{}.obs;
   final selectedCity = Rx<CityStateModel?>(null);
   final selectedArea = Rx<AreaModel?>(null);
   final selectedDoctor = Rx<DoctorModel?>(null);
@@ -374,6 +376,7 @@ class BookingController extends GetxController {
 
   Future<void> loadServiceAreasForSelectedCity() async {
     serviceAreas.clear();
+    areaDoctorByAreaId.clear();
     selectedArea.value = null;
     isLoading.value = true;
     try {
@@ -381,6 +384,25 @@ class BookingController extends GetxController {
         selectedCity.value!.id,
       );
       serviceAreas.assignAll(areas);
+
+      final doctorIds = areas
+          .map((a) => a.doctorId ?? 0)
+          .where((id) => id > 0)
+          .toList();
+      if (doctorIds.isNotEmpty) {
+        final doctors = await supabaseController.getDoctorsByIds(doctorIds);
+        final byId = {for (final d in doctors) (d.id ?? 0): d};
+        final mapped = <int, DoctorModel>{};
+        for (final area in areas) {
+          final doctorId = area.doctorId ?? 0;
+          final doctor = byId[doctorId];
+          if (doctor != null) {
+            mapped[area.id] = doctor;
+          }
+        }
+        areaDoctorByAreaId.assignAll(mapped);
+      }
+
       if (areas.length == 1) {
         selectedArea.value = areas.first;
       } else {
@@ -391,6 +413,8 @@ class BookingController extends GetxController {
     }
   }
 
+
+  /// Not In Use
   Future<void> loadDoctorsForSelectedArea() async {
     if (selectedArea.value == null) {
       areaDoctors.clear();
@@ -417,6 +441,7 @@ class BookingController extends GetxController {
     selectedArea.value = null;
     selectedDoctor.value = null;
     serviceAreas.clear();
+    areaDoctorByAreaId.clear();
     areaDoctors.clear();
   }
 
