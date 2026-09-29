@@ -59,39 +59,6 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: AppColors.backgroundGradientColors,
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: AppColors.border, width: 1),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_outlined,
-                              color: AppColors.medicalBlueDark,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'City / State',
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 18),
                       TextField(
                         controller: searchController,
                         onChanged: (_) => setState(() {}),
@@ -105,18 +72,18 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
                           fillColor: AppColors.surface,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
-                            vertical: 14,
+                            vertical: 12,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: AppColors.border),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: AppColors.border),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                               color: AppColors.medicalBlue,
                               width: 2,
@@ -124,11 +91,11 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
                       Text(
                         'Choose your preferred city',
                         style: GoogleFonts.inter(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
@@ -140,7 +107,7 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
                             : ListView.separated(
                                 itemCount: filteredCities.length,
                                 separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 10),
                                 itemBuilder: (context, index) {
                                   final city = filteredCities[index];
                                   final isSelected =
@@ -155,8 +122,10 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
                                         controller.selectedDoctor.value = null;
                                         await controller
                                             .loadServiceAreasForSelectedCity();
-                                        if(controller.serviceAreas.value.isNotEmpty) {
-                                          Get.toNamed(AppPage.selectServiceArea);
+                                        if (controller.serviceAreas.isNotEmpty) {
+                                          Get.toNamed(
+                                            AppPage.selectServiceArea,
+                                          );
                                         } else {
                                           Get.snackbar(
                                             'No Service Areas',
@@ -167,60 +136,61 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
                                           );
                                         }
                                       },
-                                      borderRadius: BorderRadius.circular(18),
+                                      borderRadius: BorderRadius.circular(16),
                                       child: AnimatedContainer(
                                         duration: const Duration(
                                           milliseconds: 200,
                                         ),
-                                        padding: const EdgeInsets.all(18),
+                                        padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           color: isSelected
                                               ? AppColors.medicalBlueLight
                                               : AppColors.surface,
                                           borderRadius: BorderRadius.circular(
-                                            18,
+                                            16,
                                           ),
                                           border: Border.all(
                                             color: isSelected
                                                 ? AppColors.medicalBlue
                                                 : AppColors.border,
-                                            width: isSelected ? 2 : 1,
+                                            width: isSelected ? 1.5 : 1,
                                           ),
                                           boxShadow: const [
                                             BoxShadow(
                                               color: AppColors.shadowLight,
-                                              blurRadius: 12,
-                                              offset: Offset(0, 4),
+                                              blurRadius: 8,
+                                              offset: Offset(0, 2),
                                             ),
                                           ],
                                         ),
                                         child: Row(
                                           children: [
                                             Container(
-                                              width: 52,
-                                              height: 52,
+                                              width: 48,
+                                              height: 48,
                                               decoration: BoxDecoration(
                                                 color: isSelected
                                                     ? AppColors.medicalBlue
                                                     : AppColors
                                                           .wellnessGreenLight,
                                                 borderRadius:
-                                                    BorderRadius.circular(14),
+                                                    BorderRadius.circular(12),
                                               ),
                                               child: Icon(
                                                 Icons.location_city_rounded,
+                                                size: 22,
                                                 color: isSelected
                                                     ? Colors.white
                                                     : AppColors
                                                           .wellnessGreenDark,
                                               ),
                                             ),
-                                            const SizedBox(width: 14),
+                                            const SizedBox(width: 12),
                                             Expanded(
                                               child: Text(
                                                 city.cityStateName,
                                                 style: GoogleFonts.inter(
-                                                  fontSize: 18,
+                                                  fontSize: 16,
                                                   fontWeight: FontWeight.w700,
                                                   color: AppColors.textPrimary,
                                                 ),
@@ -228,7 +198,7 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
                                             ),
                                             Icon(
                                               Icons.arrow_forward_ios_rounded,
-                                              size: 18,
+                                              size: 16,
                                               color: AppColors.textSecondary,
                                             ),
                                           ],
