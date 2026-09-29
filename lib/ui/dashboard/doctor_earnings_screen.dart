@@ -82,8 +82,9 @@ class _DoctorEarningsScreenState extends State<DoctorEarningsScreen> {
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: AppColors.warningLight,
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusMd),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusMd,
+                        ),
                       ),
                       child: Text(
                         _onboardingHint!,
@@ -144,6 +145,55 @@ class _DoctorEarningsScreenState extends State<DoctorEarningsScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    'Appointments',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard(
+                          'Upcoming',
+                          '${_summary['upcomingCount'] ?? 0}',
+                          'pending or confirmed',
+                          AppColors.medicalBlue,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: _statCard(
+                          'Completed',
+                          '${_summary['completedCount'] ?? 0}',
+                          'sessions',
+                          AppColors.wellnessGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard(
+                          'Cancelled / NoShow',
+                          '${_summary['cancelledNoShowCount'] ?? 0}',
+                          'appointments',
+                          AppColors.warning,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: _statCard(
+                          'Total',
+                          '${_summary['totalCount'] ?? 0}',
+                          'appointments',
+                          AppColors.therapyPurple,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
                   _infoTile(
                     Icons.schedule,
                     'Slot management',
@@ -174,7 +224,10 @@ class _DoctorEarningsScreenState extends State<DoctorEarningsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          Text(
+            title,
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
           const SizedBox(height: 4),
           Text(
             value,
@@ -184,7 +237,10 @@ class _DoctorEarningsScreenState extends State<DoctorEarningsScreen> {
               color: color,
             ),
           ),
-          Text(subtitle, style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+          Text(
+            subtitle,
+            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+          ),
         ],
       ),
     );
