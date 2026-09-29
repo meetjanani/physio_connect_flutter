@@ -8,6 +8,7 @@ import 'package:physio_connect/utils/theme/app_colors.dart';
 
 import 'booking_controller.dart';
 
+/// Not In Use
 class SelectDoctorScreen extends StatefulWidget {
   const SelectDoctorScreen({super.key});
 
@@ -130,11 +131,28 @@ class _SelectDoctorScreenState extends State<SelectDoctorScreen> {
                                               borderRadius:
                                                   BorderRadius.circular(18),
                                             ),
-                                            child: Icon(
-                                              Icons.person_rounded,
-                                              size: 30,
-                                              color: AppColors.medicalBlueDark,
-                                            ),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: (doctor.profilePhotoUrl
+                                                        ?.trim()
+                                                        .isNotEmpty ==
+                                                    true)
+                                                ? Image.network(
+                                                    doctor.profilePhotoUrl!,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (_, __, ___) =>
+                                                        Icon(
+                                                      Icons.person_rounded,
+                                                      size: 30,
+                                                      color: AppColors
+                                                          .medicalBlueDark,
+                                                    ),
+                                                  )
+                                                : Icon(
+                                                    Icons.person_rounded,
+                                                    size: 30,
+                                                    color: AppColors
+                                                        .medicalBlueDark,
+                                                  ),
                                           ),
                                           const SizedBox(width: 14),
                                           Expanded(
