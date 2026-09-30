@@ -94,8 +94,9 @@ class HelpSupportScreen extends StatelessWidget {
             title: 'Cancellation & refund policy',
             icon: Icons.policy_outlined,
             body:
-                '• Cancel free if more than $FREE_CANCEL_HOURS hours before your session.\n'
-                '• Within $FREE_CANCEL_HOURS hours, cancel is allowed but refunds may be partial.\n'
+                '• You can cancel upcoming appointments in Booking details.\n'
+                '• Refunds are handled by support ($SUPPORT_EMAIL / WhatsApp), not automatically in the app.\n'
+                '• Free full refund is typical if cancelled more than $FREE_CANCEL_HOURS hours ahead; later cancels may be partial.\n'
                 '• If the doctor cancels, you are entitled to a full refund.\n',
           ),
         ],

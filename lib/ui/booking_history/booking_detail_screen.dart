@@ -1449,8 +1449,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Text(
-            'Free cancel if more than $FREE_CANCEL_HOURS hours before the session. '
-            'Later cancels may need a refund only 70% appointment',
+            'Cancelling frees the slot. Refunds are processed by support '
+            '($SUPPORT_EMAIL / WhatsApp). Free refund if cancelled more than '
+            '$FREE_CANCEL_HOURS hours ahead; later cancels may be partial.',
             style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
         ),
@@ -1495,9 +1496,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         content: Text(
           freeCancel
               ? 'You are cancelling more than $FREE_CANCEL_HOURS hours ahead. '
-                    'If payment was collected, request a refund from Help if it does not reverse automatically.'
+                    'This frees the slot. For a refund, contact support at '
+                    '$SUPPORT_EMAIL or WhatsApp — it is not automatic in the app.'
               : 'This cancellation is within $FREE_CANCEL_HOURS hours of the session. '
-                    'Cancellation is allowed, but 30% of the payment will be deducted as a cancellation fee. ',
+                    'The slot will be freed. Refunds (if any) are handled by support '
+                    'and may be partial. Contact $SUPPORT_EMAIL.',
         ),
         actions: [
           TextButton(

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_controller.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_screen.dart';
 import 'package:physio_connect/ui/dashboard/doctor_dashboard_screen.dart';
-import 'package:physio_connect/ui/dashboard/doctor_earnings_screen.dart';
-import 'package:physio_connect/ui/generate_prescription/generate_prescription_screen.dart';
 import 'package:physio_connect/ui/help/help_support_screen.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import '../../model/user_model_supabase.dart';
@@ -26,6 +24,7 @@ class _DashboardBottomNavigationScreenState
 
   List<Widget> _buildScreens = [];
   bool _isDoctor = false;
+  bool _ready = false;
 
   @override
   void initState() {
@@ -35,10 +34,7 @@ class _DashboardBottomNavigationScreenState
         controller.userModelSupabase = value;
         _isDoctor = isDoctorTypeUser(value);
         _initializeScreens();
-        // Doctors land on their appointments tab (index 0).
-        if (_isDoctor && widget.currentIndex == 0) {
-          widget.currentIndex = 0;
-        }
+        _ready = true;
       });
     });
   }
@@ -91,11 +87,15 @@ class _DashboardBottomNavigationScreenState
       ),
     ];
 
+    if (!_ready) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: _buildScreens.isNotEmpty
-          ? _buildScreens[widget.currentIndex.clamp(0, _buildScreens.length - 1)]
-          : const Center(child: CircularProgressIndicator()),
+      body: _buildScreens[widget.currentIndex.clamp(0, _buildScreens.length - 1)],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [

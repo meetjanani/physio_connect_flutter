@@ -6,6 +6,17 @@ Also apply newer migrations in order:
 
 - `migrations/20260925150000_booking_bulk_group.sql`
 - `migrations/20260926140000_ratings_and_doctor_privacy.sql` (ratings columns + doctor.userId index)
+- `migrations/20260930120000_doctor_privacy_indexes.sql` (booking/doctor indexes for multi-doctor filters)
+
+## 5-doctor soft launch
+
+Ops pack:
+
+- [`ops/5_doctor_seed.sql`](ops/5_doctor_seed.sql) — seed template + verification queries
+- [`ops/SMOKE_TEST.md`](ops/SMOKE_TEST.md) — go-live smoke matrix
+
+Coverage model for this release: **one doctor per area** via `area.doctorId`.
+Bookings store `doctor.userId` in `bookings.doctorId`.
 
 ## Lightweight admin / ops checklist
 
@@ -13,9 +24,9 @@ Until a dedicated admin app exists, manage coverage from the Supabase dashboard 
 
 1. **Cities & areas** — `city_state`, `area`, `service_areas`
 2. **Doctors** — `doctor` row with `userId` linked to `users.id`, `userType = 'Doctor'`, registration number, Razorpay Route account, `sessionTypeId` / `timeSlotId` CSVs
-3. **Coverage link** — `doctor_service_areas` for each area a doctor serves
-4. **Pause coverage** — set `isActive = false` on `service_areas` or `doctor_service_areas`
-5. **Disputes / refunds** — use booking detail refund (doctor, 48h) or Razorpay dashboard; support email in app Help tab
+3. **Coverage link** — set `area.doctorId` (live path). Optionally also `doctor_service_areas`
+4. **Pause coverage** — set `isActive = false` on `area` or `service_areas`
+5. **Disputes / refunds** — patient cancel frees the slot only; refund via doctor long-press (48h), Razorpay dashboard, or support email/WhatsApp in Help tab
 
 ## Role model
 
@@ -25,12 +36,12 @@ To publish a new home-visit area:
 
 1. Add or activate the state, city, and area row.
 2. Create one `service_areas` row for the area and set its center `latitude`, `longitude`, and `radiusKm` (for example `5`).
-3. Add an active `doctor_service_areas` row for every doctor who serves it, and set each doctor's `latitude` and `longitude`.
+3. Set `area.doctorId` to the serving doctor's **table id**. Optionally add `doctor_service_areas`.
 4. Add or activate `session_type` rows with `mode = 'Home Visit'`.
 5. Configure the matching active `time_slot` rows. Set `serviceAreaId` when a slot is area-specific; leave it null for a shared slot.
 
 For online sessions, publish `session_type` rows with `mode = 'Online'`; they do not require a `service_areas` row. Keep `isActive` false until the provider, pricing, and customer-facing copy are ready.
 
-Existing bookings are intentionally retained. New bookings store `serviceAreaId`, `areaId`, and `serviceMode` in addition to the existing JSON snapshots so historical details do not change when coverage is edited.
+Existing bookings are intentionally retained. New bookings store JSON snapshots so historical details do not change when coverage is edited.
 
-The app groups the published records as `State — City`, lets the patient select an area, and can use GPS to find the nearest service-area center within that area's radius. The assigned doctor is then selected by distance from the patient's coordinates; if coordinates are unavailable, the first eligible doctor is used.
+The app groups the published records as `State — City`, lets the patient select an area, and assigns the doctor from `area.doctorId`.

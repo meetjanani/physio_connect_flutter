@@ -247,7 +247,8 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                                           ?.id ??
                                                       0,
                                                 );
-                                        if (doctor?.id == null) {
+                                        if (doctor?.userId == null ||
+                                            doctor!.userId! <= 0) {
                                           return {
                                             'todayCount': 0,
                                             'pendingCount': 0,
@@ -260,7 +261,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                         }
                                         return controller.supabaseController
                                             .getDoctorEarningsSummary(
-                                              doctor!.id!,
+                                              doctor.userId!,
                                             );
                                       }(),
                                       builder: (context, snapshot) {

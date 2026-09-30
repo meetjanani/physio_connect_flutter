@@ -36,8 +36,9 @@ class _DoctorEarningsScreenState extends State<DoctorEarningsScreen> {
     final user = await UserModelSupabase.getFromSecureStorage();
     final doctor = await _supabase.getDoctorByUserId(user?.id ?? 0);
     _doctor = doctor;
-    if (doctor?.id != null) {
-      _summary = await _supabase.getDoctorEarningsSummary(doctor!.id!);
+    // Bookings store doctor.userId (users.id), not doctor table PK.
+    if (doctor?.userId != null && doctor!.userId! > 0) {
+      _summary = await _supabase.getDoctorEarningsSummary(doctor.userId!);
     }
     _onboardingHint = _buildOnboardingHint(doctor);
     setState(() => _loading = false);

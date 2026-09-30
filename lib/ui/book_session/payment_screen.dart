@@ -327,10 +327,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       border: Border.all(color: AppColors.medicalBlueLight),
                     ),
                     child: Text(
-                      'Cancellation policy: Free cancel if more than '
-                      '$FREE_CANCEL_HOURS hours before the session. '
-                      'If the doctor cancels, you get a full refund. '
-                      'Support: $SUPPORT_EMAIL',
+                      'Cancellation: cancel from Booking details to free the slot. '
+                      'Refunds are processed by support ($SUPPORT_EMAIL), not automatically. '
+                      'Typical full refund if more than $FREE_CANCEL_HOURS hours before the session.',
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
                           fontSize: 12,
