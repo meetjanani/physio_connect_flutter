@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:physio_connect/model/doctor_model.dart';
+import 'package:physio_connect/utils/constants.dart';
 
 import '../../model/user_model_supabase.dart';
 import '../../supabase/firebase_auth_controller.dart';
@@ -12,26 +13,37 @@ class ProfileAboutUsController extends GetxController {
   SupabaseController supabaseController = SupabaseController.to;
   FirebaseAuthController authController = FirebaseAuthController.to;
   RxBool isLoading = false.obs;
+  RxBool isDoctor = false.obs;
   Rx<UserModelSupabase?> userModelSupabase = Rx<UserModelSupabase?>(null);
   Rx<DoctorModel?> doctor =  Rx<DoctorModel?>(null);
-  String image = "https://i.pravatar.cc/150?img=3";
+  String patientProfileImage = "https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9";
 
   @override
-  void onInit() async {
+  void onInit() {
     super.onInit();
-    fetchUserProfile();
-    fetchDoctorProfile();
+    _loadProfile();
   }
 
-  void fetchUserProfile() async {
+  Future<void> _loadProfile() async {
+    isLoading.value = true;
+    try {
+      await fetchUserProfile();
+      await fetchDoctorProfile();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchUserProfile() async {
     var mobileNumber = await secureStorageRepository.read(SecureStorage.userMobileNumberSessionStorage) ?? '';
     userModelSupabase.value = await UserModelSupabase.getFromSecureStorage();
+    isDoctor.value = isDoctorTypeUser(userModelSupabase.value);
     if (userModelSupabase.value?.id == null && mobileNumber.isNotEmpty) {
       userModelSupabase.value = await authController.fetchUserProfile(mobileNumber);
     }
   }
 
-  void fetchDoctorProfile() async {
+  Future<void> fetchDoctorProfile() async {
     doctor.value = await DoctorModel.getFromSecureStorage();
     if (doctor.value?.id == null &&
         (userModelSupabase.value?.doctorId ?? 0) > 0) {
