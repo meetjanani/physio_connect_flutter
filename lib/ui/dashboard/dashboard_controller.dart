@@ -41,6 +41,7 @@ class DashboardController extends GetxController {
         userModelSupabase?.id ?? 0, token.toString());
   }
 
+  // TODO: Try to display List of doctors (Profile Image, Name, Degree, Experience, Bio)
   Future<void> fetchDoctorDetail() async {
     var doctor = await supabaseController.getDoctorById(
         userModelSupabase?.doctorId ?? 0);

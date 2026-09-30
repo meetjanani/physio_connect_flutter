@@ -14,13 +14,20 @@ class ConfirmationScreen extends StatelessWidget {
 
   ConfirmationScreen({Key? key}) : super(key: key);
 
+  void _goHomeWithFreshBookingSession() {
+    Get.offAllNamed(AppPage.dashboardScreen);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      BookingController.replaceWithFresh();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormatter = DateFormat('EEEE, MMMM d, yyyy');
 
     return WillPopScope(
       onWillPop: () async {
-        Get.offAll(AppPage.dashboardScreen);
+        _goHomeWithFreshBookingSession();
         return false;
       },
       child: Scaffold(
@@ -178,9 +185,7 @@ class ConfirmationScreen extends StatelessWidget {
 
                 // Back to home button
                 ElevatedButton(
-                  onPressed: () {
-                    Get.offAndToNamed(AppPage.dashboardScreen);
-                  },
+                  onPressed: _goHomeWithFreshBookingSession,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.medicalBlue,
                     foregroundColor: AppColors.textOnDark,

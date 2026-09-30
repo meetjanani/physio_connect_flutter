@@ -205,6 +205,7 @@ class SupabaseController {
     // .order(DatabaseSchema.serviceAreasOrderBy, ascending: true);
     return AreaModel.fromJsonList(response);
   }
+
   /// Batch-fetch doctors by primary keys (used for area list doctor cards).
   Future<List<DoctorModel>> getDoctorsByIds(List<int> doctorIds) async {
     final ids = doctorIds.where((id) => id > 0).toSet().toList();
@@ -322,10 +323,7 @@ class SupabaseController {
     return newId;
   }
 
-  Future<List<int>> createNewBookings(
-    List<BookingsModel> bookings,
-    int notificationUserId,
-  ) async {
+  Future<List<int>> createNewBookings(List<BookingsModel> bookings) async {
     if (bookings.isEmpty) {
       throw ArgumentError('At least one booking is required.');
     }
@@ -341,8 +339,7 @@ class SupabaseController {
       return response
           .map<int>((row) => (row[DatabaseSchema.bookingsId] as num).toInt())
           .toList();
-    }
-    on Exception catch (e) {
+    } on Exception catch (e) {
       print('Error creating bookings: $e');
       rethrow;
     }
@@ -392,12 +389,12 @@ class SupabaseController {
     return orderModel;
   }
 
-  Future<CreateRazorPayOrderModel?> callCreateRazorPayOrderForBookings(
-    List<int> bookingIds,
-    int userId,
-    bool isBulkAppointment,
+  Future<CreateRazorPayOrderModel?> callCreateRazorPayOrderForBookings({
+    required List<int> bookingIds,
+    required int userId,
+    required bool isBulkAppointment,
     String? bulkAppointmentId,
-  ) async {
+  }) async {
     try {
       if (bookingIds.isEmpty) {
         throw ArgumentError('At least one booking ID is required.');
@@ -418,82 +415,105 @@ class SupabaseController {
     }
   }
 
-  Future<VerifyPaymentResponseModel?> callVerifyRazorPayPaymentSBEdgeFunction({
-    required String?
-    bookingId, // Use int if your app uses int, but your JSON showed String "92"
-    required String?
-    userId, // Use int if your app uses int, but your JSON showed String "5"
-    required String? razorpayOrderId,
-    required String? razorpayPaymentId,
-    required String? razorpaySignature,
-  }) async {
-    try {
-      final response = await Supabase.instance.client.functions.invoke(
-        'verify-razorpay-payment',
-        body: {
-          'bookingId': bookingId,
-          'userId': userId,
-          'razorpayOrderId': razorpayOrderId,
-          'razorpayPaymentId': razorpayPaymentId,
-          'razorpaySignature': razorpaySignature,
-        },
-      );
-
-      final verifyModel = VerifyPaymentResponseModel.fromJson(response.data);
-
-      if (verifyModel.success) {
-        print('Payment Verified! Message: ${verifyModel.message}');
-
-        if (verifyModel.transferId != null) {
-          print('Transfer ID: ${verifyModel.transferId}');
-          print('Transfer Status: ${verifyModel.transferStatus}');
-        }
-
-        if (verifyModel.alreadyPaid) {
-          print('Note: This booking was already marked as paid previously.');
-        }
-      } else {
-        print('Verification returned false. Error: ${verifyModel.error}');
-      }
-
-      return verifyModel;
-    } on FunctionException catch (e) {
-      // Supabase throws this if the Edge Function returns a 400 or 500 error
-      print('Edge Function Error: ${e.reasonPhrase}');
-      print('Error Details: ${e.details}');
-      return VerifyPaymentResponseModel(success: false, error: e.reasonPhrase);
-    } catch (e) {
-      // Catches network or parsing errors
-      print('Unexpected Error verifying payment: $e');
-      return VerifyPaymentResponseModel(success: false, error: e.toString());
-    }
-  }
-
   Future<VerifyPaymentResponseModel?> callVerifyRazorPayPaymentForBookings({
     required List<int> bookingIds,
     required int userId,
     required String? razorpayOrderId,
     required String? razorpayPaymentId,
     required String? razorpaySignature,
+    String? failureReason,
+    int? failureCode,
+    String? failureCause,
   }) async {
+    final reason = failureReason?.trim();
+    final isFailure = reason != null && reason.isNotEmpty;
     try {
       if (bookingIds.isEmpty) {
         throw ArgumentError('At least one booking ID is required.');
       }
+      final body = <String, dynamic>{
+        'bookingIds': bookingIds,
+        'userId': userId,
+        'razorpayOrderId': razorpayOrderId,
+        'razorpayPaymentId': razorpayPaymentId,
+        'razorpaySignature': razorpaySignature,
+      };
+      if (isFailure) {
+        body['paymentFailure'] = {
+          'code': failureCode,
+          'message': reason,
+          'reason': failureCause,
+        };
+      }
+
       final response = await Supabase.instance.client.functions.invoke(
         'verify-razorpay-payment',
-        body: {
-          'bookingIds': bookingIds,
-          'userId': userId,
-          'razorpayOrderId': razorpayOrderId,
-          'razorpayPaymentId': razorpayPaymentId,
-          'razorpaySignature': razorpaySignature,
-        },
+        body: body,
       );
-      return VerifyPaymentResponseModel.fromJson(response.data);
+      final data = response.data;
+      if (data is! Map) {
+        return VerifyPaymentResponseModel(
+          success: false,
+          error: 'Payment verification returned an invalid response',
+        );
+      }
+      final model = VerifyPaymentResponseModel.fromJson(
+        Map<String, dynamic>.from(data),
+      );
+      if (!isFailure && model.success) {
+        await _clearPaymentFailureReason(bookingIds);
+      }
+      return model;
+    } on FunctionException catch (e) {
+      print(
+        'Error verifying RazorPay payment for bookings: ${e.details ?? e.reasonPhrase}',
+      );
+      return VerifyPaymentResponseModel(
+        success: false,
+        error: isFailure ? reason : _functionErrorMessage(e),
+      );
     } on Exception catch (e) {
       print('Error verifying RazorPay payment for bookings: $e');
-      return null;
+      return VerifyPaymentResponseModel(
+        success: false,
+        error: isFailure ? reason : e.toString(),
+      );
+    }
+  }
+
+  String _functionErrorMessage(FunctionException e) {
+    final details = e.details;
+    if (details is Map) {
+      final error = details['error'] ?? details['message'];
+      if (error != null && error.toString().trim().isNotEmpty) {
+        return error.toString();
+      }
+    }
+    return e.reasonPhrase ?? 'Payment verification failed';
+  }
+
+  Future<void> deleteUnpaidDraftBookings(List<int> bookingIds) async {
+    if (bookingIds.isEmpty) return;
+    await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .delete()
+        .inFilter(DatabaseSchema.bookingsId, bookingIds)
+        .neq(DatabaseSchema.bookingsPaymentStatus, PaymentStatus.paid.name)
+        .neq(DatabaseSchema.bookingsPaymentStatus, PaymentStatus.refunded.name)
+        .neq(DatabaseSchema.bookingsStatus, BookingStatus.confirmed.name)
+        .neq(DatabaseSchema.bookingsStatus, BookingStatus.completed.name)
+        .neq(DatabaseSchema.bookingsStatus, BookingStatus.refunded.name);
+  }
+
+  Future<void> _clearPaymentFailureReason(List<int> bookingIds) async {
+    if (bookingIds.isEmpty) return;
+    try {
+      await supabaseClient
+          .from(DatabaseSchema.bookingsTable)
+          .update({DatabaseSchema.bookingsPaymentFailureReason: null})
+          .inFilter(DatabaseSchema.bookingsId, bookingIds);
+    } catch (e) {
+      print('Unable to clear payment failure reason: $e');
     }
   }
 

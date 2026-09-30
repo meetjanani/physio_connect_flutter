@@ -13,6 +13,8 @@ import 'package:physio_connect/utils/view_extension.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/invoice_service.dart';
+import '../../services/booking_payment_flow.dart';
+import '../../services/razorpay_checkout.dart';
 import '../../utils/constants.dart';
 import '../../utils/enum.dart';
 import 'booking_history_controller.dart';
@@ -34,6 +36,39 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   final BookingsModel appointment = Get.arguments as BookingsModel;
   int _refundLongPressCount = 0;
   bool _refundUnlocked = false;
+  List<int> _payingBookingIds = [];
+  late final BookingPaymentFlow _payment;
+
+  @override
+  void initState() {
+    super.initState();
+    _payment = BookingPaymentFlow(
+      bookingIds: () {
+        final current = controller.selectedAppointment.value ?? appointment;
+        return _payingBookingIds.isEmpty ? [current.id] : _payingBookingIds;
+      },
+      userId: () {
+        final bookingUser =
+            (controller.selectedAppointment.value ?? appointment).userId;
+        if (bookingUser > 0) return bookingUser;
+        return controller.userModelSupabase?.id ?? 0;
+      },
+      onPaid: _onPaid,
+      onVerifyFailed: () async {
+        final current = controller.selectedAppointment.value ?? appointment;
+        await _refreshAppointment(current.id);
+      },
+      onCheckoutFailed: _onCheckoutFailed,
+      // Pay-again is for an existing booking. Never delete it on cancel.
+      deleteDraftsIfNoPaymentId: false,
+    );
+  }
+
+  @override
+  void dispose() {
+    _payment.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -391,6 +426,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 () {},
                 Icons.event_available,
               ),
+            if (appointment.paymentFailureReason?.trim().isNotEmpty == true)
+              _buildInfoRow(
+                'Failure reason',
+                appointment.paymentFailureReason!,
+                () {},
+                Icons.error_outline,
+                valueColor: AppColors.error,
+              ),
             if (appointment.paymentStatus.toLowerCase() == 'refunded') ...[
               _buildInfoRow(
                 'Refunded Amount',
@@ -446,6 +489,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ),
           SizedBox(height: 24),
           _buildRefundAction(context, appointment),
+          _buildPayAgainButton(appointment),
           _buildInvoiceButton(context, appointment),
           _buildRescheduleButton(context, appointment),
           _buildPatientCancelButton(context, appointment),
@@ -1036,10 +1080,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final canGenerateInvoice =
         appointment.bookingStatus.toLowerCase() ==
             BookingStatus.completed.name &&
-            [
-              PaymentStatus.paid.name,
-              PaymentStatus.refunded.name,
-            ].contains(appointment.paymentStatus.toLowerCase());
+        [
+          PaymentStatus.paid.name,
+          PaymentStatus.refunded.name,
+        ].contains(appointment.paymentStatus.toLowerCase());
     if (!canGenerateInvoice) return const SizedBox.shrink();
 
     return Column(
@@ -1065,17 +1109,19 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Widget _buildRescheduleButton(
-      BuildContext context,
-      BookingsModel appointment,
-      ) {
+    BuildContext context,
+    BookingsModel appointment,
+  ) {
     final canRescheduleUserRoleWise = controller.isDoctor.value
         ? true
         : _isAfterToday(appointment.bookingDate);
     final canReschedule =
         (appointment.paymentStatus.toLowerCase() == PaymentStatus.paid.name ||
-            appointment.paymentStatus.toLowerCase() == PaymentStatus.refunded.name) &&
-            (appointment.bookingStatus.toLowerCase() != BookingStatus.completed.name) &&
-            (canRescheduleUserRoleWise);
+            appointment.paymentStatus.toLowerCase() ==
+                PaymentStatus.refunded.name) &&
+        (appointment.bookingStatus.toLowerCase() !=
+            BookingStatus.completed.name) &&
+        (canRescheduleUserRoleWise);
     if (!canReschedule) return const SizedBox.shrink();
 
     return Column(
@@ -1099,9 +1145,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Future<void> _showRescheduleDialog(
-      BuildContext context,
-      BookingsModel appointment,
-      ) async {
+    BuildContext context,
+    BookingsModel appointment,
+  ) async {
     final currentDate =
         DateTime.tryParse(appointment.bookingDate) ?? DateTime.now();
     DateTime? selectedDate = currentDate;
@@ -1208,12 +1254,179 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     }
   }
 
+  Widget _buildPayAgainButton(BookingsModel appointment) {
+    if (!_canPayAgain(appointment)) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Obx(
+        () => ElevatedButton(
+          onPressed: _payment.isBusy.value
+              ? null
+              : () => _payAgain(appointment),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.medicalBlue,
+            foregroundColor: AppColors.textOnDark,
+            minimumSize: Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
+          ),
+          child: Text(_payment.isBusy.value ? 'Starting payment...' : 'Pay now'),
+        ),
+      ),
+    );
+  }
+
+  bool _canPayAgain(BookingsModel appointment) {
+    if (controller.isDoctor.value) return false;
+    final payment = appointment.paymentStatus.toLowerCase();
+    final booking = appointment.bookingStatus.toLowerCase();
+    final unpaid =
+        payment == PaymentStatus.paid.name ||
+        payment == PaymentStatus.refunded.name;
+    final closed =
+        booking == BookingStatus.cancelled.name ||
+        booking == BookingStatus.completed.name ||
+        booking == BookingStatus.refunded.name;
+    return !unpaid && !closed;
+  }
+
+  // TODO : Improve Query filter instade of filtering in code. This is a temporary solution to get unpaid booking ids for bulk appointments.
+  Future<List<int>> _unpaidBookingIds(BookingsModel appointment) async {
+    if (appointment.isBulkAppointment &&
+        appointment.bulkAppointmentId?.trim().isNotEmpty == true) {
+      final group = await controller.supabaseController
+          .getBookingsByBulkAppointmentId(
+            appointment.userId,
+            appointment.bulkAppointmentId!,
+          );
+      final ids = group
+          .where((booking) {
+            final status = booking.paymentStatus.toLowerCase();
+            return status != PaymentStatus.paid.name &&
+                status != PaymentStatus.refunded.name;
+          })
+          .map((booking) => booking.id)
+          .toList();
+      if (ids.isNotEmpty) return ids;
+    }
+    return [appointment.id];
+  }
+
+  String _paymentContact(BookingsModel appointment) {
+    try {
+      return appointment.aPatient().mobileNumber ??
+          controller.userModelSupabase?.mobileNumber ??
+          '';
+    } catch (_) {
+      return controller.userModelSupabase?.mobileNumber ?? '';
+    }
+  }
+
+  String _paymentDescription(BookingsModel appointment) {
+    try {
+      return 'Payment for ${appointment.aSessionType().name}';
+    } catch (_) {
+      return 'Physiotherapy session';
+    }
+  }
+
+  Future<void> _payAgain(BookingsModel appointment) async {
+    final bookingIds = await _unpaidBookingIds(appointment);
+    _payingBookingIds = bookingIds;
+    await _payment.collectPayment(
+      createOrder: () => controller.supabaseController
+          .callCreateRazorPayOrderForBookings(
+            bookingIds: bookingIds,
+            userId: appointment.userId,
+            isBulkAppointment: appointment.isBulkAppointment,
+            bulkAppointmentId: appointment.bulkAppointmentId,
+          ),
+      description: _paymentDescription(appointment),
+      contact: _paymentContact(appointment),
+    );
+  }
+
+  Future<void> _onPaid(PaidPaymentResult paid) async {
+    final current = controller.selectedAppointment.value ?? appointment;
+    current
+      ..bookingStatus = BookingStatus.confirmed.name
+      ..paymentStatus = PaymentStatus.paid.name
+      ..paymentId = paid.paymentId
+      ..orderId = paid.orderId
+      ..signature = paid.signature;
+    controller.selectedAppointment.value = current;
+    controller.selectedAppointment.refresh();
+    await _refreshAppointment(current.id);
+    _showPaymentSnackbar(
+      'Payment successful',
+      'Your session payment is confirmed.',
+    );
+  }
+
+  Future<void> _onCheckoutFailed(RazorpayFailureDetails failure) async {
+    final current = controller.selectedAppointment.value ?? appointment;
+    final bookingIds = _payingBookingIds.isEmpty
+        ? [current.id]
+        : _payingBookingIds;
+    final refreshed = await controller.supabaseController.getBookingById(
+      current.id.toString(),
+    );
+    if (refreshed == null) {
+      _removeDeletedBookings(bookingIds);
+      _showPaymentSnackbar(failure.title, failure.message);
+      if (mounted) Get.back();
+      return;
+    }
+    controller.selectedAppointment.value = refreshed;
+    if (mounted) setState(() {});
+    _showPaymentSnackbar(failure.title, failure.message);
+  }
+
+  void _removeDeletedBookings(List<int> bookingIds) {
+    controller.upComingBookings.removeWhere(
+      (booking) => bookingIds.contains(booking.id),
+    );
+    controller.selectedAppointment.value = null;
+  }
+
+  Future<void> _refreshAppointment(int bookingId) async {
+    final refreshed = await controller.supabaseController.getBookingById(
+      bookingId.toString(),
+    );
+    if (refreshed != null) {
+      controller.selectedAppointment.value = refreshed;
+      final index = controller.upComingBookings.indexWhere(
+        (booking) => booking.id == refreshed.id,
+      );
+      if (index >= 0) {
+        controller.upComingBookings[index] = refreshed;
+      }
+    } else {
+      _removeDeletedBookings([bookingId]);
+    }
+    if (mounted) setState(() {});
+  }
+
+  void _showPaymentSnackbar(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: title == 'Payment successful'
+          ? AppColors.wellnessGreen
+          : AppColors.error,
+      colorText: AppColors.textOnDark,
+    );
+  }
+
   Widget _buildPatientCancelButton(
-      BuildContext context,
-      BookingsModel appointment,
-      ) {
-    if (controller.isDoctor.value ||
-        !_canPatientCancel(appointment)) {
+    BuildContext context,
+    BookingsModel appointment,
+  ) {
+    if (controller.isDoctor.value || !_canPatientCancel(appointment)) {
       return const SizedBox.shrink();
     }
 
@@ -1237,7 +1450,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           padding: const EdgeInsets.only(top: 8),
           child: Text(
             'Free cancel if more than $FREE_CANCEL_HOURS hours before the session. '
-                'Later cancels may need a refund only 70% appointment',
+            'Later cancels may need a refund only 70% appointment',
             style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
         ),
@@ -1248,7 +1461,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   bool _canPatientCancel(BookingsModel appointment) {
     final status = appointment.bookingStatus.toLowerCase();
     return (status == BookingStatus.pending.name ||
-        status == BookingStatus.confirmed.name) &&
+            status == BookingStatus.confirmed.name) &&
         _isAfterToday(appointment.bookingDate);
   }
 
@@ -1267,9 +1480,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Future<void> _confirmPatientCancel(
-      BuildContext context,
-      BookingsModel appointment,
-      ) async {
+    BuildContext context,
+    BookingsModel appointment,
+  ) async {
     final bookingDate = DateTime.tryParse(appointment.bookingDate);
     final hoursAhead = bookingDate == null
         ? 0
@@ -1282,9 +1495,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         content: Text(
           freeCancel
               ? 'You are cancelling more than $FREE_CANCEL_HOURS hours ahead. '
-              'If payment was collected, request a refund from Help if it does not reverse automatically.'
+                    'If payment was collected, request a refund from Help if it does not reverse automatically.'
               : 'This cancellation is within $FREE_CANCEL_HOURS hours of the session. '
-              'Cancellation is allowed, but 30% of the payment will be deducted as a cancellation fee. ',
+                    'Cancellation is allowed, but 30% of the payment will be deducted as a cancellation fee. ',
         ),
         actions: [
           TextButton(
