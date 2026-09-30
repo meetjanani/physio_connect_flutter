@@ -30,6 +30,7 @@ class DatabaseSchema extends GetxController {
   static const String areaCityStateId = "cityStateId";
   static const String areaDoctorId = "doctorId";
   static const String areaIsActive = "isActive";
+  static const String areaOrderBy = "orderBy";
 
   static const String serviceAreasTable = "service_areas";
   static const String serviceAreasId = "id";
