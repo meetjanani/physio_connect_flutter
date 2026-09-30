@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/route/route_module.dart';
@@ -102,10 +103,32 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                             width: 3,
                                           ),
                                         ),
-                                        child: CircleAvatar(
-                                          radius: 50,
-                                          backgroundImage: NetworkImage(
-                                            controller.image,
+                                        child: ClipOval(
+                                          child: CachedNetworkImage(
+                                            imageUrl:
+                                                controller
+                                                    .doctor
+                                                    .value
+                                                    ?.profilePhotoUrl ??
+                                                'https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9',
+                                            fit: BoxFit.cover,
+                                            width: 80,
+                                            height: 80,
+                                            placeholder: (_, __) => const Center(
+                                              child: SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                              ),
+                                            ),
+                                            errorWidget: (_, __, ___) =>
+                                                const Icon(
+                                                  Icons.person,
+                                                  color: Colors.white,
+                                                ),
                                           ),
                                         ),
                                       ),
@@ -565,8 +588,6 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                     //       ],
                     //     ),
                     //   ),
-
-
                     if (isDoctorTypeUser(controller.userModelSupabase.value))
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
@@ -590,8 +611,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          onPressed: () =>
-                              Get.toNamed(AppPage.manageTimeSlot),
+                          onPressed: () => Get.toNamed(AppPage.manageTimeSlot),
                         ),
                       ),
 

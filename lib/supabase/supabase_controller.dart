@@ -201,8 +201,8 @@ class SupabaseController {
         .from(DatabaseSchema.areaTable)
         .select('*')
         .eq(DatabaseSchema.areaCityStateId, cityId)
-        .eq(DatabaseSchema.serviceAreasIsActive, true);
-    // .order(DatabaseSchema.serviceAreasOrderBy, ascending: true);
+        .eq(DatabaseSchema.serviceAreasIsActive, true)
+        .order(DatabaseSchema.areaOrderBy, ascending: false);
     return AreaModel.fromJsonList(response);
   }
 
