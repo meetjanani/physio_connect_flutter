@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/route/route_module.dart';
+import 'package:physio_connect/custom_widget/physio_progress_bar.dart';
 import 'package:physio_connect/ui/profile/profile_about_us_controller.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/enum.dart';
@@ -28,7 +29,10 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PhysioProgressOverlay(
+      isLoading: controller.isLoading,
+      message: 'Looking after your profile…',
+      child: Scaffold(
       appBar: commonAppBar("Profile"),
       body: SingleChildScrollView(
         child: Obx(
@@ -106,11 +110,9 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                         child: ClipOval(
                                           child: CachedNetworkImage(
                                             imageUrl:
-                                                controller
-                                                    .doctor
-                                                    .value
-                                                    ?.profilePhotoUrl ??
-                                                'https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9',
+                                                controller.isDoctor.value
+                                                    ? controller.doctor.value?.profilePhotoUrl ?? controller.patientProfileImage
+                                                    : controller.patientProfileImage,
                                             fit: BoxFit.cover,
                                             width: 80,
                                             height: 80,
@@ -653,6 +655,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
