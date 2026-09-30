@@ -112,7 +112,7 @@ class SessionTypeScreen extends StatelessWidget {
                 children: [
                   CatchedImageWidget(
                     imageUrl: session.imageUrl,
-                    height: 160,
+                    height: 180,
                     width: double.infinity,
                     boxFit: BoxFit.cover,
                   ),
@@ -138,7 +138,7 @@ class SessionTypeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
@@ -148,9 +148,54 @@ class SessionTypeScreen extends StatelessWidget {
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
+                                overflow: TextOverflow.visible
                               ),
                             ),
                           ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.medicalBlueLight,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(
+                            Icons.arrow_forward_rounded,
+                            color: AppColors.medicalBlueDark,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    if (session.description != null)
+                      Text(
+                        session.description,
+                        style: GoogleFonts.inter(
+                          textStyle: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        maxLines: 10,
+                        overflow: TextOverflow.visible,
+                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '₹ ${session.price.toStringAsFixed(0)}',
+                              style: GoogleFonts.inter(
+                                textStyle: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.medicalBlueDark,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         Container(
                           padding: EdgeInsets.symmetric(
@@ -174,57 +219,6 @@ class SessionTypeScreen extends StatelessWidget {
                                 color: AppColors.medicalBlueDark,
                               ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    if (session.description != null)
-                      Text(
-                        session.description,
-                        style: GoogleFonts.inter(
-                          textStyle: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.monetization_on_outlined,
-                              size: 20,
-                              color: AppColors.medicalBlue,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              '₹${session.price.toStringAsFixed(0)}',
-                              style: GoogleFonts.inter(
-                                textStyle: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.medicalBlueDark,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.medicalBlueLight,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Icon(
-                            Icons.arrow_forward_rounded,
-                            color: AppColors.medicalBlueDark,
-                            size: 20,
                           ),
                         ),
                       ],

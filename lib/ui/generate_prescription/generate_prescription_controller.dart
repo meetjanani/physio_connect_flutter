@@ -13,13 +13,12 @@ class GeneratePrescriptionController extends GetxController {
   final patientAddressController = TextEditingController();
 
   final sessionTypeController = TextEditingController(text: 'General Physiotherapy');
-  final sessionDescriptionController = TextEditingController(text: 'Mussel Strengthening');
+  final sessionDescriptionController = TextEditingController(text: 'Muscle Strengthening');
   final sessionQtyController = TextEditingController(text: '1');
-  final sessionAmountController = TextEditingController(text: '600');
-  final doctorNameController = TextEditingController(text: 'Dr. Parul Desai');
+  final sessionAmountController = TextEditingController(text: '0');
+  final doctorNameController = TextEditingController();
   final specialistController = TextEditingController(text: 'Physiotherapist');
-  final doctorCredentialsController =
-      TextEditingController(text: 'Physiotherapist G-2345');
+  final doctorCredentialsController = TextEditingController();
 
   final isGenerating = false.obs;
 
@@ -29,12 +28,21 @@ class GeneratePrescriptionController extends GetxController {
     final args = Get.arguments;
     if (args is BookingsModel) {
       final patient = args.aPatient();
+      final doctor = args.aDoctor();
       patientNameController.text = patient.name ?? '';
       patientAddressController.text = args.address ?? '';
       sessionTypeController.text = args.aSessionType().name;
       sessionDescriptionController.text = args.aSessionType().name;
-      doctorNameController.text = args.aDoctor().name ?? 'Dr. Parul Desai';
-      specialistController.text = args.aDoctor().degree ?? 'Physiotherapist';
+      sessionAmountController.text = args.price > 0 ? '${args.price}' : '';
+      doctorNameController.text = (doctor.name ?? '').trim();
+      specialistController.text =
+          (doctor.degree ?? '').trim().isNotEmpty
+              ? doctor.degree!.trim()
+              : 'Physiotherapist';
+      final reg = (doctor.drRegNumber ?? '').trim();
+      doctorCredentialsController.text = reg.isNotEmpty
+          ? '${doctor.degree ?? 'Physiotherapist'} $reg'
+          : (doctor.degree ?? '').trim();
     }
   }
 

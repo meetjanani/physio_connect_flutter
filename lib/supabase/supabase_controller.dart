@@ -268,13 +268,29 @@ class SupabaseController {
 
     final bookingsResponse = await supabaseClient
         .from(DatabaseSchema.bookingsTable)
-        .select('timeSlotId')
+        .select(
+          'timeSlotId,${DatabaseSchema.bookingsPaymentStatus},${DatabaseSchema.bookingsCreatedAt},${DatabaseSchema.bookingsStatus}',
+        )
         .eq(DatabaseSchema.bookingsDoctorId, doctorUserId)
         .eq(DatabaseSchema.bookingsDate, formattedDate);
 
-    var bookedTimeslotList = bookingsResponse
-        .map((e) => e['timeSlotId'])
-        .toList();
+    final bookedTimeslotList = <dynamic>[];
+    for (final row in bookingsResponse) {
+      final payment =
+          (row[DatabaseSchema.bookingsPaymentStatus] as String? ?? '')
+              .toLowerCase();
+      final status =
+          (row[DatabaseSchema.bookingsStatus] as String? ?? '').toLowerCase();
+      if (status == 'cancelled' ||
+          status == 'canceled' ||
+          status == 'refunded') {
+        continue;
+      }
+      if ((payment == 'paid') || (payment == 'pending')) {
+        bookedTimeslotList.add(row['timeSlotId']);
+        continue;
+      }
+    }
     for (var timeSlot in timeSlotList) {
       if (bookedTimeslotList.contains(timeSlot.id)) {
         timeSlot.isBooked = true;
@@ -613,10 +629,12 @@ class SupabaseController {
         .eq(DatabaseSchema.bookingsId, bookingId);
   }
 
+  /// [doctorUserId] must be `doctor.userId` (users.id). Bookings.doctorId
+  /// stores the linked user id, not the doctor table primary key.
   Future<Map<String, dynamic>> getDoctorEarningsSummary(
-    int doctorTableId,
+    int doctorUserId,
   ) async {
-    if (doctorTableId <= 0) {
+    if (doctorUserId <= 0) {
       return {
         'todayCount': 0,
         'pendingCount': 0,
@@ -643,7 +661,7 @@ class SupabaseController {
           '${DatabaseSchema.bookingsDoctorAmount},'
           '${DatabaseSchema.bookingsTransferStatus}',
         )
-        .eq(DatabaseSchema.bookingsDoctorId, doctorTableId);
+        .eq(DatabaseSchema.bookingsDoctorId, doctorUserId);
 
     final bookings = response;
     String normalizedStatus(Map<String, dynamic> booking) {

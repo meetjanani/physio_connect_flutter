@@ -25,11 +25,14 @@ void main() async {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp();
   await FirebaseAppCheck.instance.activate(
-    webProvider: ReCaptchaV3Provider(
+    providerWeb: ReCaptchaV3Provider(
       // '6LdG3acrAAAAALq9f54S9uWGrRZPyqVFVQCH0onf',
       '6LdG3acrAAAAAH_QL4vEhTZ_zqs2ZZ0vgqNlnLIx',
     ),
-    androidProvider: AndroidProvider.debug,
+    // Debug provider only for local builds; Play Integrity for release.
+    providerAndroid: kDebugMode
+        ? const AndroidDebugProvider()
+        : const AndroidPlayIntegrityProvider(),
   );
   FirebaseNotification().init();
   FirebaseMessaging.onBackgroundMessage((message) async {
@@ -127,7 +130,7 @@ class _MyAppState extends State<MyApp> {
     builder: (_) => GetMaterialApp(
       key: UniqueKey(),
       debugShowCheckedModeBanner: false,
-      enableLog: true,
+      enableLog: false,
       theme: AppTheme.lightTheme,
       // supportedLocales: flc.supportedLocales.map((e) => Locale(e)),
       // localizationsDelegates: const [

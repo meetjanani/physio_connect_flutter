@@ -92,7 +92,7 @@ class _GeneratePrescriptionScreenState extends State<GeneratePrescriptionScreen>
                 CustomTextField(
                   controller: controller.doctorNameController,
                   labelText: 'Doctor Name',
-                  hintText: 'Dr. Parul Desai',
+                  hintText: 'Assigned doctor name',
                   prefixIcon: Icons.medical_information_outlined,
                   validator: (value) => _required(value, 'Doctor name is required'),
                 ),
