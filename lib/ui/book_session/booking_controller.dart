@@ -8,7 +8,6 @@ import 'package:physio_connect/model/city_state_model.dart';
 import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/view_extension.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../model/bookings_model.dart';
@@ -18,14 +17,27 @@ import '../../model/session_type_model.dart';
 import '../../model/time_slots_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
-import '../../services/appointment_reminder_service.dart';
-import '../../services/app_analytics.dart';
 import '../../utils/constants.dart';
 
 class BookingController extends GetxController {
   static BookingController get to => Get.find();
 
   BookingController();
+
+  /// Drops the current booking session and registers an empty controller.
+  static void replaceWithFresh() {
+    if (Get.isRegistered<BookingController>()) {
+      Get.delete<BookingController>(force: true);
+    }
+    Get.put(BookingController(), permanent: true);
+  }
+
+  @override
+  void onClose() {
+    addressController.dispose();
+    houseNameBlockNumberController.dispose();
+    super.onClose();
+  }
   // Add a TextEditingController for address if not present in controller
   final TextEditingController addressController = TextEditingController();
   final TextEditingController houseNameBlockNumberController =
@@ -50,12 +62,17 @@ class BookingController extends GetxController {
   final recurrence = 'every_day'.obs;
   final appointmentDates = <DateTime>[].obs;
   String? bulkAppointmentId;
-  final razorpayPaymentId = ''.obs;
-  var bookingId = 0;
   final pendingBookingIds = <int>[].obs;
+  final paymentFailureMessage = ''.obs;
   final createRazorPayOrderModel = Rx<CreateRazorPayOrderModel?>(null);
 
+  void resetPendingPaymentAttempt() {
+    pendingBookingIds.clear();
+    paymentFailureMessage.value = '';
+  }
+
   void configureAppointmentDates() {
+    resetPendingPaymentAttempt();
     final count = isBulkAppointment.value ? bulkAppointmentCount.value : 1;
     final step = recurrence.value == 'alternative_day'
         ? 2
@@ -96,6 +113,7 @@ class BookingController extends GetxController {
   }
 
   void updateAppointmentDate(int index, DateTime date) {
+    resetPendingPaymentAttempt();
     if (index < 0 || index >= appointmentDates.length) return;
     final normalized = DateTime(date.year, date.month, date.day);
     if (normalized.isBefore(DateTime.now())) return;
@@ -157,181 +175,82 @@ class BookingController extends GetxController {
     }
   }
 
-  void createAppointment(
-    PaymentSuccessResponse paymentResponse,
-    PaymentStatus paymentStatus,
-  ) async {
-    isLoading.value = true;
-    final sessionType = selectedSessionType.value;
-    if (sessionType == null) {
-      isLoading.value = false;
-      showErrorSnackbar(
-        'Please select a session type before completing payment.',
-      );
-      return;
-    }
-
-    final doctorModel =
-        selectedDoctor.value ?? await DoctorModel.getFromSecureStorage();
-    final doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
-    final timeslotJson = jsonEncode(selectedTimeSlot.value?.toJson() ?? {});
-    final sessionTypeJson = jsonEncode(sessionType.toJson());
-    final patientJson = jsonEncode(userModelSupabase?.toJson() ?? {});
-
-    final notificationDoctorId =
-        doctorModel?.userId ?? selectedDoctor.value?.userId ?? 0;
-    if (notificationDoctorId > 0) {
-      await supabaseController.sentNotification(
-        notificationDoctorId,
-        'Booking confirmed',
-        '${userModelSupabase?.name ?? 'A patient'} booked ${sessionType.name} '
-            'for ${DateFormat('MMM d, yyyy').format(selectedDate.value)} '
-            'at ${selectedTimeSlot.value?.time ?? 'the selected time'}.',
-      );
-    }
-
-    bookingsModel.value = BookingsModel(
-      id: 0,
-      userId: userModelSupabase?.id ?? 0,
-      bookingStatus: BookingStatus.confirmed.name,
-      timeSlotId: selectedTimeSlot.value?.id ?? 1,
-      timeSlotJson: timeslotJson,
-      doctorId: doctorModel?.id ?? selectedDoctor.value?.id ?? 0,
-      cityStateJson: selectedCity.value?.toJson().toString(),
-      areaJson: selectedArea.value?.toJson().toString(),
-      doctorJson: doctorJson,
-      sessionTypeId: sessionType.id,
-      price: sessionType.price,
-      sessionTypeJson: sessionTypeJson,
-      patientJson: patientJson,
-      paymentStatus: paymentStatus.name,
-      paymentId: paymentResponse.paymentId!,
-      orderId: paymentResponse.orderId,
-      signature: paymentResponse.signature,
-      doctorNotes: "No additional notes provided.",
-      address:
-          "${houseNameBlockNumberController.text}\n${addressController.text}",
-      latLong:
-          "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
-      bookingDate: DateFormat('yyyy-MM-dd').format(selectedDate.value),
-      createdAt: DateTime.now().toString(),
-    );
-    await supabaseController.createNewBooking(
-      bookingsModel.value!,
-      notificationDoctorId,
-    );
-    isLoading.value = false;
-
-    // In a real app, this would create the appointment in your database
-    final appointmentId = Uuid().v4();
-
-    // Example implementation:
-    // final appointment = booking_model.dart(
-    //   appointmentId: appointmentId,
-    //   userId: 'current-user-id', // Get from auth service
-    //   therapistId: 'assigned-therapist-id',
-    //   sessionTypeId: selectedSessionType.value!.sessionTypeId,
-    //   date: DateFormat('yyyy-MM-dd').format(selectedDate.value),
-    //   startTime: selectedTimeSlot.value,
-    //   endTime: calculateEndTime(selectedTimeSlot.value, selectedSessionType.value!.durationMinutes),
-    //   status: 'booked',
-    //   createdAt: DateTime.now(),
-    // );
-
-    // Create payment record
-    // final payment = PaymentModel(
-    //   paymentId: Uuid().v4(),
-    //   appointmentId: appointmentId,
-    //   amount: selectedSessionType.value!.price,
-    //   razorpayPaymentId: razorpayPaymentId.value,
-    //   status: 'completed',
-    //   timestamp: DateTime.now(),
-    // );
-
-    // Save to database
-    // databaseService.saveAppointment(appointment);
-    // databaseService.savePayment(payment);
-
-    print('Appointment created with ID: $appointmentId');
-  }
-
   Future<CreateRazorPayOrderModel?> createPendingBookingBeforePayment() async {
+    if(selectedTimeSlot.value == null || selectedSessionType.value == null) return null;
     isLoading.value = true;
 
     try {
-      try {
-        await AppAnalytics.instance.bookingStarted();
-      } catch (_) {}
-      final sessionType = selectedSessionType.value;
-      if (sessionType == null) {
-        showErrorSnackbar(
-          'Please select a session type before proceeding to payment.',
-        );
-        return null;
-      }
-
       final doctorModel =
           selectedDoctor.value ?? await DoctorModel.getFromSecureStorage();
       final doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
-      final timeslotJson = jsonEncode(selectedTimeSlot.value?.toJson() ?? {});
+      final timeSlotModel = selectedTimeSlot.value!;
+      final timeslotJson = jsonEncode(timeSlotModel.toJson() ?? {});
+      final sessionType = selectedSessionType.value!;
       final sessionTypeJson = jsonEncode(sessionType.toJson());
       final patientJson = jsonEncode(userModelSupabase?.toJson() ?? {});
 
       final dates = appointmentDates.isEmpty
-          ? [DateTime(selectedDate.value.year, selectedDate.value.month, selectedDate.value.day)]
+          ? [
+              DateTime(
+                selectedDate.value.year,
+                selectedDate.value.month,
+                selectedDate.value.day,
+              ),
+            ]
           : appointmentDates.toList();
       if (dates.length > 1) {
         bulkAppointmentId = const Uuid().v4();
       }
       final groupId = dates.length > 1 ? bulkAppointmentId : null;
-      final bookings = dates.map((date) => BookingsModel(
-        id: 0,
-        userId: userModelSupabase?.id ?? 0,
-        bookingStatus: BookingStatus.pending.name,
-        timeSlotId: selectedTimeSlot.value?.id ?? 1,
-        timeSlotJson: timeslotJson,
-        doctorId: doctorModel?.userId ?? selectedDoctor.value?.userId ?? 0,
-        cityStateJson: selectedCity.value?.toJson().toString(),
-        areaJson: selectedArea.value?.toJson().toString(),
-        doctorJson: doctorJson,
-        sessionTypeId: sessionType.id,
-        price: sessionType.price,
-        sessionTypeJson: sessionTypeJson,
-        patientJson: patientJson,
-        paymentStatus: PaymentStatus.pending.name,
-        paymentId: null,
-        orderId: null,
-        signature: null,
-        doctorNotes: 'No additional notes provided.',
-        address: "${houseNameBlockNumberController.text}\n${addressController.text}",
-        latLong: "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
-        bookingDate: DateFormat('yyyy-MM-dd').format(date),
-        createdAt: DateTime.now().toString(),
-        isBulkAppointment: groupId != null,
-        bulkAppointmentId: groupId,
-      )).toList();
+      final bookings = dates
+          .map(
+            (date) => BookingsModel(
+              id: 0,
+              userId: userModelSupabase?.id ?? 0,
+              bookingStatus: BookingStatus.pending.name,
+              timeSlotId: timeSlotModel.id ?? 1,
+              timeSlotJson: timeslotJson,
+              doctorId:
+                  doctorModel?.userId ?? selectedDoctor.value?.userId ?? 0,
+              doctorJson: doctorJson,
+              patientJson: patientJson,
+              cityStateJson: selectedCity.value?.toJson().toString(),
+              areaJson: selectedArea.value?.toJson().toString(),
+              sessionTypeId: sessionType.id,
+              sessionTypeJson: sessionTypeJson,
+              price: sessionType.price,
+              paymentStatus: PaymentStatus.pending.name,
+              paymentId: null,
+              orderId: null,
+              signature: null,
+              doctorNotes: 'No additional notes provided.',
+              address:
+                  "${houseNameBlockNumberController.text}\n${addressController.text}",
+              latLong:
+                  "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
+              bookingDate: DateFormat('yyyy-MM-dd').format(date),
+              createdAt: DateTime.now().toString(),
+              isBulkAppointment: groupId != null,
+              bulkAppointmentId: groupId,
+            ),
+          )
+          .toList();
       bookingsModel.value = bookings.first;
-      final notificationDoctorId = doctorModel?.userId ?? selectedDoctor.value?.userId ?? 0;
-      final bookingIds = await supabaseController.createNewBookings(
-        bookings,
-        notificationDoctorId,
-      );
+      final bookingIds = await supabaseController.createNewBookings(bookings);
       pendingBookingIds.assignAll(bookingIds);
-      bookingId = bookingIds.first;
-      await supabaseController.sentNotification(
-        notificationDoctorId,
-        'Booking placed',
-        '${userModelSupabase?.name ?? 'A patient'} requested a '
-            '${sessionType.name} session for '
-            '${DateFormat('MMM d, yyyy').format(dates.first)} '
-            'at ${selectedTimeSlot.value?.time ?? 'the selected time'}.',
-      );
-      var razorpayOrder = await supabaseController
+      final razorpayOrder = await supabaseController
           .callCreateRazorPayOrderForBookings(
-          bookingIds,
-          userModelSupabase?.id ?? 0, groupId != null, groupId
-      );
+            bookingIds: bookingIds,
+            userId: userModelSupabase?.id ?? 0,
+            isBulkAppointment: groupId != null,
+            bulkAppointmentId: groupId,
+          );
       createRazorPayOrderModel.value = razorpayOrder;
+      // if (razorpayOrder == null || !razorpayOrder.hasOrder) {
+      //   await supabaseController.deleteUnpaidDraftBookings(bookingIds);
+      //   pendingBookingIds.clear();
+      //   return null;
+      // }
       return razorpayOrder;
     } finally {
       isLoading.value = false;
@@ -445,43 +364,4 @@ class BookingController extends GetxController {
     areaDoctors.clear();
   }
 
-  Future<void> scheduleRemindersForPendingBookings() async {
-    final dates = appointmentDates.isEmpty
-        ? [selectedDate.value]
-        : appointmentDates.toList();
-    final slotTime = selectedTimeSlot.value?.time ?? '09:00';
-    final sessionName = selectedSessionType.value?.name ?? 'Physio session';
-
-    for (var i = 0; i < pendingBookingIds.length; i++) {
-      final bookingId = pendingBookingIds[i];
-      final date = i < dates.length ? dates[i] : dates.last;
-      final start = _combineDateAndSlot(date, slotTime);
-      try {
-        await AppointmentReminderService.instance.scheduleSessionReminders(
-          bookingId: bookingId,
-          sessionStart: start,
-          sessionLabel: sessionName,
-        );
-      } catch (e) {
-        print('Reminder schedule failed: $e');
-      }
-    }
-  }
-
-  DateTime _combineDateAndSlot(DateTime date, String slotTime) {
-    final cleaned = slotTime.trim().toUpperCase();
-    final match = RegExp(
-      r'(\d{1,2}):(\d{2})\s*(AM|PM)?',
-    ).firstMatch(cleaned);
-    var hour = 9;
-    var minute = 0;
-    if (match != null) {
-      hour = int.tryParse(match.group(1) ?? '9') ?? 9;
-      minute = int.tryParse(match.group(2) ?? '0') ?? 0;
-      final ampm = match.group(3);
-      if (ampm == 'PM' && hour < 12) hour += 12;
-      if (ampm == 'AM' && hour == 12) hour = 0;
-    }
-    return DateTime(date.year, date.month, date.day, hour, minute);
-  }
 }

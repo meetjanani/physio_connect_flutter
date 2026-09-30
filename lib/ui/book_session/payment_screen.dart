@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/constants.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 
-import '../../model/create_razorpay_order_model.dart';
 import '../../route/route_module.dart';
-import '../../services/app_analytics.dart';
+import '../../services/booking_payment_flow.dart';
 import '../../utils/enum.dart';
 import 'booking_controller.dart';
 
@@ -20,149 +18,81 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   final BookingController controller = Get.find<BookingController>();
-  late Razorpay _razorpay;
+  late final BookingPaymentFlow _payment;
 
   @override
   void initState() {
     super.initState();
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-    print('[Razorpay] Listeners registered in PaymentScreen.initState');
+    _payment = BookingPaymentFlow(
+      bookingIds: () => controller.pendingBookingIds.toList(),
+      userId: () => controller.userModelSupabase?.id ?? 0,
+      fallbackOrderId: () =>
+          controller.createRazorPayOrderModel.value?.orderId,
+      onPaid: _onPaid,
+      onCheckoutFailed: (failure) async {
+        controller.pendingBookingIds.clear();
+        controller.paymentFailureMessage.value = failure.message;
+        BookingPaymentFlow.snackbar(failure.title, failure.message);
+      },
+      onCreateFailed: () async {
+        try {
+          await controller.supabaseController.deleteUnpaidDraftBookings(
+            controller.pendingBookingIds.toList(),
+          );
+        } catch (_) {}
+        controller.pendingBookingIds.clear();
+      },
+    );
   }
 
   @override
   void dispose() {
-    _razorpay.clear();
+    _payment.dispose();
     super.dispose();
   }
 
-  void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    print(
-      '[Razorpay] PAYMENT SUCCESS callback invoked: paymentId=${response.paymentId}, orderId=${response.orderId}, signature=${response.signature}',
-    );
-    // Store payment data and navigate to confirmation
-    controller.razorpayPaymentId.value = response.paymentId!;
-
-    // controller.supabaseController.callVerifyRazorPayPaymentSBEdgeFunction(
-    //     bookingId: controller.bookingId.toString(),
-    //     userId: controller.userModelSupabase?.id!.toString(),
-    //     razorpayOrderId: response.orderId,
-    //     razorpayPaymentId: response.paymentId,
-    //     razorpaySignature: response.signature);
-
-    controller.supabaseController
-        .callVerifyRazorPayPaymentForBookings(
-          bookingIds: controller.pendingBookingIds.toList(),
-          userId: controller.userModelSupabase?.id ?? 0,
-          razorpayOrderId: response.orderId,
-          razorpayPaymentId: response.paymentId,
-          razorpaySignature: response.signature,
-        )
-        .then((_) async {
-          try {
-            await AppAnalytics.instance.paymentSuccess(
-              amount: controller.selectedSessionType.value?.price ?? 0,
-            );
-          } catch (_) {}
-          await controller.scheduleRemindersForPendingBookings();
-          Get.toNamed(AppPage.bookingConfirmation);
-        });
-  }
-
-  void _handlePaymentError(PaymentFailureResponse response) {
-    print(
-      '[Razorpay] PAYMENT ERROR callback invoked: code=${response.code}, message=${response.message}',
-    );
-    Get.snackbar(
-      'Payment Failed',
-      'Error: ${response.message}',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.error,
-      colorText: AppColors.textOnDark,
-    );
-  }
-
-  void _handleExternalWallet(ExternalWalletResponse response) {
-    Get.snackbar(
-      'External Wallet',
-      'Payment with ${response.walletName}',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.medicalBlueLight,
-      colorText: AppColors.medicalBlueDark,
-    );
-  }
-
-  void _openRazorpayCheckout(CreateRazorPayOrderModel razorpayOrder) {
-    // For testing purposes, directly call success handler
-    // In production, uncomment the Razorpay integration code below
-    // controller.razorpayPaymentId.value = "razor_pay_test_payment_id"!;
-    // controller.createAppointment(PaymentSuccessResponse("razor_pay_test_payment_id", "order_id", "signature", {}), PaymentStatus.paid);
-    // return;
-
-    // rzp_live_RAnbKgZCZa6RZZ
-    // rzp_test_R9Cb4IgtUNcVsB
-    var options = {
-      'key': razorpayOrder.keyId,
-      'amount': razorpayOrder.amount, // In paise
-      'order_id': razorpayOrder.orderId,
-      'currency': razorpayOrder.currency,
-      'name': 'PhysioConnect',
-      'description':
-          'Payment for ${controller.selectedSessionType.value?.name ?? 'Physiotherapy session'}',
-      'prefill': {
-        'contact': controller.userModelSupabase?.mobileNumber ?? '',
-        // 'email': controller.userModelSupabase?.email ?? '',  // Recommended to include email
-      },
-      /*'external': {
-        'wallets': ['googlePay']  // Enable Google Pay
-      },*/
-      'method': {
-        'netbanking': false,
-        'wallet': true,
-        'upi': true,
-        'paylater': false,
-        'emi': false,
-        'card': true, // Only enable card payments
-      },
-      'config': {
-        'display': {
-          'hide': [
-            {'method': 'netbanking'},
-            // {'method': 'wallet', 'except': ['googlePay']},  // Hide all wallets except Google Pay
-            // {'method': 'upi', 'flows': ['collect']},  // Hide UPI collect
-            {'method': 'paylater'},
-            {'method': 'emi'},
-          ],
-        },
-      },
-    };
-
-    try {
-      print(
-        '[Razorpay] Opening checkout for order ${razorpayOrder.orderId} amount=${razorpayOrder.amount}',
-      );
-      _razorpay.open(options);
-    } catch (e, stackTrace) {
-      print('[Razorpay] Error opening checkout: ${e.toString()}');
-      print('[Razorpay] ERROR = $e');
-      print('[Razorpay] STACK = $stackTrace');
-      Get.snackbar(
-        'Error',
-        'Unable to start payment process',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error,
-        colorText: AppColors.textOnDark,
+  Future<void> _onPaid(PaidPaymentResult paid) async {
+    controller.paymentFailureMessage.value = '';
+    controller.pendingBookingIds.assignAll(paid.bookingIds);
+    final booking = controller.bookingsModel.value;
+    if (booking != null && paid.bookingIds.isNotEmpty) {
+      booking
+        ..id = paid.bookingIds.first
+        ..bookingStatus = BookingStatus.confirmed.name
+        ..paymentStatus = PaymentStatus.paid.name
+        ..paymentId = paid.paymentId
+        ..orderId = paid.orderId
+        ..signature = paid.signature;
+      controller.bookingsModel.refresh();
+    }
+    controller.pendingBookingIds.clear();
+    if (mounted) {
+      Get.toNamed(
+        AppPage.bookingConfirmation,
+        arguments: controller.bookingsModel.value,
       );
     }
+  }
+
+  Future<void> _startPayment() async {
+    controller.paymentFailureMessage.value = '';
+    await _payment.collectPayment(
+      createOrder: controller.createPendingBookingBeforePayment,
+      description:
+          'Payment for ${controller.selectedSessionType.value?.name ?? 'Physiotherapy session'}',
+      contact: controller.userModelSupabase?.mobileNumber ?? '',
+      busyMessage: 'Preparing your booking…',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final dateFormatter = DateFormat('EEEE, MMMM d, yyyy');
 
-    return Scaffold(
+    return Obx(
+      () => PopScope(
+      canPop: !_payment.isBusy.value,
+      child: Scaffold(
       appBar: commonAppBar('Payment', isBackButtonVisible: true),
       body: SafeArea(
         child: Column(
@@ -398,9 +328,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                     child: Text(
                       'Cancellation policy: Free cancel if more than '
-                          '$FREE_CANCEL_HOURS hours before the session. '
-                          'If the doctor cancels, you get a full refund. '
-                          'Support: $SUPPORT_EMAIL',
+                      '$FREE_CANCEL_HOURS hours before the session. '
+                      'If the doctor cancels, you get a full refund. '
+                      'Support: $SUPPORT_EMAIL',
                       style: GoogleFonts.inter(
                         textStyle: TextStyle(
                           fontSize: 12,
@@ -434,32 +364,47 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           color: AppColors.medicalBlue,
                         ),
                       )
-                    : ElevatedButton(
-                        onPressed: () async {
-                          var razorpayOrder = await controller
-                              .createPendingBookingBeforePayment();
-                          if (razorpayOrder != null) {
-                            _openRazorpayCheckout(razorpayOrder);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.medicalBlue,
-                          foregroundColor: AppColors.textOnDark,
-                          minimumSize: Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 2,
-                        ),
-                        child: Text(
-                          'Pay Now',
-                          style: GoogleFonts.inter(
-                            textStyle: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (controller
+                              .paymentFailureMessage
+                              .value
+                              .isNotEmpty) ...[
+                            Text(
+                              controller.paymentFailureMessage.value,
+                              style: GoogleFonts.inter(
+                                textStyle: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.error,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          ElevatedButton(
+                            onPressed: _payment.isBusy.value ? null : _startPayment,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.medicalBlue,
+                              foregroundColor: AppColors.textOnDark,
+                              minimumSize: Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: Text(
+                              'Pay Now',
+                              style: GoogleFonts.inter(
+                                textStyle: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
               ),
             ),
@@ -467,6 +412,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ],
         ),
       ),
+    ),
+    ),
     );
   }
 

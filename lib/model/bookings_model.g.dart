@@ -59,8 +59,7 @@ Map<String, dynamic> _$BookingsModelToJson(BookingsModel instance) =>
       'sessionTypeJson': instance.sessionTypeJson,
       'patientJson': instance.patientJson,
       'paymentStatus': instance.paymentStatus,
-      if (instance.paymentFailureReason != null)
-        'paymentFailureReason': instance.paymentFailureReason,
+      'paymentFailureReason': instance.paymentFailureReason,
       'paymentId': instance.paymentId,
       'orderId': instance.orderId,
       'signature': instance.signature,
