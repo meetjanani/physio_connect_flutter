@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:physio_connect/custom_widget/session_type_info.dart';
 import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
@@ -70,7 +71,10 @@ class ConfirmationScreen extends StatelessWidget {
                           ),
                         ),
 
-                        SizedBox(height: 36),
+                        SizedBox(height: 28),
+
+                        const SessionTypeInfo(),
+                        SizedBox(height: 16),
 
                         // Booking details
                         Container(
@@ -88,17 +92,6 @@ class ConfirmationScreen extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              // Session type
-                              Obx(() => _buildConfirmationItem(
-                                title: 'Session Type',
-                                value: controller.selectedSessionType.value?.name ?? 'N/A',
-                                icon: Icons.spa,
-                              )),
-
-                              SizedBox(height: 16),
-                              Divider(),
-                              SizedBox(height: 16),
-
                               // Date
                               Obx(() => _buildConfirmationItem(
                                 title: 'Date',

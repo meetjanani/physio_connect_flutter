@@ -26,7 +26,7 @@ class BookingHistoryController extends GetxController {
   UserModelSupabase? userModelSupabase;
   RxList<BookingsModel> upComingBookings = RxList();
   RxBool isDoctor = false.obs;
-  final therapistsImage = "https://randomuser.me/api/portraits/women/44.jpg";
+  final therapistsImage = "https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9";
 
   @override
   Future<void> onInit() async {
@@ -124,7 +124,7 @@ class BookingHistoryController extends GetxController {
   ) {
     final status = bookingStatus.toLowerCase().replaceAll(RegExp(r'[-_\s]'), '');
     final title = switch (status) {
-      'pending' => 'Booking pending',
+      'pending' => 'Booking awaiting confirmation',
       'confirmed' => 'Booking confirmed',
       'completed' => 'Session completed',
       'cancelled' || 'canceled' => 'Booking cancelled',
@@ -138,7 +138,7 @@ class BookingHistoryController extends GetxController {
       'confirmed' =>
         'Your $appointmentDetails with $doctorName is confirmed.',
       'completed' =>
-        'Your $appointmentDetails with $doctorName has been marked completed.',
+        'Your $appointmentDetails with $doctorName has been completed.',
       'cancelled' || 'canceled' =>
         'Your $appointmentDetails with $doctorName has been cancelled.',
       'noshow' =>
@@ -154,11 +154,11 @@ class BookingHistoryController extends GetxController {
       'confirmed' =>
         '$patientName has a confirmed $appointmentDetails booking.',
       'completed' =>
-        '$patientName\'s $appointmentDetails session is completed.',
+        '$patientName\'s $appointmentDetails has been completed.',
       'cancelled' || 'canceled' =>
         '$patientName\'s $appointmentDetails booking has been cancelled.',
       'noshow' =>
-        '$patientName was marked as a no-show for the $appointmentDetails booking.',
+        '$patientName did not attend their $appointmentDetails.',
       'refunded' =>
         'The refund for $patientName\'s $appointmentDetails booking has been processed.',
       _ =>
@@ -236,7 +236,6 @@ class BookingHistoryController extends GetxController {
     var appointment = selectedAppointment.value;
     var doctorId = appointment?.doctorId ?? 0;
     var userId = appointment?.userId ?? 0;
-    var bookingDate = appointment?.bookingDate ?? "";
     final doctor = appointment?.aDoctor();
     final patient = appointment?.aPatient();
     final timeSlot = appointment?.aTimeslot();
@@ -246,23 +245,27 @@ class BookingHistoryController extends GetxController {
         : DateFormat('MMM d, yyyy').format(parsedDate);
 
     if (isDoctorTypeUser(userModelSupabase) == false) {
-      // Patient is sending a reminder to the doctor
       await supabaseController.sentNotification(
         doctorId,
-        '${patient?.name ?? 'A patient'} would like you to call back about the '
-            'appointment on $appointmentDate at ${timeSlot?.time}.',
+        '${patient?.name ?? 'A patient'} has requested a callback about their '
+            'appointment scheduled for $appointmentDate at '
+            '${timeSlot?.time ?? 'the scheduled time'}.',
         'Patient callback request',
       );
     } else {
-      // Doctor is sending a reminder to the patient
       await supabaseController.sentNotification(
         userId,
-        "The appointment on ${bookingDate}. Reminder has been sent by the doctor: ${doctor?.name}.",
-        "Appointment Reminder for ${patient?.name} ",
+        'Your appointment with ${doctor?.name ?? 'your doctor'} is scheduled '
+            'for $appointmentDate at '
+            '${timeSlot?.time ?? 'the scheduled time'}. This is a reminder from '
+            'your doctor.',
+        'Appointment reminder',
       );
     }
-    Get.showSuccessSnackbar("Notification was sent successfully to the ${isDoctorTypeUser(userModelSupabase) == false ? "doctor" : "patient"}."
-        "${isDoctorTypeUser(userModelSupabase) == false ? "doctor" : "patient"} will be notified about the appointment.");
+    final recipient = isDoctorTypeUser(userModelSupabase) ? 'patient' : 'doctor';
+    Get.showSuccessSnackbar(
+      'Your notification has been sent to the $recipient.',
+    );
   }
 
   Future<RefundResponseModel> processRefundForPatient(

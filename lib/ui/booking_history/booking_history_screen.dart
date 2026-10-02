@@ -2,10 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:physio_connect/ui/booking_history/session_booking_card.dart';
-import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_note.dart';
-import 'package:physio_connect/utils/enum.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
 import '../../route/route_module.dart';
@@ -14,7 +11,7 @@ import '../../utils/view_extension.dart';
 import 'booking_history_controller.dart';
 
 class BookingHistoryScreen extends StatefulWidget {
-  BookingHistoryScreen({super.key});
+  const BookingHistoryScreen({super.key});
 
   @override
   State<BookingHistoryScreen> createState() => _BookingHistoryScreenState();
@@ -28,26 +25,32 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: commonAppBar(controller.isDoctor.value ? "Doctor Dashboard" : "My Bookings"),
+      appBar: commonAppBar(
+        controller.isDoctor.value ? "Doctor Dashboard" : "My Bookings",
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildDateFilter(context),
-            Expanded(
-              child: Obx(
-                    () =>
-                controller.isLoading.value
-                    ? Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.medicalBlue,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              children: [
+                _buildDateFilter(context),
+                Expanded(
+                  child: Obx(
+                    () => controller.isLoading.value
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.medicalBlue,
+                            ),
+                          )
+                        : (controller.upComingBookings.isEmpty
+                              ? _buildEmptyState()
+                              : _buildAppointmentsList()),
                   ),
-                )
-                    : (controller.upComingBookings.isEmpty
-                    ? _buildEmptyState()
-                    : _buildAppointmentsList()),
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -55,9 +58,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
 
   Widget _buildDateFilter(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: AppColors.shadowLight,
@@ -80,42 +86,49 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
             ),
           ),
           SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Obx(
-                  () => buildDatePickerButton(
-                    label: 'From',
-                    date: controller.fromDate.value,
-                    onTap: () => _selectDate(context, true),
-                  ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final fromDate = Obx(
+                () => buildDatePickerButton(
+                  label: 'From',
+                  date: controller.fromDate.value,
+                  onTap: () => _selectDate(context, true),
                 ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Obx(
-                  () => buildDatePickerButton(
-                    label: 'To',
-                    date: controller.toDate.value,
-                    onTap: () => _selectDate(context, false),
-                  ),
+              );
+              final toDate = Obx(
+                () => buildDatePickerButton(
+                  label: 'To',
+                  date: controller.toDate.value,
+                  onTap: () => _selectDate(context, false),
                 ),
-              ),
-            ],
+              );
+              if (constraints.maxWidth < 340) {
+                return Column(
+                  children: [fromDate, const SizedBox(height: 8), toDate],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: fromDate),
+                  const SizedBox(width: 12),
+                  Expanded(child: toDate),
+                ],
+              );
+            },
           ),
           SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _buildQuickFilterChip(
                 'Last 7 days',
                 () => controller.applyQuickFilter(7),
               ),
-              SizedBox(width: 8),
               _buildQuickFilterChip(
                 'Last 30 days',
                 () => controller.applyQuickFilter(30),
               ),
-              SizedBox(width: 8),
               _buildQuickFilterChip(
                 'This month',
                 () => controller.filterCurrentMonth(),
@@ -191,8 +204,8 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_busy, size: 80, color: AppColors.medicalBlueLight),
-          SizedBox(height: 16),
+          Icon(Icons.event_busy, size: 64, color: AppColors.medicalBlueLight),
+          const SizedBox(height: 16),
           Text(
             'No appointments found',
             style: GoogleFonts.inter(
@@ -203,7 +216,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               ),
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Try adjusting your filter or book a new appointment',
             textAlign: TextAlign.center,
@@ -211,7 +224,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               textStyle: TextStyle(fontSize: 14, color: AppColors.textMuted),
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () => Get.toNamed(AppPage.selectServiceCity),
             icon: Icon(Icons.add),
@@ -229,85 +242,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
 
   Widget _buildAppointmentsList() {
     return ListView.builder(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       itemCount: controller.upComingBookings.length,
       itemBuilder: (context, index) {
         final appointment = controller.upComingBookings[index];
-        final isUpcoming =
-            appointment.paymentStatus == BookingStatus.confirmed.name;
         return SessionBookingCard(appointment);
       },
     );
-  }
-
-  Widget _buildPaymentBadge(String status) {
-    Color bgColor;
-    Color textColor;
-
-    switch (status.toLowerCase()) {
-      case 'paid':
-        bgColor = AppColors.wellnessGreenLight;
-        textColor = AppColors.wellnessGreenDark;
-        break;
-      case 'pending':
-        bgColor = AppColors.warningLight;
-        textColor = AppColors.warningDark;
-        break;
-      case 'failed':
-        bgColor = AppColors.errorLight;
-        textColor = AppColors.errorDark;
-        break;
-      default:
-        bgColor = AppColors.textMuted.withOpacity(0.15);
-        textColor = AppColors.textMuted;
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        status,
-        style: GoogleFonts.inter(
-          textStyle: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: textColor,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'booked':
-        return AppColors.wellnessGreen;
-      case 'completed':
-        return AppColors.medicalBlue;
-      case 'cancelled':
-        return AppColors.error;
-      case 'no-show':
-        return AppColors.warning;
-      default:
-        return AppColors.textMuted;
-    }
-  }
-
-  String _getStatusText(String status) {
-    switch (status.toLowerCase()) {
-      case 'booked':
-        return 'Upcoming';
-      case 'completed':
-        return 'Completed';
-      case 'cancelled':
-        return 'Cancelled';
-      case 'no-show':
-        return 'No Show';
-      default:
-        return status.capitalize!;
-    }
   }
 }

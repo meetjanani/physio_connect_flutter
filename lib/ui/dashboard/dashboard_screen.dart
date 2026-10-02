@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:physio_connect/ui/booking_history/booking_history_controller.dart';
 import 'package:physio_connect/ui/dashboard/dashboard_controller.dart';
+import 'package:physio_connect/utils/constants.dart';
 
+import '../../model/bookings_model.dart';
 import '../../route/route_module.dart';
 import '../../utils/common_appbar.dart';
 import '../../utils/theme/app_colors.dart';
@@ -31,72 +33,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: commonAppBar("PhysioConnect"),
       body: SafeArea(
-        child: Center(
-          child: Obx(
-            () => Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: Get.height * 0.02),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      children: [
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: Get.height * 0.2,
-                          ),
-                          child: Container(
-                            width: Get.width,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: AppColors.border,
-                                width: 2,
-                              ),
-                              gradient: LinearGradient(
-                                colors: AppColors.backgroundGradientColors,
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child:
-                                  controller.upComingBookings.value.isNotEmpty
-                                  ? _buildAppointmentView()
-                                  : _buildNoAppointmentView(),
-                            ),
-                          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth < 360 ? 12.0 : 20.0;
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                20,
+                horizontalPadding,
+                96,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: Obx(() {
+                    final hasAppointment =
+                        controller.upComingBookings.isNotEmpty;
+                    return Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(
+                        constraints.maxWidth < 360 ? 16 : 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.border),
+                        gradient: LinearGradient(
+                          colors: AppColors.backgroundGradientColors,
                         ),
-                        // Add this after your appointment container
-                        SizedBox(height: 24),
-                        // Text(
-                        //   "Health & Recovery Tips",
-                        //   style: GoogleFonts.inter(
-                        //     textStyle: TextStyle(
-                        //       fontSize: 20,
-                        //       fontWeight: FontWeight.w600,
-                        //       color: AppColors.textPrimary,
-                        //     ),
-                        //   ),
-                        // ),
-                        // SizedBox(height: 16),
-                        // SizedBox(
-                        //   height: 230,
-                        //   child: ListView(
-                        //     scrollDirection: Axis.horizontal,
-                        //     physics: BouncingScrollPhysics(),
-                        //     padding: EdgeInsets.symmetric(horizontal: 8),
-                        //     children: _buildHealthTipCards(),
-                        //   ),
-                        // ),
-                      ],
-                    ),
-                  ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadowLight,
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: hasAppointment
+                          ? _buildAppointmentView()
+                          : _buildNoAppointmentView(),
+                    );
+                  }),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -123,19 +104,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.event_busy,
-          size: 60,
-          color: AppColors.medicalBlueDark.withOpacity(0.7),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.medicalBlueLight.withValues(alpha: 0.45),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.event_busy,
+            size: 40,
+            color: AppColors.medicalBlueDark.withValues(alpha: 0.8),
+          ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         Text(
           "No upcoming appointments",
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             textStyle: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -148,29 +136,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             textStyle: TextStyle(color: AppColors.textSecondary, fontSize: 16),
           ),
         ),
-        const SizedBox(height: 16),
-        FloatingActionButton.extended(
-          onPressed: () {
-            Get.toNamed(AppPage.selectServiceCity);
-            // Navigate to booking screen
-          },
-          backgroundColor: AppColors.medicalBlue,
-          foregroundColor: AppColors.textOnDark,
-          elevation: 4,
-          icon: Icon(Icons.add),
-          label: Text(
-            'Book Appointment',
-            style: GoogleFonts.inter(
-              textStyle: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
       ],
     );
   }
 
   Widget _buildAppointmentView() {
-    var appointment = controller.upComingBookings.value.first;
+    final appointment = controller.upComingBookings.first;
+    var isDoctor = isDoctorTypeUser(controller.userModelSupabase);
+    var nameOfPerson = isDoctor
+        ? appointment.aPatient().name
+        : appointment.aDoctor().name;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -201,7 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "with ${appointment.aDoctor().name}",
+                    "with $nameOfPerson",
                     style: GoogleFonts.inter(
                       textStyle: TextStyle(
                         color: AppColors.textPrimary,
@@ -282,45 +257,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            OutlinedButton.icon(
-              onPressed: () {
-                Get.put(BookingHistoryController()).selectedAppointment.value = appointment;
-                Get.toNamed(
-                  AppPage.bookingDetail,
-                  arguments: appointment,
-                );
-              },
-              icon: Icon(Icons.edit_calendar, color: AppColors.medicalBlueDark),
-              label: Text(
-                "Reschedule",
-                style: TextStyle(color: AppColors.medicalBlueDark),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final buttons = [
+              OutlinedButton.icon(
+                onPressed: () => _openAppointment(appointment),
+                icon: const Icon(Icons.edit_calendar),
+                label: const Text("Reschedule"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.medicalBlueDark,
+                  side: BorderSide(color: AppColors.medicalBlueDark),
+                ),
               ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.medicalBlueDark),
+              ElevatedButton.icon(
+                onPressed: () => _openAppointment(appointment),
+                icon: const Icon(Icons.visibility),
+                label: const Text("View Details"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.medicalBlueDark,
+                  foregroundColor: AppColors.textOnDark,
+                ),
               ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                Get.put(BookingHistoryController()).selectedAppointment.value = appointment;
-                Get.toNamed(
-                  AppPage.bookingDetail,
-                  arguments: appointment,
-                );
-              },
-              icon: Icon(Icons.visibility, color: AppColors.textOnDark),
-              label: Text("View Details"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.medicalBlueDark,
-                foregroundColor: AppColors.textOnDark,
-              ),
-            ),
-          ],
+            ];
+            if (constraints.maxWidth < 380) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [buttons[0], const SizedBox(height: 8), buttons[1]],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: buttons[0]),
+                const SizedBox(width: 12),
+                Expanded(child: buttons[1]),
+              ],
+            );
+          },
         ),
       ],
     );
+  }
+
+  void _openAppointment(BookingsModel appointment) {
+    Get.put(BookingHistoryController()).selectedAppointment.value = appointment;
+    Get.toNamed(AppPage.bookingDetail, arguments: appointment);
   }
 
   List<Widget> _buildHealthTipCards() {
