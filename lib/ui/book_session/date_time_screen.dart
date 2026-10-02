@@ -22,19 +22,12 @@ class DateTimeScreen extends StatefulWidget {
 
 class _DateTimeScreenState extends State<DateTimeScreen> {
   final BookingController controller = Get.find<BookingController>();
-  final appointmentCountController = TextEditingController(text: '2');
 
   @override
   void initState() {
     super.initState();
     _fetchTimeSlotAfterDateSelection(DateTime.now());
     fetchAndSetCurrentLocation();
-  }
-
-  @override
-  void dispose() {
-    appointmentCountController.dispose();
-    super.dispose();
   }
 
   @override
@@ -374,6 +367,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
   Widget _buildAppointmentPlanner() {
     return Obx(() {
       final bulk = controller.isBulkAppointment.value;
+      final count = controller.bulkAppointmentCount.value;
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -386,11 +380,22 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
           children: [
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Book multiple appointments'),
+              title: Text(
+                'Book multiple appointments',
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               subtitle: Text(
                 bulk
                     ? 'Create one payment for multiple dates'
                     : 'Book a single appointment',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
               value: bulk,
               activeTrackColor: AppColors.medicalBlue,
@@ -403,49 +408,178 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
               onChanged: controller.setBulkAppointmentEnabled,
             ),
             if (bulk) ...[
-              TextField(
-                controller: appointmentCountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Number of appointments (2–100)',
+              const SizedBox(height: 4),
+              _buildSessionCountStepper(count),
+              const SizedBox(height: 14),
+              Text(
+                'Repeat',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
-                onChanged: controller.setBulkAppointmentCount,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
+                runSpacing: 8,
                 children: [
                   _recurrenceChip('Every day', 'every_day'),
                   _recurrenceChip('Alternate day', 'alternative_day'),
                   _recurrenceChip('Every 2 days', 'every_2_day'),
                 ],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'You can change any appointment date before payment. Dates can also be changed individually after booking.',
-                style: TextStyle(fontSize: 12),
+              const SizedBox(height: 10),
+              Text(
+                'Editing a date also updates all sessions after it.',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
               ),
               const SizedBox(height: 10),
               ...controller.appointmentDates.asMap().entries.map(
-                (entry) => ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    radius: 14,
-                    child: Text('${entry.key + 1}'),
-                  ),
-                  title: Text(
-                    DateFormat('dd-MMM-yyyy').format(entry.value),
-                  ),
-                  trailing: const Icon(Icons.edit_calendar),
-                  onTap: () => _editAppointmentDate(entry.key, entry.value),
-                ),
+                (entry) => _buildAppointmentDateRow(entry.key, entry.value),
               ),
             ],
           ],
         ),
       );
     });
+  }
+
+  Widget _buildSessionCountStepper(int count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.medicalBlueLight.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.medicalBlue.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Number of sessions',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Min 2 · Max 100',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _stepperButton(
+            icon: Icons.remove_rounded,
+            enabled: count > 2,
+            onTap: () => controller.adjustBulkAppointmentCount(-1),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              '$count',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.medicalBlueDark,
+              ),
+            ),
+          ),
+          _stepperButton(
+            icon: Icons.add_rounded,
+            enabled: count < 100,
+            onTap: () => controller.adjustBulkAppointmentCount(1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepperButton({
+    required IconData icon,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: enabled ? AppColors.surface : AppColors.borderLight,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: enabled ? onTap : null,
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: Icon(
+            icon,
+            size: 20,
+            color: enabled ? AppColors.medicalBlueDark : AppColors.textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppointmentDateRow(int index, DateTime date) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        color: AppColors.backgroundLight,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => _editAppointmentDate(index, date),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.medicalBlueLight,
+                  child: Text(
+                    '${index + 1}',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.medicalBlueDark,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    DateFormat('d-MMM-yyyy, EEEE').format(date),
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.edit_calendar_rounded,
+                  size: 18,
+                  color: AppColors.medicalBlueDark,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _recurrenceChip(String label, String value) {
@@ -459,11 +593,29 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
   }
 
   Future<void> _editAppointmentDate(int index, DateTime current) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    DateTime firstDate = today;
+    if (index > 0) {
+      final previous = controller.appointmentDates[index - 1];
+      final minAfterPrevious = DateTime(
+        previous.year,
+        previous.month,
+        previous.day,
+      ).add(const Duration(days: 1));
+      if (minAfterPrevious.isAfter(firstDate)) {
+        firstDate = minAfterPrevious;
+      }
+    }
+
+    final initialDate =
+        current.isBefore(firstDate) ? firstDate : current;
+
     final date = await showDatePicker(
       context: context,
-      initialDate: current,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: today.add(const Duration(days: 365)),
     );
     if (date != null) {
       controller.updateAppointmentDate(index, date);
