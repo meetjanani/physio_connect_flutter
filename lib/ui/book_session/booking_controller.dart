@@ -73,8 +73,10 @@ class BookingController extends GetxController {
 
   void configureAppointmentDates() {
     resetPendingPaymentAttempt();
-    final count = isBulkAppointment.value ? bulkAppointmentCount.value : 1;
-    final step = _recurrenceStepDays();
+    final count = bulkAppointmentCount.value.clamp(1, 100);
+    bulkAppointmentCount.value = count;
+    isBulkAppointment.value = count >= 2;
+    final step = count >= 2 ? _recurrenceStepDays() : 1;
     final start = DateTime(
       selectedDate.value.year,
       selectedDate.value.month,
@@ -96,26 +98,20 @@ class BookingController extends GetxController {
             : 1;
   }
 
-  void setBulkAppointmentEnabled(bool enabled) {
-    isBulkAppointment.value = enabled;
-    if (!enabled) {
-      bulkAppointmentCount.value = 1;
-      recurrence.value = 'every_day';
-    } else if (bulkAppointmentCount.value < 2) {
-      bulkAppointmentCount.value = 2;
-    }
-    configureAppointmentDates();
-  }
-
-  void setBulkAppointmentCount(String value) {
-    final count = int.tryParse(value);
-    if (count == null) return;
-    setBulkAppointmentCountValue(count);
-  }
-
   void setBulkAppointmentCountValue(int count) {
-    if (count < 2 || count > 100) return;
+    if (count < 1 || count > 100) return;
     bulkAppointmentCount.value = count;
+    isBulkAppointment.value = count >= 2;
+    if (count < 2) {
+      recurrence.value = 'every_day';
+    }
+    if (appointmentDates.isNotEmpty) {
+      selectedDate.value = DateTime(
+        appointmentDates.first.year,
+        appointmentDates.first.month,
+        appointmentDates.first.day,
+      );
+    }
     configureAppointmentDates();
   }
 
@@ -130,25 +126,26 @@ class BookingController extends GetxController {
 
   /// Updates [index] and regenerates all following dates using the current
   /// recurrence step (every day / alternate / every 2 days).
-  void updateAppointmentDate(int index, DateTime date) {
+  /// Returns `true` when the first session date changed (time slots should refresh).
+  bool updateAppointmentDate(int index, DateTime date) {
     resetPendingPaymentAttempt();
-    if (index < 0 || index >= appointmentDates.length) return;
+    if (index < 0 || index >= appointmentDates.length) return false;
 
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
     final normalized = DateTime(date.year, date.month, date.day);
-    if (normalized.isBefore(todayDate)) return;
+    if (normalized.isBefore(todayDate)) return false;
 
     if (index > 0) {
       final previous = appointmentDates[index - 1];
       final previousDate =
           DateTime(previous.year, previous.month, previous.day);
-      if (!normalized.isAfter(previousDate)) return;
+      if (!normalized.isAfter(previousDate)) return false;
     }
 
     final dates = appointmentDates.toList();
     dates[index] = normalized;
-    final step = _recurrenceStepDays();
+    final step = dates.length >= 2 ? _recurrenceStepDays() : 1;
     for (var i = index + 1; i < dates.length; i++) {
       dates[i] = dates[i - 1].add(Duration(days: step));
     }
@@ -156,7 +153,9 @@ class BookingController extends GetxController {
 
     if (index == 0) {
       selectedDate.value = normalized;
+      return true;
     }
+    return false;
   }
 
   UserModelSupabase? userModelSupabase;

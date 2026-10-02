@@ -45,7 +45,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   const SessionTypeInfo(),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     'Select Date',
                     style: GoogleFonts.inter(
@@ -57,41 +57,8 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Obx(
-                    () => InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: _selectDate,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Appointment date',
-                          prefixIcon: Icon(
-                            Icons.calendar_today,
-                            color: AppColors.medicalBlue,
-                          ),
-                          suffixIcon: Icon(
-                            Icons.arrow_drop_down,
-                            color: AppColors.medicalBlueDark,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          DateFormat(
-                            'dd-MMM-yyyy',
-                          ).format(controller.selectedDate.value),
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 12),
-
-                  // Time slots
+                  _buildAppointmentPlanner(),
+                  const SizedBox(height: 16),
                   Text(
                     'Select Time',
                     style: GoogleFonts.inter(
@@ -102,12 +69,22 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  Obx(() {
+                    final multi = controller.bulkAppointmentCount.value > 1;
+                    if (!multi) return const SizedBox(height: 10);
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 10),
+                      child: Text(
+                        'Same time is used for all sessions (based on first date).',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    );
+                  }),
                   Obx(() => _buildTimeSlotSection()),
-                  SizedBox(height: 12),
-                  _buildAppointmentPlanner(),
-                  SizedBox(height: 12),
-
+                  const SizedBox(height: 16),
                   Text(
                     'Enter Address',
                     style: GoogleFonts.inter(
@@ -118,8 +95,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
-                  // Address multiline text field with location icon
+                  const SizedBox(height: 10),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -366,8 +342,8 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
 
   Widget _buildAppointmentPlanner() {
     return Obx(() {
-      final bulk = controller.isBulkAppointment.value;
       final count = controller.bulkAppointmentCount.value;
+      final isMulti = count > 1;
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -378,38 +354,8 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                'Book multiple appointments',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              subtitle: Text(
-                bulk
-                    ? 'Create one payment for multiple dates'
-                    : 'Book a single appointment',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              value: bulk,
-              activeTrackColor: AppColors.medicalBlue,
-              activeThumbColor: AppColors.surface,
-              inactiveTrackColor: AppColors.borderDark,
-              inactiveThumbColor: AppColors.surface,
-              trackOutlineColor: WidgetStatePropertyAll(
-                bulk ? AppColors.medicalBlue : AppColors.borderDark,
-              ),
-              onChanged: controller.setBulkAppointmentEnabled,
-            ),
-            if (bulk) ...[
-              const SizedBox(height: 4),
-              _buildSessionCountStepper(count),
+            _buildSessionCountStepper(count),
+            if (isMulti) ...[
               const SizedBox(height: 14),
               Text(
                 'Repeat',
@@ -437,11 +383,11 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                   color: AppColors.textMuted,
                 ),
               ),
-              const SizedBox(height: 10),
-              ...controller.appointmentDates.asMap().entries.map(
-                (entry) => _buildAppointmentDateRow(entry.key, entry.value),
-              ),
             ],
+            const SizedBox(height: 10),
+            ...controller.appointmentDates.asMap().entries.map(
+              (entry) => _buildAppointmentDateRow(entry.key, entry.value),
+            ),
           ],
         ),
       );
@@ -474,7 +420,9 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Min 2 · Max 100',
+                  count == 1
+                      ? 'Tap + to book multiple dates'
+                      : 'Min 1 · Max 100',
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     color: AppColors.textMuted,
@@ -485,7 +433,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
           ),
           _stepperButton(
             icon: Icons.remove_rounded,
-            enabled: count > 2,
+            enabled: count > 1,
             onTap: () => controller.adjustBulkAppointmentCount(-1),
           ),
           Padding(
@@ -608,8 +556,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
       }
     }
 
-    final initialDate =
-        current.isBefore(firstDate) ? firstDate : current;
+    final initialDate = current.isBefore(firstDate) ? firstDate : current;
 
     final date = await showDatePicker(
       context: context,
@@ -617,23 +564,37 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
       firstDate: firstDate,
       lastDate: today.add(const Duration(days: 365)),
     );
-    if (date != null) {
-      controller.updateAppointmentDate(index, date);
+    if (date == null) return;
+
+    final firstDateChanged = controller.updateAppointmentDate(index, date);
+    if (firstDateChanged) {
+      await _fetchTimeSlotAfterDateSelection(date, regenerateDates: false);
     }
   }
 
   Future<void> _confirmAppointments() async {
     final dates = controller.appointmentDates;
+    if (dates.length <= 1) {
+      Get.toNamed(AppPage.performPayment);
+      return;
+    }
+
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('Confirm appointments'),
         content: Text(
-          '${dates.length} appointment${dates.length == 1 ? '' : 's'} will be created. '
+          '${dates.length} appointments will be created. '
           'You will make one payment for the total amount.',
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Review')),
-          ElevatedButton(onPressed: () => Get.back(result: true), child: const Text('Confirm')),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Review'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Confirm'),
+          ),
         ],
       ),
     );
@@ -642,23 +603,14 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
     }
   }
 
-  Future<void> _selectDate() async {
-    final now = DateTime.now();
-    final current = controller.selectedDate.value;
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: current.isBefore(now) ? now : current,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 60)),
-    );
-    if (pickedDate == null) return;
-
-    await _fetchTimeSlotAfterDateSelection(pickedDate);
-  }
-
-  Future<void> _fetchTimeSlotAfterDateSelection(DateTime selectedDate) async {
+  Future<void> _fetchTimeSlotAfterDateSelection(
+    DateTime selectedDate, {
+    bool regenerateDates = true,
+  }) async {
     controller.selectedDate.value = selectedDate;
-    controller.configureAppointmentDates();
+    if (regenerateDates) {
+      controller.configureAppointmentDates();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         controller.getTimeSlotsMaster();
