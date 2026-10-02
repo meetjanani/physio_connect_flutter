@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:physio_connect/model/city_state_model.dart';
 import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/utils/enum.dart';
-import 'package:physio_connect/utils/view_extension.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../model/bookings_model.dart';
@@ -56,6 +55,14 @@ class BookingController extends GetxController {
   final bookingsModel = Rx<BookingsModel?>(null);
   final timeSlots = <TimeSlotModel>[].obs;
 
+  /// Per-date resolved timeslot (`yyyy-MM-dd` -> slot).
+  final timeSlotByDate = <String, TimeSlotModel>{}.obs;
+
+  /// Dates where preferred timeslot is unavailable.
+  final conflictDates = <String>{}.obs;
+
+  final isCheckingConflicts = false.obs;
+
   final selectedDate = DateTime.now().obs;
   final isBulkAppointment = false.obs;
   final bulkAppointmentCount = 1.obs;
@@ -69,6 +76,38 @@ class BookingController extends GetxController {
   void resetPendingPaymentAttempt() {
     pendingBookingIds.clear();
     paymentFailureMessage.value = '';
+  }
+
+  String dateKey(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
+
+  bool get hasUnresolvedConflicts => conflictDates.isNotEmpty;
+
+  bool get canContinueToPayment {
+    if (selectedSessionType.value == null) return false;
+    if (appointmentDates.isEmpty) return false;
+    if (hasUnresolvedConflicts) return false;
+    if (isCheckingConflicts.value) return false;
+    for (final date in appointmentDates) {
+      if (!timeSlotByDate.containsKey(dateKey(date))) return false;
+    }
+    return true;
+  }
+
+  void clearPerDateTimeSlots() {
+    timeSlotByDate.clear();
+    conflictDates.clear();
+  }
+
+  List<int>? _configuredTimeSlotIds() {
+    final configured = selectedDoctor.value?.timeSlotId
+        ?.split(',')
+        .map((value) => int.tryParse(value.trim()))
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toSet()
+        .toList();
+    if (configured == null || configured.isEmpty) return null;
+    return configured;
   }
 
   void configureAppointmentDates() {
@@ -88,6 +127,12 @@ class BookingController extends GetxController {
         (index) => start.add(Duration(days: index * step)),
       ),
     );
+    // Re-check preferred time across the new date set.
+    if (selectedTimeSlot.value != null) {
+      checkConflictsAcrossDates();
+    } else {
+      clearPerDateTimeSlots();
+    }
   }
 
   int _recurrenceStepDays() {
@@ -155,7 +200,92 @@ class BookingController extends GetxController {
       selectedDate.value = normalized;
       return true;
     }
+
     return false;
+  }
+
+  /// Sets preferred timeslot and checks availability on every selected date.
+  Future<void> selectPreferredTimeSlot(TimeSlotModel slot) async {
+    selectedTimeSlot.value = slot;
+    await checkConflictsAcrossDates();
+  }
+
+  /// For each appointment date, prefer [selectedTimeSlot] when free; otherwise
+  /// mark the date as a conflict until the user picks an alternate.
+  Future<void> checkConflictsAcrossDates() async {
+    final preferred = selectedTimeSlot.value;
+    final dates = appointmentDates.toList();
+    if (preferred == null || dates.isEmpty) {
+      clearPerDateTimeSlots();
+      return;
+    }
+
+    isCheckingConflicts.value = true;
+    try {
+      final doctorUserId = selectedDoctor.value?.userId ?? 0;
+      final configuredIds = _configuredTimeSlotIds();
+      final results = await Future.wait(
+        dates.map(
+          (date) => supabaseController.getTimeSlotsMaster(
+            date,
+            doctorUserId,
+            timeSlotIds: configuredIds,
+          ),
+        ),
+      );
+
+      final nextSlots = <String, TimeSlotModel>{};
+      final nextConflicts = <String>{};
+
+      for (var i = 0; i < dates.length; i++) {
+        final key = dateKey(dates[i]);
+        final daySlots = results[i];
+        final match = daySlots.cast<TimeSlotModel?>().firstWhere(
+              (s) => s?.id == preferred.id,
+              orElse: () => null,
+            );
+        final isBooked = match == null || (match.isBooked ?? false);
+        if (isBooked) {
+          nextConflicts.add(key);
+        } else {
+          nextSlots[key] = match;
+        }
+      }
+
+      timeSlotByDate
+        ..clear()
+        ..addAll(nextSlots);
+      conflictDates
+        ..clear()
+        ..addAll(nextConflicts);
+      timeSlotByDate.refresh();
+      conflictDates.refresh();
+    } finally {
+      isCheckingConflicts.value = false;
+    }
+  }
+
+  /// Saves an alternate timeslot for a single conflict date.
+  void resolveConflictForDate(DateTime date, TimeSlotModel slot) {
+    final key = dateKey(date);
+    timeSlotByDate[key] = slot;
+    conflictDates.remove(key);
+    timeSlotByDate.refresh();
+    conflictDates.refresh();
+    resetPendingPaymentAttempt();
+  }
+
+  TimeSlotModel? timeSlotForDate(DateTime date) =>
+      timeSlotByDate[dateKey(date)];
+
+  bool isConflictDate(DateTime date) => conflictDates.contains(dateKey(date));
+
+  Future<List<TimeSlotModel>> loadSlotsForDate(DateTime date) async {
+    return supabaseController.getTimeSlotsMaster(
+      date,
+      selectedDoctor.value?.userId ?? 0,
+      timeSlotIds: _configuredTimeSlotIds(),
+    );
   }
 
   UserModelSupabase? userModelSupabase;
@@ -192,36 +322,41 @@ class BookingController extends GetxController {
   Future<void> getTimeSlotsMaster() async {
     isLoading.value = true;
     timeSlots.clear();
+    // Keep preferred slot if still present after first-date refresh;
+    // conflict check decides per-date mapping.
+    final previousPreferredId = selectedTimeSlot.value?.id;
     selectedTimeSlot.value = null;
+    clearPerDateTimeSlots();
     try {
-      final configuredTimeSlotIds = selectedDoctor.value?.timeSlotId
-          ?.split(',')
-          .map((value) => int.tryParse(value.trim()))
-          .whereType<int>()
-          .where((id) => id > 0)
-          .toSet()
-          .toList();
       final response = await supabaseController.getTimeSlotsMaster(
         selectedDate.value,
         selectedDoctor.value?.userId ?? 0,
-        timeSlotIds: configuredTimeSlotIds,
+        timeSlotIds: _configuredTimeSlotIds(),
       );
       timeSlots.addAll(response);
+      if (previousPreferredId != null) {
+        final stillAvailable = timeSlots.cast<TimeSlotModel?>().firstWhere(
+              (s) => s?.id == previousPreferredId && !(s?.isBooked ?? true),
+              orElse: () => null,
+            );
+        if (stillAvailable != null) {
+          await selectPreferredTimeSlot(stillAvailable);
+        }
+      }
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<CreateRazorPayOrderModel?> createPendingBookingBeforePayment() async {
-    if(selectedTimeSlot.value == null || selectedSessionType.value == null) return null;
+    if (selectedSessionType.value == null) return null;
+    if (!canContinueToPayment) return null;
     isLoading.value = true;
 
     try {
       final doctorModel =
           selectedDoctor.value ?? await DoctorModel.getFromSecureStorage();
       final doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
-      final timeSlotModel = selectedTimeSlot.value!;
-      final timeslotJson = jsonEncode(timeSlotModel.toJson() ?? {});
       final sessionType = selectedSessionType.value!;
       final sessionTypeJson = jsonEncode(sessionType.toJson());
       final patientJson = jsonEncode(userModelSupabase?.toJson() ?? {});
@@ -235,43 +370,46 @@ class BookingController extends GetxController {
               ),
             ]
           : appointmentDates.toList();
+
+      for (final date in dates) {
+        if (timeSlotForDate(date) == null) return null;
+      }
+
       if (dates.length > 1) {
         bulkAppointmentId = const Uuid().v4();
       }
       final groupId = dates.length > 1 ? bulkAppointmentId : null;
-      final bookings = dates
-          .map(
-            (date) => BookingsModel(
-              id: 0,
-              userId: userModelSupabase?.id ?? 0,
-              bookingStatus: BookingStatus.pending.name,
-              timeSlotId: timeSlotModel.id ?? 1,
-              timeSlotJson: timeslotJson,
-              doctorId:
-                  doctorModel?.userId ?? selectedDoctor.value?.userId ?? 0,
-              doctorJson: doctorJson,
-              patientJson: patientJson,
-              cityStateJson: selectedCity.value?.toJson().toString(),
-              areaJson: selectedArea.value?.toJson().toString(),
-              sessionTypeId: sessionType.id,
-              sessionTypeJson: sessionTypeJson,
-              price: sessionType.price,
-              paymentStatus: PaymentStatus.pending.name,
-              paymentId: null,
-              orderId: null,
-              signature: null,
-              doctorNotes: 'No additional notes provided.',
-              address:
-                  "${houseNameBlockNumberController.text}\n${addressController.text}",
-              latLong:
-                  "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
-              bookingDate: DateFormat('yyyy-MM-dd').format(date),
-              createdAt: DateTime.now().toString(),
-              isBulkAppointment: groupId != null,
-              bulkAppointmentId: groupId,
-            ),
-          )
-          .toList();
+      final bookings = dates.map((date) {
+        final slot = timeSlotForDate(date)!;
+        return BookingsModel(
+          id: 0,
+          userId: userModelSupabase?.id ?? 0,
+          bookingStatus: BookingStatus.pending.name,
+          timeSlotId: slot.id,
+          timeSlotJson: jsonEncode(slot.toJson()),
+          doctorId: doctorModel?.userId ?? selectedDoctor.value?.userId ?? 0,
+          doctorJson: doctorJson,
+          patientJson: patientJson,
+          cityStateJson: selectedCity.value?.toJson().toString(),
+          areaJson: selectedArea.value?.toJson().toString(),
+          sessionTypeId: sessionType.id,
+          sessionTypeJson: sessionTypeJson,
+          price: sessionType.price,
+          paymentStatus: PaymentStatus.pending.name,
+          paymentId: null,
+          orderId: null,
+          signature: null,
+          doctorNotes: 'No additional notes provided.',
+          address:
+              "${houseNameBlockNumberController.text}\n${addressController.text}",
+          latLong:
+              "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
+          bookingDate: dateKey(date),
+          createdAt: DateTime.now().toString(),
+          isBulkAppointment: groupId != null,
+          bulkAppointmentId: groupId,
+        );
+      }).toList();
       bookingsModel.value = bookings.first;
       final bookingIds = await supabaseController.createNewBookings(bookings);
       pendingBookingIds.assignAll(bookingIds);
@@ -283,11 +421,6 @@ class BookingController extends GetxController {
             bulkAppointmentId: groupId,
           );
       createRazorPayOrderModel.value = razorpayOrder;
-      // if (razorpayOrder == null || !razorpayOrder.hasOrder) {
-      //   await supabaseController.deleteUnpaidDraftBookings(bookingIds);
-      //   pendingBookingIds.clear();
-      //   return null;
-      // }
       return razorpayOrder;
     } finally {
       isLoading.value = false;

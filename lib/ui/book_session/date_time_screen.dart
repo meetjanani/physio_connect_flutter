@@ -22,6 +22,7 @@ class DateTimeScreen extends StatefulWidget {
 
 class _DateTimeScreenState extends State<DateTimeScreen> {
   final BookingController controller = Get.find<BookingController>();
+  final _addressFormKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -75,7 +76,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(top: 4, bottom: 10),
                       child: Text(
-                        'Same time is used for all sessions (based on first date).',
+                        'Preferred time is applied to all dates. Conflict days need their own time.',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppColors.textMuted,
@@ -84,6 +85,31 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                     );
                   }),
                   Obx(() => _buildTimeSlotSection()),
+                  Obx(() {
+                    if (!controller.isCheckingConflicts.value) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Checking availability across dates…',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                   const SizedBox(height: 16),
                   Text(
                     'Enter Address',
@@ -96,57 +122,75 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: controller.houseNameBlockNumberController,
+                  Form(
+                    key: _addressFormKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller:
+                              controller.houseNameBlockNumberController,
                           maxLines: 3,
                           minLines: 2,
+                          textInputAction: TextInputAction.next,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Apartment/House name & block number is required';
+                            }
+                            return null;
+                          },
                           decoration: InputDecoration(
-                            labelText: 'Appartment/House Name &  Block number',
-                            hintText: 'Appartment Name &  Block number',
+                            labelText:
+                                'Apartment/House Name & Block number *',
+                            hintText: 'Apartment Name & Block number',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: controller.addressController,
-                          maxLines: 3,
-                          minLines: 2,
-                          decoration: InputDecoration(
-                            labelText: 'Address',
-                            hintText: 'Enter your address',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 12),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: controller.addressController,
+                                maxLines: 3,
+                                minLines: 2,
+                                textInputAction: TextInputAction.done,
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.trim().isEmpty) {
+                                    return 'Address is required';
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  labelText: 'Address *',
+                                  hintText: 'Enter your address',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.my_location,
+                                color: AppColors.medicalBlue,
+                              ),
+                              tooltip: 'Use current location',
+                              onPressed: () async {
+                                await fetchAndSetCurrentLocation();
+                                _addressFormKey.currentState?.validate();
+                              },
+                            ),
+                          ],
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      IconButton(
-                        icon: Icon(
-                          Icons.my_location,
-                          color: AppColors.medicalBlue,
-                        ),
-                        tooltip: 'Use current location',
-                        onPressed: () async {
-                          fetchAndSetCurrentLocation();
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
@@ -164,43 +208,71 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                   ),
                 ],
               ),
-              child: Obx(
-                () => ElevatedButton(
-                  onPressed: controller.selectedTimeSlot.value == null
-                      ? null
-                      : () {
-                          if (controller.selectedSessionType.value == null) {
-                            controller.showErrorSnackbar(
-                              'Please select a session type before proceeding.',
-                            );
-                            return;
-                          }
-                          _confirmAppointments();
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: controller.selectedTimeSlot.value == null
-                        ? AppColors.textMuted
-                        : AppColors.medicalBlue,
-                    foregroundColor: AppColors.textOnDark,
-                    disabledBackgroundColor: AppColors.border,
-                    disabledForegroundColor: AppColors.textMuted,
-                    minimumSize: Size(double.infinity, 50),
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'Continue to Payment',
-                    style: GoogleFonts.inter(
-                      textStyle: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+              child: Obx(() {
+                final canContinue = controller.canContinueToPayment;
+                final conflictCount = controller.conflictDates.length;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (conflictCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Resolve $conflictCount conflict date${conflictCount == 1 ? '' : 's'} to continue',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.errorDark,
+                          ),
+                        ),
+                      ),
+                    ElevatedButton(
+                      onPressed: !canContinue
+                          ? null
+                          : () {
+                              if (controller.selectedSessionType.value == null) {
+                                controller.showErrorSnackbar(
+                                  'Please select a session type before proceeding.',
+                                );
+                                return;
+                              }
+                              final formValid =
+                                  _addressFormKey.currentState?.validate() ??
+                                      false;
+                              if (!formValid) {
+                                controller.showErrorSnackbar(
+                                  'Please fill in apartment/house details and address.',
+                                );
+                                return;
+                              }
+                              _confirmAppointments();
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: canContinue
+                            ? AppColors.medicalBlue
+                            : AppColors.textMuted,
+                        foregroundColor: AppColors.textOnDark,
+                        disabledBackgroundColor: AppColors.border,
+                        disabledForegroundColor: AppColors.textMuted,
+                        minimumSize: const Size(double.infinity, 50),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Continue to Payment',
+                        style: GoogleFonts.inter(
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
+                  ],
+                );
+              }),
             ),
           ],
         ),
@@ -301,7 +373,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
     return GestureDetector(
       onTap: isBooked
           ? null
-          : () => controller.selectedTimeSlot.value = slot,
+          : () => controller.selectPreferredTimeSlot(slot),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         alignment: Alignment.center,
@@ -377,7 +449,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Editing a date also updates all sessions after it.',
+                'Editing a date also updates all sessions after it. Conflict days: tap Choose to pick another time.',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   color: AppColors.textMuted,
@@ -482,51 +554,270 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
   }
 
   Widget _buildAppointmentDateRow(int index, DateTime date) {
+    // Read maps so Obx rebuilds when conflict status changes.
+    controller.timeSlotByDate.length;
+    controller.conflictDates.length;
+    final isConflict = controller.isConflictDate(date);
+    final assignedSlot = controller.timeSlotForDate(date);
+    final hasPreferred = controller.selectedTimeSlot.value != null;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Material(
-        color: AppColors.backgroundLight,
+        color: isConflict
+            ? AppColors.errorLight.withValues(alpha: 0.55)
+            : AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          onTap: () => _editAppointmentDate(index, date),
+          onTap: () async {
+            if (isConflict) {
+              await _showAlternateTimeSheet(date);
+              return;
+            }
+            await _editAppointmentDate(index, date);
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: AppColors.medicalBlueLight,
+                  backgroundColor: isConflict
+                      ? AppColors.error.withValues(alpha: 0.15)
+                      : AppColors.medicalBlueLight,
                   child: Text(
                     '${index + 1}',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.medicalBlueDark,
+                      color: isConflict
+                          ? AppColors.errorDark
+                          : AppColors.medicalBlueDark,
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    DateFormat('d-MMM-yyyy, EEEE').format(date),
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormat('d-MMM-yyyy, EEEE').format(date),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      if (hasPreferred) ...[
+                        const SizedBox(height: 4),
+                        _buildDateStatusChip(
+                          isConflict: isConflict,
+                          slot: assignedSlot,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                Icon(
-                  Icons.edit_calendar_rounded,
-                  size: 18,
-                  color: AppColors.medicalBlueDark,
-                ),
+                if (isConflict)
+                  TextButton(
+                    onPressed: () => _showAlternateTimeSheet(date),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Choose',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.errorDark,
+                      ),
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.edit_calendar_rounded,
+                    size: 18,
+                    color: AppColors.medicalBlueDark,
+                  ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDateStatusChip({
+    required bool isConflict,
+    required TimeSlotModel? slot,
+  }) {
+    if (isConflict) {
+      return Text(
+        'Conflict · Tap to choose time',
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.errorDark,
+        ),
+      );
+    }
+    if (slot == null) {
+      return Text(
+        'Waiting for time',
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          color: AppColors.textMuted,
+        ),
+      );
+    }
+    return Text(
+      slot.time,
+      style: GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppColors.wellnessGreenDark,
+      ),
+    );
+  }
+
+  Future<void> _showAlternateTimeSheet(DateTime date) async {
+    final formatted = DateFormat('d-MMM-yyyy, EEEE').format(date);
+    final slotsFuture = controller.loadSlotsForDate(date);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: FutureBuilder<List<TimeSlotModel>>(
+              future: slotsFuture,
+              builder: (context, snapshot) {
+                final loading =
+                    snapshot.connectionState != ConnectionState.done;
+                final daySlots = snapshot.data ?? const <TimeSlotModel>[];
+                final available =
+                    daySlots.where((s) => !(s.isBooked ?? false)).toList();
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.border,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Choose time for conflict day',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      formatted,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (loading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.medicalBlue,
+                          ),
+                        ),
+                      )
+                    else if (snapshot.hasError)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text(
+                          'Could not load slots. Please try again.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.errorDark,
+                          ),
+                        ),
+                      )
+                    else if (available.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text(
+                          'No available slots on this date. Try changing the date.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      )
+                    else
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.4,
+                        ),
+                        child: GridView.count(
+                          shrinkWrap: true,
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 2.35,
+                          children: available.map((slot) {
+                            return GestureDetector(
+                              onTap: () {
+                                controller.resolveConflictForDate(date, slot);
+                                Navigator.of(context).pop();
+                              },
+                              child: Container(
+                                alignment: Alignment.center,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Text(
+                                  slot.time,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -569,6 +860,8 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
     final firstDateChanged = controller.updateAppointmentDate(index, date);
     if (firstDateChanged) {
       await _fetchTimeSlotAfterDateSelection(date, regenerateDates: false);
+    } else if (controller.selectedTimeSlot.value != null) {
+      await controller.checkConflictsAcrossDates();
     }
   }
 
