@@ -5,6 +5,7 @@ import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
+import '../../custom_widget/physio_progress_bar.dart';
 import 'booking_controller.dart';
 
 class ServiceCityScreen extends StatefulWidget {
@@ -46,7 +47,10 @@ class _ServiceCityScreenState extends State<ServiceCityScreen> {
           child: Padding(
             padding: const EdgeInsets.all(18),
             child: controller.isLoading.value
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: PhysioProgressBar(
+              card: false,
+              message: 'Loading List of Cities...',
+            ))
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

@@ -500,6 +500,57 @@ class SupabaseController {
     }
   }
 
+  Future<bool> releaseDoctorPayment({
+    required List<int> bookingIds,
+    required int doctorId,
+  }) async {
+    try {
+      if (bookingIds.isEmpty) {
+        throw ArgumentError(
+          'At least one booking ID is required to release payment.',
+        );
+      }
+
+      final response = await Supabase.instance.client.functions.invoke(
+        'release-doctor-payment',
+        body: {'bookingIds': bookingIds, 'doctorId': doctorId},
+      );
+
+      final responseData = response.data;
+
+      if (responseData is Map && responseData['success'] == true) {
+        final responseMessage =
+            responseData['message']?.toString() ??
+            'Funds successfully released.';
+        final responseTransferId = responseData['transferId']?.toString();
+        Get.showSuccessSnackbar(
+          responseTransferId == null || responseTransferId.isEmpty
+              ? responseMessage
+              : '$responseMessage (Transfer ID: $responseTransferId)',
+        );
+        return true;
+      }
+
+      final errorMessage = responseData is Map
+          ? responseData['error']?.toString()
+          : null;
+      Get.showErrorSnackbar(errorMessage ?? 'Failed to release doctor funds.');
+      return false;
+    } on FunctionException catch (e) {
+      final details = e.details;
+      final errorMessage = details is Map
+          ? (details['error'] ?? details['message'])?.toString()
+          : null;
+      Get.showErrorSnackbar(
+        errorMessage ?? e.reasonPhrase ?? 'Failed to release doctor funds.',
+      );
+      return false;
+    } catch (e) {
+      Get.showErrorSnackbar('Failed to release doctor funds: $e');
+      return false;
+    }
+  }
+
   String _functionErrorMessage(FunctionException e) {
     final details = e.details;
     if (details is Map) {
