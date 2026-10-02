@@ -8,6 +8,7 @@ import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 
+import '../../model/time_slots_model.dart';
 import '../../route/route_module.dart';
 import '../../utils/view_extension.dart';
 import 'booking_controller.dart';
@@ -109,112 +110,11 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                     ),
                   ),
                   SizedBox(height: 10),
-                  Obx(
-                    () => controller.isLoading.value
-                        ? Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(24.0),
-                              child: CircularProgressIndicator(
-                                color: AppColors.medicalBlue,
-                              ),
-                            ),
-                          )
-                        : controller.timeSlots.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(24.0),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.event_busy,
-                                    size: 48,
-                                    color: AppColors.medicalBlueLight,
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'No available slots for this date',
-                                    style: GoogleFonts.inter(
-                                      textStyle: TextStyle(
-                                        fontSize: 16,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : Wrap(
-                            spacing: 8,
-                            runSpacing: 12,
-                            children: controller.timeSlots.map((slot) {
-                              final bool isBooked = slot.isBooked ?? false;
-                              final bool isSelected =
-                                  controller.selectedTimeSlot.value == slot;
-
-                              return GestureDetector(
-                                onTap: isBooked
-                                    ? null
-                                    : () {
-                                        controller.selectedTimeSlot.value =
-                                            slot;
-                                      },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isBooked
-                                        ? AppColors.errorLight
-                                        : isSelected
-                                        ? AppColors.medicalBlue
-                                        : AppColors.surface,
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      if (isSelected)
-                                        BoxShadow(
-                                          color: AppColors.medicalBlue
-                                              .withOpacity(0.3),
-                                          blurRadius: 4,
-                                          offset: Offset(0, 2),
-                                        ),
-                                    ],
-                                    border: Border.all(
-                                      color: isBooked
-                                          ? AppColors.error
-                                          : isSelected
-                                          ? AppColors.medicalBlue
-                                          : AppColors.border,
-                                      width: isSelected ? 1.5 : 1,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    slot.time,
-                                    style: GoogleFonts.inter(
-                                      textStyle: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                        color: isBooked
-                                            ? AppColors.error
-                                            : isSelected
-                                            ? AppColors.textOnDark
-                                            : AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                  ),
+                  Obx(() => _buildTimeSlotSection()),
                   SizedBox(height: 12),
                   _buildAppointmentPlanner(),
                   SizedBox(height: 12),
 
-                  // Time slots
                   Text(
                     'Enter Address',
                     style: GoogleFonts.inter(
@@ -334,6 +234,138 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeSlotSection() {
+    // Read observables here so Obx always tracks selection changes.
+    // (GridView.builder's itemBuilder is lazy and can miss GetX updates.)
+    final isLoading = controller.isLoading.value;
+    final slots = controller.timeSlots.toList();
+    final selectedId = controller.selectedTimeSlot.value?.id;
+
+    if (isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: CircularProgressIndicator(color: AppColors.medicalBlue),
+        ),
+      );
+    }
+
+    if (slots.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.event_busy_rounded,
+              size: 36,
+              color: AppColors.medicalBlue.withValues(alpha: 0.45),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No available slots for this date',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.count(
+      key: ValueKey('slots_$selectedId'),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 3,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+      childAspectRatio: 2.35,
+      children: slots.map((slot) {
+        final isBooked = slot.isBooked ?? false;
+        final isSelected = selectedId != null && selectedId == slot.id;
+        return _buildTimeSlotChip(
+          slot: slot,
+          isBooked: isBooked,
+          isSelected: isSelected,
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildTimeSlotChip({
+    required TimeSlotModel slot,
+    required bool isBooked,
+    required bool isSelected,
+  }) {
+    final Color bg;
+    final Color border;
+    final Color text;
+
+    if (isBooked) {
+      bg = AppColors.errorLight;
+      border = AppColors.error.withValues(alpha: 0.45);
+      text = AppColors.errorDark;
+    } else if (isSelected) {
+      bg = AppColors.medicalBlue;
+      border = AppColors.medicalBlueDark;
+      text = AppColors.textOnDark;
+    } else {
+      bg = AppColors.surface;
+      border = AppColors.border;
+      text = AppColors.textPrimary;
+    }
+
+    return GestureDetector(
+      onTap: isBooked
+          ? null
+          : () => controller.selectedTimeSlot.value = slot,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: border,
+            width: isSelected ? 1.5 : 1,
+          ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: AppColors.medicalBlue.withValues(alpha: 0.25),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+          ],
+        ),
+        child: Text(
+          slot.time,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            height: 1.2,
+            color: text,
+            decoration: isBooked ? TextDecoration.lineThrough : null,
+            decorationColor: text,
+          ),
         ),
       ),
     );
