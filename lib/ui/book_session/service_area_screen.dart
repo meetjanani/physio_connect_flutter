@@ -7,6 +7,7 @@ import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
+import '../../custom_widget/physio_progress_bar.dart';
 import 'booking_controller.dart';
 
 class ServiceAreaScreen extends StatefulWidget {
@@ -62,7 +63,10 @@ class _ServiceAreaScreenState extends State<ServiceAreaScreen> {
           child: Padding(
             padding: const EdgeInsets.all(18),
             child: controller.isLoading.value
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: PhysioProgressBar(
+              card: false,
+              message: 'Loading Areas for ${city.cityStateName}..',
+            ))
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -391,7 +395,10 @@ class _DoctorAvatar extends StatelessWidget {
                   child: SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: PhysioProgressBar(
+                      card: false,
+                      message: 'Loading Areas for',
+                    ),
                   ),
                 ),
                 errorWidget: (_, __, ___) => _initials(initials),

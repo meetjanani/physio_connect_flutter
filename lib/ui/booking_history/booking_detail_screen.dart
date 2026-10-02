@@ -37,6 +37,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   final BookingsModel appointment = Get.arguments as BookingsModel;
   int _refundLongPressCount = 0;
   bool _refundUnlocked = false;
+  bool _isReleasingDoctorPayment = false;
   List<int> _payingBookingIds = [];
   late final BookingPaymentFlow _payment;
 
@@ -490,6 +491,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           SizedBox(height: 24),
           _buildRefundAction(context, appointment),
           _buildPayAgainButton(appointment),
+          _buildDoctorFundReleaseButton(appointment),
           _buildInvoiceButton(context, appointment),
           _buildRescheduleButton(context, appointment),
           _buildPatientCancelButton(context, appointment),
@@ -1129,6 +1131,114 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         SizedBox(height: 16),
       ],
     );
+  }
+
+  Widget _buildDoctorFundReleaseButton(BookingsModel appointment) {
+    final canRelease =
+        controller.isDoctor.value &&
+        appointment.bookingStatus.toLowerCase() ==
+            BookingStatus.completed.name &&
+        appointment.transferStatus?.toLowerCase() != 'released';
+    if (!canRelease) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        SizedBox(height: 16),
+        ElevatedButton.icon(
+          onPressed: _isReleasingDoctorPayment
+              ? null
+              : () => _releaseDoctorPayment(appointment),
+          icon: _isReleasingDoctorPayment
+              ? SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.textOnDark,
+                  ),
+                )
+              : Icon(Icons.account_balance),
+          label: Text(
+            _isReleasingDoctorPayment
+                ? 'Releasing Doctor Funds...'
+                : 'Doctor Fund Release',
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.wellnessGreen,
+            foregroundColor: AppColors.textOnDark,
+            minimumSize: Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Future<void> _releaseDoctorPayment(BookingsModel appointment) async {
+    if (_isReleasingDoctorPayment) return;
+
+    setState(() => _isReleasingDoctorPayment = true);
+    try {
+      var bookingIds = [appointment.id];
+      if (appointment.isBulkAppointment &&
+          appointment.bulkAppointmentId?.trim().isNotEmpty == true) {
+        final bookings = await controller.supabaseController
+            .getBookingsByBulkAppointmentId(
+              appointment.userId,
+              appointment.bulkAppointmentId!,
+            );
+        bookingIds = bookings.map((booking) => booking.id).toList();
+        if (bookingIds.isEmpty) {
+          showErrorSnackbar(
+            'No bookings were found for this appointment group.',
+          );
+          return;
+        }
+      }
+
+      final shouldRelease = await Get.dialog<bool>(
+        AlertDialog(
+          title: Text('Release Doctor Funds'),
+          content: Text(
+            'Release funds for ${bookingIds.length == 1 ? 'this appointment' : 'these ${bookingIds.length} appointments'}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Get.back(result: true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.wellnessGreen,
+                foregroundColor: AppColors.textOnDark,
+              ),
+              child: Text('Release Funds'),
+            ),
+          ],
+        ),
+      );
+      if (shouldRelease != true) return;
+
+      final released = await controller.supabaseController.releaseDoctorPayment(
+        bookingIds: bookingIds,
+        doctorId: appointment.doctorId,
+      );
+      if (!released) return;
+
+      appointment.transferStatus = 'released';
+      controller.selectedAppointment.value = appointment;
+      await _refreshAppointment(appointment.id);
+    } catch (e) {
+      showErrorSnackbar('Failed to release doctor funds: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isReleasingDoctorPayment = false);
+      }
+    }
   }
 
   Widget _buildRescheduleButton(
