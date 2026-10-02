@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:physio_connect/custom_widget/session_type_info.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:geocoding/geocoding.dart';
@@ -44,96 +45,13 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
           children: [
             Expanded(
               child: ListView(
-                padding: EdgeInsets.all(16),
+                padding: EdgeInsets.all(12),
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  // Session type info
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.medicalBlueLight,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.medicalBlue.withOpacity(0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Obx(
-                      () => Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Coverage Details',
-                            style: GoogleFonts.inter(
-                              textStyle: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.medicalBlueDark,
-                                letterSpacing: 0.6,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            '${controller.selectedCity.value?.cityStateName ?? 'City'} › ${controller.selectedArea.value?.areaName ?? 'Area'} › ${controller.selectedDoctor.value?.name ?? 'Doctor'}',
-                            style: GoogleFonts.inter(
-                              textStyle: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.spa,
-                                color: AppColors.medicalBlueDark,
-                                size: 24,
-                              ),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      controller
-                                              .selectedSessionType
-                                              .value
-                                              ?.name ??
-                                          'Selected Session',
-                                      style: GoogleFonts.inter(
-                                        textStyle: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      '${controller.selectedSessionType.value?.duration ?? 0} • ₹${controller.selectedSessionType.value?.price.toStringAsFixed(0) ?? 0}',
-                                      style: GoogleFonts.inter(
-                                        textStyle: TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 12),
+                  const SessionTypeInfo(),
+                  SizedBox(height: 16),
                   Text(
                     'Select Date',
                     style: GoogleFonts.inter(

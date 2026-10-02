@@ -44,6 +44,9 @@ class SupabaseController {
         .select('*')
         .eq(userColumn, userId)
         .gte(DatabaseSchema.bookingsDate, today)
+        .neq(DatabaseSchema.bookingsStatus, BookingStatus.completed.name)
+        .neq(DatabaseSchema.bookingsStatus, BookingStatus.cancelled.name)
+        .neq(DatabaseSchema.bookingsStatus, BookingStatus.refunded.name)
         .order(DatabaseSchema.bookingsId, ascending: true);
     var bookingList = BookingsModel.fromJsonList(response);
     return bookingList;

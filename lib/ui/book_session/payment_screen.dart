@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:physio_connect/custom_widget/session_type_info.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
 import 'package:physio_connect/utils/constants.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
@@ -104,6 +105,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
+                  const SessionTypeInfo(),
+                  SizedBox(height: 16),
+
                   // Booking summary card
                   Container(
                     padding: EdgeInsets.all(20),
@@ -132,18 +136,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                         ),
                         SizedBox(height: 20),
-
-                        // Session info
-                        Obx(
-                          () => _buildSummaryItem(
-                            icon: Icons.spa,
-                            title: 'Session Type',
-                            value:
-                                controller.selectedSessionType.value?.name ??
-                                'N/A',
-                          ),
-                        ),
-                        SizedBox(height: 16),
                         Obx(
                           () => Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,17 +183,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             value:
                                 controller.selectedTimeSlot.value?.time ??
                                 'N/A',
-                          ),
-                        ),
-                        SizedBox(height: 16),
-
-                        // Duration info
-                        Obx(
-                          () => _buildSummaryItem(
-                            icon: Icons.timelapse,
-                            title: 'Duration',
-                            value:
-                                '${controller.selectedSessionType.value?.duration ?? 0}',
                           ),
                         ),
 

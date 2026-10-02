@@ -1,4 +1,5 @@
 // lib/ui/booking/history/booking_detail_screen.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:get/get.dart';
@@ -309,12 +310,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             SizedBox(height: 12),
           _buildInfoCard([
             _buildInfoRow(
-              'Session Type',
-              "${appointment.aSessionType().name}\n${appointment.aSessionType().description}",
-              () {},
-              Icons.healing,
-            ),
-            _buildInfoRow(
               'Date',
               dateFormatter.format(dateObj),
               () {},
@@ -348,6 +343,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 }
               }
             }, Icons.location_pin),
+            _buildInfoRow(
+              'Session Type',
+              "${appointment.aSessionType().name}\n\n${appointment.aSessionType().description}",
+                  () {},
+              Icons.healing,
+            ),
           ]),
 
           SizedBox(height: 24),
@@ -399,7 +400,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               valueColor: _getPaymentStatusColor(appointment.paymentStatus),
               valueBold: true,
             ),
-            if (appointment.paymentId?.isNotEmpty == true)
+           /* if (appointment.paymentId?.isNotEmpty == true)
               _buildInfoRow(
                 'Payment Reference',
                 appointment.paymentId ?? 'N/A',
@@ -418,7 +419,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 () {},
                 Icons.shopping_bag_outlined,
                 valueStyle: _referenceTextStyle,
-              ),
+              ),*/
             if (appointment.paymentVerifiedAt?.isNotEmpty == true)
               _buildInfoRow(
                 'Payment Date',
@@ -426,14 +427,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 () {},
                 Icons.event_available,
               ),
-            if (appointment.paymentFailureReason?.trim().isNotEmpty == true)
+            /*if (appointment.paymentFailureReason?.trim().isNotEmpty == true)
               _buildInfoRow(
                 'Failure reason',
                 appointment.paymentFailureReason!,
                 () {},
                 Icons.error_outline,
                 valueColor: AppColors.error,
-              ),
+              ),*/
             if (appointment.paymentStatus.toLowerCase() == 'refunded') ...[
               _buildInfoRow(
                 'Refunded Amount',
@@ -453,20 +454,19 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 ),
             ],
             if (appointment.razorpayTransferId?.isNotEmpty == true)
-              _buildInfoRow(
+              /*_buildInfoRow(
                 'Transfer Reference',
                 appointment.razorpayTransferId!,
                 () {},
                 Icons.account_balance_outlined,
                 valueStyle: _referenceTextStyle,
-              ),
+              ),*/
             if (appointment.transferStatus?.isNotEmpty == true)
               _buildInfoRow(
                 'Transfer Status',
                 _getPaymentStatusText(appointment.transferStatus!),
-                () {},
-                Icons.sync,
-                valueColor: _getPaymentStatusColor(appointment.transferStatus!),
+                    () {},
+                Icons.event_available,
               ),
           ]),
 
@@ -662,9 +662,32 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             radius: 30,
             backgroundImage: NetworkImage(controller.therapistsImage),
             backgroundColor: AppColors.medicalBlueLight,
-            child: controller.therapistsImage.isEmpty
-                ? Icon(Icons.person, color: AppColors.medicalBlueDark)
-                : null,
+            child: ClipOval(
+              child: CachedNetworkImage(
+                imageUrl:
+                controller.isDoctor.value
+                    ? appointment.aDoctor()?.profilePhotoUrl ?? controller.therapistsImage
+                    : controller.therapistsImage,
+                fit: BoxFit.cover,
+                width: 80,
+                height: 80,
+                placeholder: (_, __) => const Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child:
+                    CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  ),
+                ),
+                errorWidget: (_, __, ___) =>
+                const Icon(
+                  Icons.person,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
           SizedBox(width: 16),
           Expanded(
@@ -697,8 +720,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ElevatedButton.icon(
             onPressed: () {
               showSuccessSnackbar(
-                "Request for call has been initiated\n"
-                "Doctor may call you back within 8 hours",
+                "Your call request has been sent.\n"
+                "The doctor may call you back within 8 hours.",
               );
               controller.sendReminderNotification();
             },
