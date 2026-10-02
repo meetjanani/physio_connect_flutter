@@ -92,23 +92,61 @@ class ConfirmationScreen extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              // Date
-                              Obx(() => _buildConfirmationItem(
-                                title: 'Date',
-                                value: dateFormatter.format(controller.selectedDate.value),
-                                icon: Icons.calendar_today,
-                              )),
+                              Obx(() {
+                                final dates = controller.appointmentDates;
+                                if (dates.length <= 1) {
+                                  final date = dates.isNotEmpty
+                                      ? dates.first
+                                      : controller.selectedDate.value;
+                                  final slot = controller.timeSlotForDate(date) ??
+                                      controller.selectedTimeSlot.value;
+                                  return Column(
+                                    children: [
+                                      _buildConfirmationItem(
+                                        title: 'Date',
+                                        value: dateFormatter.format(date),
+                                        icon: Icons.calendar_today,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Divider(),
+                                      const SizedBox(height: 16),
+                                      _buildConfirmationItem(
+                                        title: 'Time',
+                                        value: slot?.time ?? '',
+                                        icon: Icons.access_time,
+                                      ),
+                                    ],
+                                  );
+                                }
 
-                              SizedBox(height: 16),
-                              Divider(),
-                              SizedBox(height: 16),
-
-                              // Time
-                              Obx(() => _buildConfirmationItem(
-                                title: 'Time',
-                                value: controller.selectedTimeSlot.value?.time ?? "",
-                                icon: Icons.access_time,
-                              )),
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildConfirmationItem(
+                                      title: 'Appointments',
+                                      value: '${dates.length} sessions',
+                                      icon: Icons.event_repeat_rounded,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ...dates.map((date) {
+                                      final slot =
+                                          controller.timeSlotForDate(date);
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 8),
+                                        child: Text(
+                                          '${DateFormat('d-MMM-yyyy, EEE').format(date)} · ${slot?.time ?? 'N/A'}',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ],
+                                );
+                              }),
 
                               SizedBox(height: 16),
                               Divider(),

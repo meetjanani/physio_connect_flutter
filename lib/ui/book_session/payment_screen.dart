@@ -88,8 +88,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dateFormatter = DateFormat('EEEE, MMMM d, yyyy');
-
     return Obx(
       () => PopScope(
       canPop: !_payment.isBusy.value,
@@ -148,42 +146,46 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              ...controller.appointmentDates.map(
-                                (date) => Text(
-                                  DateFormat('dd-MMM-yyyy').format(date),
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                              ...controller.appointmentDates.map((date) {
+                                final slot = controller.timeSlotForDate(date);
+                                final dateLabel =
+                                    DateFormat('dd-MMM-yyyy, EEE').format(date);
+                                final timeLabel = slot?.time ?? 'N/A';
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Text(
+                                    '$dateLabel · $timeLabel',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
-                                ),
-                              ),
+                                );
+                              }),
                             ],
                           ),
                         ),
                         SizedBox(height: 16),
 
-                        // Date info
+                        // Preferred / first session time (kept for single-day clarity)
                         Obx(
-                          () => _buildSummaryItem(
-                            icon: Icons.calendar_today,
-                            title: 'Date',
-                            value: dateFormatter.format(
-                              controller.selectedDate.value,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 16),
-
-                        // Time info
-                        Obx(
-                          () => _buildSummaryItem(
-                            icon: Icons.access_time,
-                            title: 'Time',
-                            value:
-                                controller.selectedTimeSlot.value?.time ??
-                                'N/A',
-                          ),
+                          () {
+                            final allTimes = controller.appointmentDates
+                                .map((d) => controller.timeSlotForDate(d)?.time)
+                                .whereType<String>()
+                                .toSet();
+                            final value = allTimes.length == 1
+                                ? allTimes.first
+                                : '${allTimes.length} different times';
+                            return _buildSummaryItem(
+                              icon: Icons.access_time,
+                              title: allTimes.length == 1
+                                  ? 'Time'
+                                  : 'Session times',
+                              value: value.isEmpty ? 'N/A' : value,
+                            );
+                          },
                         ),
 
                         SizedBox(height: 24),
