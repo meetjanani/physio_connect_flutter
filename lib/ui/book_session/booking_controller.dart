@@ -534,4 +534,16 @@ class BookingController extends GetxController {
     areaDoctors.clear();
   }
 
+  /// Sets city / area / assigned doctor and loads that doctor's session types.
+  Future<void> startSessionBookingForDoctor({
+    required DoctorModel doctor,
+    required AreaModel area,
+    required CityStateModel city,
+  }) async {
+    selectedCity.value = city;
+    selectedArea.value = area;
+    selectedDoctor.value = doctor;
+    await getSessionTypesMaster();
+  }
+
 }

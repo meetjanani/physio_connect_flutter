@@ -144,53 +144,59 @@ class _ServiceAreaScreenState extends State<ServiceAreaScreen> {
                                       : 'Doctor to be assigned';
                                   final doctorDegree =
                                       doctor?.degree?.trim() ?? '';
-                                  return InkWell(
-                                    onTap: () async {
-                                      controller.selectedArea.value = area;
-                                      final assigned =
-                                          doctor ??
-                                          await controller.supabaseController
-                                              .getDoctorById(
-                                                area.doctorId ?? 0,
-                                              );
-                                      controller.selectedDoctor.value =
-                                          assigned;
-                                      await controller.getSessionTypesMaster();
-                                      Get.back();
-                                      Get.back();
-                                      // Get.toNamed(AppPage.selectDoctor);
-                                      Get.toNamed(AppPage.selectSessionType);
-                                    },
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
+                                  return AnimatedContainer(
+                                    duration: const Duration(
+                                      milliseconds: 200,
+                                    ),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? AppColors.medicalBlueLight
+                                          : AppColors.surface,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
                                         color: isSelected
-                                            ? AppColors.medicalBlueLight
-                                            : AppColors.surface,
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? AppColors.medicalBlue
-                                              : AppColors.border,
-                                          width: isSelected ? 1.5 : 1,
-                                        ),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: AppColors.shadowLight,
-                                            blurRadius: 8,
-                                            offset: Offset(0, 2),
-                                          ),
-                                        ],
+                                            ? AppColors.medicalBlue
+                                            : AppColors.border,
+                                        width: isSelected ? 1.5 : 1,
                                       ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          IntrinsicHeight(
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: AppColors.shadowLight,
+                                          blurRadius: 8,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        InkWell(
+                                          onTap: () async {
+                                            controller.selectedArea.value =
+                                                area;
+                                            final assigned =
+                                                doctor ??
+                                                await controller
+                                                    .supabaseController
+                                                    .getDoctorPublicById(
+                                                      area.doctorId ?? 0,
+                                                    );
+                                            controller.selectedDoctor.value =
+                                                assigned;
+                                            await controller
+                                                .getSessionTypesMaster();
+                                            Get.back();
+                                            Get.back();
+                                            Get.toNamed(
+                                              AppPage.selectSessionType,
+                                            );
+                                          },
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          child: IntrinsicHeight(
                                             child: Row(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.stretch,
@@ -283,8 +289,44 @@ class _ServiceAreaScreenState extends State<ServiceAreaScreen> {
                                               ],
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        if ((doctor?.id ?? 0) > 0)
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: TextButton(
+                                              onPressed: () {
+                                                Get.toNamed(
+                                                  AppPage.doctorProfile,
+                                                  arguments: {
+                                                    'doctorId': doctor!.id,
+                                                    'preview': doctor,
+                                                    'areaId': area.id,
+                                                    'cityId': city.id,
+                                                  },
+                                                );
+                                              },
+                                              style: TextButton.styleFrom(
+                                                padding: EdgeInsets.zero,
+                                                minimumSize: const Size(
+                                                  0,
+                                                  32,
+                                                ),
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                              ),
+                                              child: Text(
+                                                'View profile',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      AppColors.medicalBlueDark,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   );
                                 },

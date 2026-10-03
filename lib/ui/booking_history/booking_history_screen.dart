@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:physio_connect/ui/booking_history/session_booking_card.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
+import '../../custom_widget/physio_progress_bar.dart';
 import '../../route/route_module.dart';
 import '../../utils/common_appbar.dart';
 import '../../utils/view_extension.dart';
@@ -39,8 +40,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                   child: Obx(
                     () => controller.isLoading.value
                         ? const Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.medicalBlue,
+                            child: PhysioProgressBar(
+                              card: false,
+                              message: 'Fetching your bookings…',
                             ),
                           )
                         : (controller.upComingBookings.isEmpty

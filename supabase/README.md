@@ -7,6 +7,7 @@ Also apply newer migrations in order:
 - `migrations/20260925150000_booking_bulk_group.sql`
 - `migrations/20260926140000_ratings_and_doctor_privacy.sql` (ratings columns + doctor.userId index)
 - `migrations/20260930120000_doctor_privacy_indexes.sql` (booking/doctor indexes for multi-doctor filters)
+- `migrations/20261003120000_doctor_public_catalog.sql` (`doctor_public` view + optional SELECT policy for active profiles)
 
 ## 5-doctor soft launch
 

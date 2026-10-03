@@ -757,6 +757,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Widget _buildTherapistCard(BookingsModel appointment) {
+    final doctor = appointment.aDoctor();
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -772,57 +773,91 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundImage: NetworkImage(controller.therapistsImage),
-            backgroundColor: AppColors.medicalBlueLight,
-            child: ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: controller.isDoctor.value
-                    ? controller.therapistsImage
-                    : appointment.aDoctor().profilePhotoUrl ??
-                          controller.therapistsImage,
-                fit: BoxFit.cover,
-                width: 80,
-                height: 80,
-                placeholder: (_, __) => const Center(
-                  child: SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-                errorWidget: (_, __, ___) =>
-                    const Icon(Icons.person, color: Colors.white),
-              ),
-            ),
-          ),
-          SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  appointment.aDoctor().name ?? '',
-                  style: GoogleFonts.inter(
-                    textStyle: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+            child: InkWell(
+              onTap: controller.isDoctor.value
+                  ? null
+                  : () {
+                      final doctorId = doctor.id ?? 0;
+                      if (doctorId <= 0) return;
+                      Get.toNamed(
+                        AppPage.doctorProfile,
+                        arguments: {
+                          'doctorId': doctorId,
+                          'preview': doctor,
+                        },
+                      );
+                    },
+              borderRadius: BorderRadius.circular(12),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage: NetworkImage(controller.therapistsImage),
+                    backgroundColor: AppColors.medicalBlueLight,
+                    child: ClipOval(
+                      child: CachedNetworkImage(
+                        imageUrl: controller.isDoctor.value
+                            ? controller.therapistsImage
+                            : doctor.profilePhotoUrl ??
+                                  controller.therapistsImage,
+                        fit: BoxFit.cover,
+                        width: 80,
+                        height: 80,
+                        placeholder: (_, __) => const Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (_, __, ___) =>
+                            const Icon(Icons.person, color: Colors.white),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  appointment.aDoctor().degree ?? '',
-                  style: GoogleFonts.inter(
-                    textStyle: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textMuted,
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          doctor.name ?? '',
+                          style: GoogleFonts.inter(
+                            textStyle: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          doctor.degree ?? '',
+                          style: GoogleFonts.inter(
+                            textStyle: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ),
+                        if (!controller.isDoctor.value)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              'View profile',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.medicalBlueDark,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           ElevatedButton.icon(

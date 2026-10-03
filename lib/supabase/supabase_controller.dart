@@ -215,10 +215,51 @@ class SupabaseController {
     if (ids.isEmpty) return <DoctorModel>[];
     final response = await supabaseClient
         .from(DatabaseSchema.doctorTable)
-        .select('*')
+        .select(DatabaseSchema.doctorPublicColumns)
         .inFilter(DatabaseSchema.doctorId, ids)
-        .eq('isActive', true);
+        .eq(DatabaseSchema.doctorIsActive, true);
     return DoctorModel.fromJsonList(response);
+  }
+
+  Future<List<DoctorModel>> getActiveDoctors() async {
+    final response = await supabaseClient
+        .from(DatabaseSchema.doctorTable)
+        .select(DatabaseSchema.doctorPublicColumns)
+        .eq(DatabaseSchema.doctorIsActive, true)
+        .order(DatabaseSchema.doctorName, ascending: true);
+    return DoctorModel.fromJsonList(response);
+  }
+
+  Future<DoctorModel?> getDoctorPublicById(int doctorId) async {
+    if (doctorId <= 0) return null;
+    final response = await supabaseClient
+        .from(DatabaseSchema.doctorTable)
+        .select(DatabaseSchema.doctorPublicColumns)
+        .eq(DatabaseSchema.doctorId, doctorId)
+        .eq(DatabaseSchema.doctorIsActive, true)
+        .limit(1);
+    if (response.isEmpty) return null;
+    return DoctorModel.fromJson(response.first);
+  }
+
+  Future<List<AreaModel>> getAreasServedByDoctor(int doctorId) async {
+    if (doctorId <= 0) return <AreaModel>[];
+    final response = await supabaseClient
+        .from(DatabaseSchema.areaTable)
+        .select('*')
+        .eq(DatabaseSchema.areaDoctorId, doctorId)
+        .eq(DatabaseSchema.areaIsActive, true)
+        .order(DatabaseSchema.areaOrderBy, ascending: false);
+    return AreaModel.fromJsonList(response);
+  }
+
+  Future<List<AreaModel>> getActiveServiceAreas() async {
+    final response = await supabaseClient
+        .from(DatabaseSchema.areaTable)
+        .select('*')
+        .eq(DatabaseSchema.areaIsActive, true)
+        .order(DatabaseSchema.areaOrderBy, ascending: false);
+    return AreaModel.fromJsonList(response);
   }
 
   Future<List<DoctorModel>> getDoctorsForArea(int areaId) async {

@@ -11,6 +11,8 @@ import '../../route/route_module.dart';
 import '../../utils/common_appbar.dart';
 import '../../utils/theme/app_colors.dart';
 import '../../utils/units_extensions.dart';
+import '../doctors/doctor_directory_card.dart';
+import '../doctors/doctor_directory_controller.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -49,29 +51,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Obx(() {
                     final hasAppointment =
                         controller.upComingBookings.isNotEmpty;
-                    return Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(
-                        constraints.maxWidth < 360 ? 16 : 20,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.border),
-                        gradient: LinearGradient(
-                          colors: AppColors.backgroundGradientColors,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.shadowLight,
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(
+                            constraints.maxWidth < 360 ? 16 : 20,
                           ),
-                        ],
-                      ),
-                      child: hasAppointment
-                          ? _buildAppointmentView()
-                          : _buildNoAppointmentView(),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.border),
+                            gradient: LinearGradient(
+                              colors: AppColors.backgroundGradientColors,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.shadowLight,
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: hasAppointment
+                              ? _buildAppointmentView()
+                              : _buildNoAppointmentView(),
+                        ),
+                        if (!isDoctorTypeUser(controller.userModelSupabase))
+                          _buildPhysiotherapistsSection(),
+                      ],
                     );
                   }),
                 ),
@@ -295,6 +304,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildPhysiotherapistsSection() {
+    if (!Get.isRegistered<DoctorDirectoryController>()) {
+      return const SizedBox.shrink();
+    }
+    final directory = DoctorDirectoryController.to;
+    if (directory.isLoadingCatalog.value && directory.doctors.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 24),
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    final preview = directory.homePreviewDoctors;
+    if (preview.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Our physiotherapists',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Get.toNamed(AppPage.doctors),
+                child: Text(
+                  'See all',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.medicalBlueDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Learn about the clinicians who visit your area.',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...preview.map(
+            (doctor) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: DoctorDirectoryCard(
+                doctor: doctor,
+                coverageLabel: directory.firstCoverageLabel(doctor),
+                onTap: () => Get.toNamed(
+                  AppPage.doctorProfile,
+                  arguments: {
+                    'doctorId': doctor.id ?? 0,
+                    'preview': doctor,
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

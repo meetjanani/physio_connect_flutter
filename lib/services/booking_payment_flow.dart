@@ -172,7 +172,6 @@ class BookingPaymentFlow {
         razorpayPaymentId: response.paymentId,
         razorpaySignature: response.signature,
       );
-      hideBusy();
       if (result?.success == true) {
         await _completePaid(
           PaidPaymentResult(
@@ -185,6 +184,7 @@ class BookingPaymentFlow {
         );
         return;
       }
+      hideBusy();
       await onVerifyFailed?.call();
       snackbar(
         'Payment verification failed',
@@ -260,6 +260,7 @@ class BookingPaymentFlow {
     }
     await _logPaymentAnalytics(bookings);
     await _scheduleReminders(bookings);
+    hideBusy();
     await onPaid(paid);
   }
 

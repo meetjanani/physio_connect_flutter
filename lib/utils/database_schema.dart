@@ -106,8 +106,16 @@ class DatabaseSchema extends GetxController {
   static const String doctorIsActive = "isActive";
   static const String doctorUserId = "userId";
   static const String doctorPercentageSplit = "percentageSplit";
+  /// Comma-separated master session_type ids this doctor offers (e.g. "1,2,5").
+  static const String doctorSessionTypeId = "sessionTypeId";
   /// Comma-separated master time_slot ids enabled for this doctor (e.g. "1,2,5").
   static const String doctorTimeSlotId = "timeSlotId";
+
+  /// Patient-safe doctor columns. Omits payout and admin fields.
+  static const String doctorPublicColumns =
+      '$doctorId,$doctorName,$doctorDegree,$doctorExperience,'
+      '$doctorDrRegNumber,$doctorBiodata,$doctorProfilePhotoUrl,'
+      '$doctorUserId,$doctorSessionTypeId,$doctorTimeSlotId';
 
   // common string
   static const String projectName = "PHYSIO CONNECT";

@@ -15,6 +15,9 @@ import '../ui/book_session/session_type_screen.dart';
 import '../ui/booking_history/booking_detail_screen.dart';
 import '../ui/booking_history/booking_history_screen.dart';
 import '../ui/dashboard/dashboard_bottom_navigation_screen.dart';
+import '../ui/doctors/doctor_directory_bindings.dart';
+import '../ui/doctors/doctor_list_screen.dart';
+import '../ui/doctors/doctor_profile_screen.dart';
 import '../ui/logIn/login_binding.dart';
 import '../ui/logIn/login_screen.dart';
 import '../ui/profile/profile_about_us_screen.dart';
@@ -42,6 +45,8 @@ class AppPage {
   static const String bookingHistory = '/booking-history';
   static const String bookingDetail = '/booking-detail';
   static const String userProfile = '/user-profile';
+  static const String doctors = '/doctors';
+  static const String doctorProfile = '/doctor-profile';
   static const String generatePrescription = '/generate-prescription';
   static const String manageTimeSlot = '/manage-time-slot';
 
@@ -119,6 +124,16 @@ class AppPage {
       page: () => const ManageTimeSlotScreen(),
     ),
     GetPage(name: AppPage.userProfile, page: () => ProfileAboutUsScreen()),
+    GetPage(
+      name: AppPage.doctors,
+      page: () => const DoctorListScreen(),
+      binding: DoctorDirectoryBindings(),
+    ),
+    GetPage(
+      name: AppPage.doctorProfile,
+      page: () => const DoctorProfileScreen(),
+      binding: DoctorDirectoryBindings(),
+    ),
   ];
 }
 // General Physiotherapy
