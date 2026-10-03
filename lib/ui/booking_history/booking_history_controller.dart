@@ -64,54 +64,49 @@ class BookingHistoryController extends GetxController {
 
   Future<void> updateAppointmentStatus(BookingsModel bookingModel) async {
     if (userModelSupabase?.id != null) {
-      isLoading.value = true;
-      try {
-        final isRefunded =
-            bookingModel.razorpayRefundId?.trim().isNotEmpty == true ||
-                bookingModel.paymentStatus.toLowerCase() == 'refunded' ||
-                bookingModel.bookingStatus.toLowerCase() == 'refunded';
-        if (isRefunded) {
-          bookingModel.bookingStatus = 'refunded';
-        }
-        await supabaseController.updateBookingStatus(
-          bookingModel.id,
-          bookingModel,
-        );
-        final doctor = bookingModel.aDoctor();
-        final patient = bookingModel.aPatient();
-        final sessionType = bookingModel.aSessionType();
-        final timeSlot = bookingModel.aTimeslot();
-        final parsedDate = DateTime.tryParse(bookingModel.bookingDate);
-        final appointmentDate = parsedDate == null
-            ? bookingModel.bookingDate
-            : DateFormat('MMM d, yyyy').format(parsedDate);
-        final appointmentDetails =
-            '${sessionType.name} session on $appointmentDate at ${timeSlot.time}';
-        final notification = _bookingStatusNotification(
-          bookingModel.bookingStatus,
-          patient.name ?? 'The patient',
-          doctor.name ?? 'your doctor',
-          appointmentDetails,
-        );
-        final doctorUserId = doctor.userId ?? 0;
-        final patientUserId = bookingModel.userId;
+      final isRefunded =
+          bookingModel.razorpayRefundId?.trim().isNotEmpty == true ||
+          bookingModel.paymentStatus.toLowerCase() == 'refunded' ||
+          bookingModel.bookingStatus.toLowerCase() == 'refunded';
+      if (isRefunded) {
+        bookingModel.bookingStatus = 'refunded';
+      }
+      await supabaseController.updateBookingStatus(
+        bookingModel.id,
+        bookingModel,
+      );
+      final doctor = bookingModel.aDoctor();
+      final patient = bookingModel.aPatient();
+      final sessionType = bookingModel.aSessionType();
+      final timeSlot = bookingModel.aTimeslot();
+      final parsedDate = DateTime.tryParse(bookingModel.bookingDate);
+      final appointmentDate = parsedDate == null
+          ? bookingModel.bookingDate
+          : DateFormat('MMM d, yyyy').format(parsedDate);
+      final appointmentDetails =
+          '${sessionType.name} session on $appointmentDate at ${timeSlot.time}';
+      final notification = _bookingStatusNotification(
+        bookingModel.bookingStatus,
+        patient.name ?? 'The patient',
+        doctor.name ?? 'your doctor',
+        appointmentDetails,
+      );
+      final doctorUserId = doctor.userId ?? 0;
+      final patientUserId = bookingModel.userId;
 
-        if (patientUserId > 0) {
-          await supabaseController.sentNotification(
-            patientUserId,
-            notification.$1,
-            notification.$2,
-          );
-        }
-        if (doctorUserId > 0) {
-          await supabaseController.sentNotification(
-            doctorUserId,
-            notification.$1,
-            notification.$3,
-          );
-        }
-      } finally {
-        isLoading.value = false;
+      if (patientUserId > 0) {
+        await supabaseController.sentNotification(
+          patientUserId,
+          notification.$1,
+          notification.$2,
+        );
+      }
+      if (doctorUserId > 0) {
+        await supabaseController.sentNotification(
+          doctorUserId,
+          notification.$1,
+          notification.$3,
+        );
       }
     }
   }

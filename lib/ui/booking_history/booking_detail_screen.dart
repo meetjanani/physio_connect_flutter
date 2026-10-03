@@ -38,7 +38,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   int _refundLongPressCount = 0;
   bool _refundUnlocked = false;
   bool _isReleasingDoctorPayment = false;
+  bool _isUpdatingAppointmentStatus = false;
   List<int> _payingBookingIds = [];
+  Future<List<BookingsModel>>? _bulkAppointmentsFuture;
   late final BookingPaymentFlow _payment;
 
   @override
@@ -76,14 +78,18 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: commonAppBar("Appointment Details", isBackButtonVisible: true),
-      body: Obx(
-        () => controller.isLoading.value
-            ? Center(
-                child: CircularProgressIndicator(color: AppColors.medicalBlue),
-              )
-            : controller.selectedAppointment.value == null
-            ? _buildErrorState()
-            : _buildDetailsContent(context),
+      body: SafeArea(
+        child: Obx(
+          () => controller.isLoading.value
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.medicalBlue,
+                  ),
+                )
+              : controller.selectedAppointment.value == null
+              ? _buildErrorState()
+              : _buildDetailsContent(context),
+        ),
       ),
     );
   }
@@ -144,152 +150,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status banner
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: _getStatusColor(
-                isAppointmentRefunded ? 'refunded' : appointment.bookingStatus,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  _getStatusIcon(
-                    isAppointmentRefunded
-                        ? 'refunded'
-                        : appointment.bookingStatus,
-                  ),
-                  color: AppColors.textOnDark,
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      isDoctorTypeUser(controller.userModelSupabase) &&
-                              !isAppointmentRefunded
-                          /*appointment.aPatient().userType?.toLowerCase() ==
-                              UserType.doctor.name*/
-                          ? Obx(
-                              () => controller.isLoading.value
-                                  ? Row(
-                                      children: [
-                                        SizedBox(
-                                          height: 16,
-                                          width: 16,
-                                          child: CircularProgressIndicator(
-                                            color: AppColors.textOnDark,
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Updating status...',
-                                          style: GoogleFonts.inter(
-                                            textStyle: TextStyle(
-                                              color: AppColors.textOnDark,
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : DropdownButton<String>(
-                                      value: appointment.bookingStatus
-                                          .toLowerCase(),
-                                      dropdownColor: AppColors.medicalBlueDark,
-                                      style: GoogleFonts.inter(
-                                        textStyle: TextStyle(
-                                          color: AppColors.textOnDark,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      underline: Container(),
-                                      icon: Icon(
-                                        Icons.arrow_drop_down,
-                                        color: AppColors.textOnDark,
-                                      ),
-                                      onChanged: (String? newValue) {
-                                        if (newValue != null &&
-                                            newValue !=
-                                                appointment.bookingStatus
-                                                    .toLowerCase()) {
-                                          appointment.bookingStatus = newValue;
-                                          controller
-                                              .updateAppointmentStatus(
-                                                appointment,
-                                              )
-                                              .then((value) {
-                                                setState(() {});
-                                              });
-                                        }
-                                      },
-                                      items:
-                                          [
-                                            BookingStatus.pending.name,
-                                            BookingStatus.confirmed.name,
-                                            BookingStatus.completed.name,
-                                            BookingStatus.cancelled.name,
-                                            BookingStatus.noShow.name,
-                                            BookingStatus.refunded.name,
-                                          ].map<DropdownMenuItem<String>>((
-                                            String value,
-                                          ) {
-                                            return DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(
-                                                _getStatusText(value),
-                                                style: GoogleFonts.inter(
-                                                  textStyle: TextStyle(
-                                                    color: AppColors.textOnDark,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                    ),
-                            )
-                          : Text(
-                              _getStatusText(
-                                isAppointmentRefunded
-                                    ? 'refunded'
-                                    : appointment.bookingStatus,
-                              ),
-                              style: GoogleFonts.inter(
-                                textStyle: TextStyle(
-                                  color: AppColors.textOnDark,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                      SizedBox(height: 4),
-                      Text(
-                        _getStatusDescription(
-                          isAppointmentRefunded
-                              ? 'refunded'
-                              : appointment.bookingStatus,
-                        ),
-                        style: GoogleFonts.inter(
-                          textStyle: TextStyle(
-                            color: AppColors.textOnDark.withOpacity(0.9),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildStatusBanner(appointment, isAppointmentRefunded),
 
           SizedBox(height: 24),
 
@@ -347,7 +208,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             _buildInfoRow(
               'Session Type',
               "${appointment.aSessionType().name}\n\n${appointment.aSessionType().description}",
-                  () {},
+              () {},
               Icons.healing,
             ),
           ]),
@@ -356,7 +217,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
           // Therapist info
           Text(
-            'Therapist',
+            controller.isDoctor.value ? 'Patient' : 'Therapist',
             style: GoogleFonts.inter(
               textStyle: TextStyle(
                 fontSize: 18,
@@ -401,7 +262,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               valueColor: _getPaymentStatusColor(appointment.paymentStatus),
               valueBold: true,
             ),
-           /* if (appointment.paymentId?.isNotEmpty == true)
+            /* if (appointment.paymentId?.isNotEmpty == true)
               _buildInfoRow(
                 'Payment Reference',
                 appointment.paymentId ?? 'N/A',
@@ -462,13 +323,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 Icons.account_balance_outlined,
                 valueStyle: _referenceTextStyle,
               ),*/
-            if (appointment.transferStatus?.isNotEmpty == true)
-              _buildInfoRow(
-                'Transfer Status',
-                _getPaymentStatusText(appointment.transferStatus!),
-                    () {},
-                Icons.event_available,
-              ),
+              if (appointment.transferStatus?.isNotEmpty == true)
+                _buildInfoRow(
+                  'Transfer Status',
+                  _getPaymentStatusText(appointment.transferStatus!),
+                  () {},
+                  Icons.event_available,
+                ),
           ]),
 
           SizedBox(height: 24),
@@ -489,60 +350,311 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             appointment.doctorNotes ?? 'No additional notes provided.',
           ),
           SizedBox(height: 24),
-          _buildRefundAction(context, appointment),
-          _buildPayAgainButton(appointment),
-          _buildDoctorFundReleaseButton(appointment),
-          _buildInvoiceButton(context, appointment),
-          _buildRescheduleButton(context, appointment),
-          _buildPatientCancelButton(context, appointment),
-          _buildPatientRating(appointment),
-
-          // Prescription Button
-          if (controller.isDoctor.value) ...[
-            SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => Get.toNamed(
-                AppPage.generatePrescription,
-                arguments: appointment,
-              ),
-              icon: Icon(Icons.description_outlined),
-              label: Text('Generate Prescription'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.medicalBlueDark,
-                foregroundColor: AppColors.textOnDark,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-              ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () async {
-                final doctor = appointment.aDoctor();
-                final file = await LetterHeadService.generateLetterHead(
-                  doctorName: doctor.name,
-                  doctorRegNumber: doctor.drRegNumber,
-                  doctorDegree: doctor.degree,
-                );
-                await LetterHeadService.openPdf(file);
-              },
-              icon: Icon(Icons.description_outlined),
-              label: Text('Generate Letter Head'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.medicalBlueDark,
-                foregroundColor: AppColors.textOnDark,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-              ),
-            ),
-            SizedBox(height: 16),
-          ],
+          ..._buildAppointmentActions(context, appointment),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBanner(
+    BookingsModel appointment,
+    bool isAppointmentRefunded,
+  ) {
+    final status = isAppointmentRefunded
+        ? BookingStatus.refunded.name
+        : appointment.bookingStatus;
+    if (controller.isDoctor.value && !isAppointmentRefunded) {
+      return _buildDoctorStatusBanner(appointment, status);
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: _getStatusColor(status),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(_getStatusIcon(status), color: AppColors.textOnDark),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getStatusText(status),
+                  style: GoogleFonts.inter(
+                    textStyle: const TextStyle(
+                      color: AppColors.textOnDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getStatusDescription(status),
+                  style: GoogleFonts.inter(
+                    textStyle: TextStyle(
+                      color: AppColors.textOnDark.withOpacity(0.9),
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoctorStatusBanner(BookingsModel appointment, String status) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: _getStatusColor(status),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.textOnDark.withOpacity(0.16),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _getStatusIcon(status),
+              color: AppColors.textOnDark,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _getStatusText(status),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    textStyle: const TextStyle(
+                      color: AppColors.textOnDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _isAppointmentDateReached(appointment.bookingDate)
+                      ? 'Update appointment status'
+                      : 'Outcome statuses unlock on appointment day',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    textStyle: TextStyle(
+                      color: AppColors.textOnDark.withOpacity(0.9),
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _isUpdatingAppointmentStatus
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.textOnDark,
+                  ),
+                )
+              : PopupMenuButton<String>(
+                  tooltip: 'Change appointment status',
+                  padding: EdgeInsets.zero,
+                  onSelected: (value) =>
+                      _updateDoctorAppointmentStatus(appointment, value),
+                  itemBuilder: (context) =>
+                      [
+                        BookingStatus.pending.name,
+                        BookingStatus.confirmed.name,
+                        BookingStatus.completed.name,
+                        BookingStatus.cancelled.name,
+                        BookingStatus.noShow.name,
+                      ].map((value) {
+                        final isOutcomeStatus =
+                            value == BookingStatus.completed.name ||
+                            value == BookingStatus.noShow.name;
+                        final isEnabled =
+                            !isOutcomeStatus ||
+                            _isAppointmentDateReached(appointment.bookingDate);
+                        return PopupMenuItem<String>(
+                          value: value,
+                          enabled: isEnabled,
+                          child: Row(
+                            children: [
+                              Expanded(child: Text(_getStatusText(value))),
+                              if (!isEnabled)
+                                const Icon(Icons.lock_outline, size: 16),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.textOnDark.withOpacity(0.16),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.edit_outlined,
+                          color: AppColors.textOnDark,
+                          size: 15,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Change',
+                          style: GoogleFonts.inter(
+                            textStyle: const TextStyle(
+                              color: AppColors.textOnDark,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+        ],
+      ),
+    );
+  }
+
+  bool _isAppointmentDateReached(String bookingDate) {
+    final appointmentDate = DateTime.tryParse(bookingDate);
+    if (appointmentDate == null) return false;
+
+    final now = DateTime.now();
+    final appointmentDay = DateTime(
+      appointmentDate.year,
+      appointmentDate.month,
+      appointmentDate.day,
+    );
+    final today = DateTime(now.year, now.month, now.day);
+    return !today.isBefore(appointmentDay);
+  }
+
+  Future<void> _updateDoctorAppointmentStatus(
+    BookingsModel appointment,
+    String newStatus,
+  ) async {
+    if (_isUpdatingAppointmentStatus ||
+        newStatus == appointment.bookingStatus.toLowerCase()) {
+      return;
+    }
+
+    setState(() {
+      _isUpdatingAppointmentStatus = true;
+      appointment.bookingStatus = newStatus;
+    });
+    try {
+      await controller.updateAppointmentStatus(appointment);
+    } catch (error) {
+      showErrorSnackbar('Could not update appointment status: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingAppointmentStatus = false);
+      }
+    }
+  }
+
+  List<Widget> _buildAppointmentActions(
+    BuildContext context,
+    BookingsModel appointment,
+  ) {
+    return controller.isDoctor.value
+        ? _buildDoctorActions(context, appointment)
+        : _buildPatientActions(context, appointment);
+  }
+
+  List<Widget> _buildPatientActions(
+    BuildContext context,
+    BookingsModel appointment,
+  ) {
+    return [
+      _buildPayAgainButton(appointment),
+      _buildRescheduleButton(context, appointment),
+      // TODO: Hide Patient Cancel button for now, as it is not implemented yet. Uncomment when implemented.
+      // _buildPatientCancelButton(context, appointment),
+      _buildPatientRating(appointment),
+      _buildInvoiceButton(context, appointment),
+    ];
+  }
+
+  List<Widget> _buildDoctorActions(
+    BuildContext context,
+    BookingsModel appointment,
+  ) {
+    return [
+      _buildRescheduleButton(context, appointment),
+      _buildDoctorFundReleaseButton(appointment),
+      _buildInvoiceButton(context, appointment),
+      _buildRefundAction(context, appointment),
+      _buildDoctorDocumentButton(
+        label: 'Generate Prescription',
+        onPressed: () =>
+            Get.toNamed(AppPage.generatePrescription, arguments: appointment),
+      ),
+      _buildDoctorDocumentButton(
+        label: 'Generate Letter Head',
+        onPressed: () async {
+          final doctor = appointment.aDoctor();
+          final file = await LetterHeadService.generateLetterHead(
+            doctorName: doctor.name,
+            doctorRegNumber: doctor.drRegNumber,
+            doctorDegree: doctor.degree,
+          );
+          await LetterHeadService.openPdf(file);
+        },
+      ),
+    ];
+  }
+
+  Widget _buildDoctorDocumentButton({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.description_outlined),
+        label: Text(label),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.medicalBlueDark,
+          foregroundColor: AppColors.textOnDark,
+          minimumSize: const Size(double.infinity, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+        ),
       ),
     );
   }
@@ -666,10 +778,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             backgroundColor: AppColors.medicalBlueLight,
             child: ClipOval(
               child: CachedNetworkImage(
-                imageUrl:
-                controller.isDoctor.value
-                    ? appointment.aDoctor()?.profilePhotoUrl ?? controller.therapistsImage
-                    : controller.therapistsImage,
+                imageUrl: controller.isDoctor.value
+                    ? controller.therapistsImage
+                    : appointment.aDoctor().profilePhotoUrl ??
+                          controller.therapistsImage,
                 fit: BoxFit.cover,
                 width: 80,
                 height: 80,
@@ -677,17 +789,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   child: SizedBox(
                     width: 18,
                     height: 18,
-                    child:
-                    CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
                 errorWidget: (_, __, ___) =>
-                const Icon(
-                  Icons.person,
-                  color: Colors.white,
-                ),
+                    const Icon(Icons.person, color: Colors.white),
               ),
             ),
           ),
@@ -905,8 +1011,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         return 'Completed Session';
       case 'cancelled':
         return 'Cancelled Appointment';
-      case 'refunded':
-        return 'Refunded Appointment';
       case 'no-show':
       case 'no_show':
         return 'Missed Appointment';
@@ -926,8 +1030,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         return 'Your session has been successfully completed';
       case 'cancelled':
         return 'This appointment was cancelled';
-      case 'refunded':
-        return 'The payment for this appointment has been refunded';
       case 'no-show':
       case 'no_show':
         return 'You did not attend this appointment';
@@ -1102,14 +1204,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Widget _buildInvoiceButton(BuildContext context, BookingsModel appointment) {
-    final canGenerateInvoice =
-        appointment.bookingStatus.toLowerCase() ==
-            BookingStatus.completed.name &&
-        [
-          PaymentStatus.paid.name,
-          PaymentStatus.refunded.name,
-        ].contains(appointment.paymentStatus.toLowerCase());
-    if (!canGenerateInvoice) return const SizedBox.shrink();
+    if (!_canIncludeInInvoice(appointment)) return const SizedBox.shrink();
 
     return Column(
       children: [
@@ -1182,21 +1277,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     setState(() => _isReleasingDoctorPayment = true);
     try {
-      var bookingIds = [appointment.id];
-      if (appointment.isBulkAppointment &&
-          appointment.bulkAppointmentId?.trim().isNotEmpty == true) {
-        final bookings = await controller.supabaseController
-            .getBookingsByBulkAppointmentId(
-              appointment.userId,
-              appointment.bulkAppointmentId!,
-            );
-        bookingIds = bookings.map((booking) => booking.id).toList();
-        if (bookingIds.isEmpty) {
-          showErrorSnackbar(
-            'No bookings were found for this appointment group.',
-          );
-          return;
-        }
+      final bookings = await _getAppointmentGroup(appointment);
+      final bookingIds = bookings.map((booking) => booking.id).toList();
+      if (bookingIds.isEmpty) {
+        showErrorSnackbar('No bookings were found for this appointment group.');
+        return;
       }
 
       final shouldRelease = await Get.dialog<bool>(
@@ -1249,12 +1334,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         ? true
         : _isAfterToday(appointment.bookingDate);
     final canReschedule =
-        (appointment.paymentStatus.toLowerCase() == PaymentStatus.paid.name ||
-            appointment.paymentStatus.toLowerCase() ==
-                PaymentStatus.refunded.name) &&
-        (appointment.bookingStatus.toLowerCase() !=
-            BookingStatus.completed.name) &&
-        (canRescheduleUserRoleWise);
+        appointment.paymentStatus.toLowerCase() == PaymentStatus.paid.name &&
+        appointment.bookingStatus.toLowerCase() ==
+            BookingStatus.confirmed.name &&
+        canRescheduleUserRoleWise;
     if (!canReschedule) return const SizedBox.shrink();
 
     return Column(
@@ -1406,7 +1489,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             ),
             elevation: 2,
           ),
-          child: Text(_payment.isBusy.value ? 'Starting payment...' : 'Pay now'),
+          child: Text(
+            _payment.isBusy.value ? 'Starting payment...' : 'Pay now',
+          ),
         ),
       ),
     );
@@ -1426,15 +1511,58 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     return !unpaid && !closed;
   }
 
+  Future<List<BookingsModel>> _getAppointmentGroup(
+    BookingsModel appointment,
+  ) async {
+    final hasBulkId =
+        appointment.isBulkAppointment &&
+        appointment.bulkAppointmentId?.trim().isNotEmpty == true;
+    if (!hasBulkId) return [appointment];
+
+    final future = _bulkAppointmentsFuture ??= controller.supabaseController
+        .getBookingsByBulkAppointmentId(
+          appointment.userId,
+          appointment.bulkAppointmentId!,
+        );
+    try {
+      final bookings = List<BookingsModel>.of(await future);
+      final selectedIndex = bookings.indexWhere(
+        (booking) => booking.id == appointment.id,
+      );
+      if (selectedIndex >= 0) {
+        bookings[selectedIndex] = appointment;
+      }
+      return bookings;
+    } catch (_) {
+      if (identical(_bulkAppointmentsFuture, future)) {
+        _bulkAppointmentsFuture = null;
+      }
+      rethrow;
+    }
+  }
+
+  String _normalizeStatus(String status) =>
+      status.toLowerCase().replaceAll(RegExp(r'[-_\s]'), '');
+
+  bool _canIncludeInInvoice(BookingsModel booking) {
+    final bookingStatus = _normalizeStatus(booking.bookingStatus);
+    final paymentStatus = _normalizeStatus(booking.paymentStatus);
+    return {
+          BookingStatus.completed.name,
+          BookingStatus.refunded.name,
+          BookingStatus.noShow.name.toLowerCase(),
+        }.contains(bookingStatus) &&
+        {
+          PaymentStatus.paid.name,
+          PaymentStatus.refunded.name,
+        }.contains(paymentStatus);
+  }
+
   // TODO : Improve Query filter instade of filtering in code. This is a temporary solution to get unpaid booking ids for bulk appointments.
   Future<List<int>> _unpaidBookingIds(BookingsModel appointment) async {
     if (appointment.isBulkAppointment &&
         appointment.bulkAppointmentId?.trim().isNotEmpty == true) {
-      final group = await controller.supabaseController
-          .getBookingsByBulkAppointmentId(
-            appointment.userId,
-            appointment.bulkAppointmentId!,
-          );
+      final group = await _getAppointmentGroup(appointment);
       final ids = group
           .where((booking) {
             final status = booking.paymentStatus.toLowerCase();
@@ -1470,8 +1598,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final bookingIds = await _unpaidBookingIds(appointment);
     _payingBookingIds = bookingIds;
     await _payment.collectPayment(
-      createOrder: () => controller.supabaseController
-          .callCreateRazorPayOrderForBookings(
+      createOrder: () =>
+          controller.supabaseController.callCreateRazorPayOrderForBookings(
             bookingIds: bookingIds,
             userId: appointment.userId,
             isBulkAppointment: appointment.isBulkAppointment,
@@ -1660,9 +1788,52 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     Get.snackbar('Cancelled', 'Your appointment was cancelled.');
   }
 
-  // Add this new method for invoice generation
-  void _generateInvoice(BuildContext context, BookingsModel appointment) async {
-    // Show loading indicator
+  Future<void> _generateInvoice(
+    BuildContext context,
+    BookingsModel appointment,
+  ) async {
+    late final List<BookingsModel> invoiceAppointments;
+    try {
+      invoiceAppointments = await _getAppointmentGroup(appointment);
+    } catch (error) {
+      Get.snackbar(
+        'Could not validate invoice',
+        'Please try again. ${error.toString()}',
+        backgroundColor: AppColors.errorLight,
+        colorText: AppColors.error,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (invoiceAppointments.isEmpty) {
+      Get.snackbar(
+        'Invoice unavailable',
+        'No appointments were found for this booking.',
+        backgroundColor: AppColors.errorLight,
+        colorText: AppColors.error,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final ineligibleAppointments = invoiceAppointments
+        .where((booking) => !_canIncludeInInvoice(booking))
+        .toList();
+    if (ineligibleAppointments.isNotEmpty) {
+      Get.snackbar(
+        'Invoice not ready',
+        'All appointments must be Completed, Refunded, or No-show, and '
+            'payment must be Paid or Refunded. '
+            '${ineligibleAppointments.length} appointment(s) still need updating.',
+        backgroundColor: AppColors.errorLight,
+        colorText: AppColors.error,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 6),
+      );
+      return;
+    }
+
     Get.dialog(
       Center(
         child: Container(
@@ -1700,15 +1871,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
 
     try {
-      var invoiceAppointments = <BookingsModel>[appointment];
-      if (appointment.isBulkAppointment &&
-          appointment.bulkAppointmentId?.trim().isNotEmpty == true) {
-        invoiceAppointments = await controller.supabaseController
-            .getBookingsByBulkAppointmentId(
-              appointment.userId,
-              appointment.bulkAppointmentId!,
-            );
-      }
       final pdfFile = await InvoiceService.generateInvoice(
         appointment,
         appointments: invoiceAppointments,
