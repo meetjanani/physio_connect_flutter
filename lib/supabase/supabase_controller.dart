@@ -856,4 +856,40 @@ class SupabaseController {
       return false;
     }
   }
+
+  Future<void> updateBookingMeetingUrl({
+    required int bookingId,
+    required String meetingUrl,
+    String provider = 'pasted',
+  }) async {
+    if (bookingId <= 0) return;
+    await supabaseClient.from(DatabaseSchema.bookingsTable).update({
+      DatabaseSchema.bookingsMeetingUrl: meetingUrl.trim(),
+      DatabaseSchema.bookingsMeetingProvider: provider,
+    }).eq(DatabaseSchema.bookingsId, bookingId);
+  }
+
+  Future<List<Map<String, dynamic>>> ensureGoogleMeetForBookings({
+    required List<int> bookingIds,
+    required int userId,
+  }) async {
+    if (bookingIds.isEmpty || userId <= 0) return [];
+    try {
+      final response = await supabaseClient.functions.invoke(
+        'create-meet-for-booking',
+        body: {'bookingIds': bookingIds, 'userId': userId},
+      );
+      final data = response.data;
+      if (data is Map && data['results'] is List) {
+        return List<Map<String, dynamic>>.from(
+          (data['results'] as List).whereType<Map>().map(
+                (row) => Map<String, dynamic>.from(row),
+              ),
+        );
+      }
+    } catch (e) {
+      print('Error creating Meet links: $e');
+    }
+    return [];
+  }
 }

@@ -107,6 +107,7 @@ class AppointmentReminderService {
     required int bookingId,
     required DateTime sessionStart,
     required String sessionLabel,
+    bool includeJoinSoon = false,
   }) async {
     await ensureInitialized();
 
@@ -158,6 +159,31 @@ class AppointmentReminderService {
         print(
           '[Reminder] Scheduled id=$id at $scheduled '
           '(local now=${tz.TZDateTime.now(tz.local)})',
+        );
+      }
+    }
+
+    if (includeJoinSoon) {
+      final whenLocal = sessionStart.subtract(const Duration(minutes: 15));
+      if (!whenLocal.isBefore(DateTime.now())) {
+        await _plugin.zonedSchedule(
+          bookingId * 10 + 9,
+          'Join your online session',
+          'Your PhysioConnect Google Meet starts in 15 minutes. Open the app to Join.',
+          tz.TZDateTime.from(whenLocal, tz.local),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channelId,
+              _channelName,
+              channelDescription: 'Upcoming physiotherapy session alerts',
+              importance: Importance.high,
+              priority: Priority.high,
+              playSound: true,
+              enableVibration: true,
+            ),
+            iOS: DarwinNotificationDetails(),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
       }
     }

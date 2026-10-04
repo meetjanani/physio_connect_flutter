@@ -41,7 +41,9 @@ BookingsModel _$BookingsModelFromJson(Map<String, dynamic> json) =>
       ..doctorAmount = (json['doctorAmount'] as num?)?.toDouble()
       ..razorpayRefundId = json['razorpayRefundId'] as String?
       ..rating = (json['rating'] as num?)?.toInt()
-      ..ratingComment = json['ratingComment'] as String?;
+      ..ratingComment = json['ratingComment'] as String?
+      ..meetingUrl = json['meetingUrl'] as String?
+      ..meetingProvider = json['meetingProvider'] as String?;
 
 Map<String, dynamic> _$BookingsModelToJson(BookingsModel instance) =>
     <String, dynamic>{
@@ -76,6 +78,8 @@ Map<String, dynamic> _$BookingsModelToJson(BookingsModel instance) =>
       'bulkAppointmentId': instance.bulkAppointmentId,
       'rating': instance.rating,
       'ratingComment': instance.ratingComment,
+      'meetingUrl': instance.meetingUrl,
+      'meetingProvider': instance.meetingProvider,
       'bookingDate': instance.bookingDate,
       'createdAt': instance.createdAt,
     };

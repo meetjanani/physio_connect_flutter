@@ -248,13 +248,18 @@ class BookingHistoryController extends GetxController {
         'Patient callback request',
       );
     } else {
+      final isOnline = appointment?.isOnlineSession == true;
       await supabaseController.sentNotification(
         userId,
-        'Your appointment with ${doctor?.name ?? 'your doctor'} is scheduled '
-            'for $appointmentDate at '
-            '${timeSlot?.time ?? 'the scheduled time'}. This is a reminder from '
-            'your doctor.',
-        'Appointment reminder',
+        isOnline
+            ? 'Your online session with ${doctor?.name ?? 'your doctor'} is on '
+                '$appointmentDate at ${timeSlot?.time ?? 'the scheduled time'}. '
+                'Open PhysioConnect and tap Join Google Meet.'
+            : 'Your appointment with ${doctor?.name ?? 'your doctor'} is scheduled '
+                'for $appointmentDate at '
+                '${timeSlot?.time ?? 'the scheduled time'}. This is a reminder from '
+                'your doctor.',
+        isOnline ? 'Join your online session' : 'Appointment reminder',
       );
     }
     final recipient = isDoctorTypeUser(userModelSupabase) ? 'patient' : 'doctor';

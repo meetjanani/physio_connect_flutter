@@ -20,6 +20,7 @@ import '../../utils/constants.dart';
 import '../../utils/enum.dart';
 import 'booking_history_controller.dart';
 import '../../route/route_module.dart';
+import 'online_session_actions.dart';
 
 class BookingDetailScreen extends StatefulWidget {
   BookingDetailScreen({Key? key}) : super(key: key);
@@ -189,7 +190,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               () {},
               Icons.timelapse,
             ),
-            _buildInfoRow('Address', appointment.address ?? 'N/A', () async {
+            if (appointment.isOnlineSession)
+              _buildInfoRow(
+                'Session',
+                'Online · Google Meet',
+                () {},
+                Icons.videocam_outlined,
+              )
+            else
+              _buildInfoRow('Address', appointment.address ?? 'N/A', () async {
               if (appointment.latLong != null) {
                 var latLongPoint = appointment.latLong!.split(
                   LAT_LONG_SEPRATOR,
@@ -228,6 +237,17 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ),
           SizedBox(height: 16),
           _buildTherapistCard(appointment),
+
+          if (appointment.isOnlineSession) ...[
+            SizedBox(height: 16),
+            OnlineSessionActions(
+              booking: appointment,
+              isDoctor: controller.isDoctor.value,
+              onChanged: () async {
+                await _refreshAppointment(appointment.id);
+              },
+            ),
+          ],
 
           SizedBox(height: 24),
 

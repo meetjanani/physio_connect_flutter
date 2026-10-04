@@ -74,6 +74,8 @@ class DatabaseSchema extends GetxController {
   static const String bookingsBulkAppointmentId = "bulkAppointmentId";
   static const String bookingsRating = "rating";
   static const String bookingsRatingComment = "ratingComment";
+  static const String bookingsMeetingUrl = "meetingUrl";
+  static const String bookingsMeetingProvider = "meetingProvider";
 
   // Session Types table
   static const String sessionTypeTable = "session_type";
@@ -85,6 +87,7 @@ class DatabaseSchema extends GetxController {
   static const String sessionTypeImageUrl = "imageUrl";
   static const String sessionTypeIsActive = "isActive";
   static const String sessionTypeOrderBy = "orderBy";
+  static const String sessionTypeMode = "mode";
 
   // Time Slots table
   static const String timeSlotTable = "time_slot";

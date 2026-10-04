@@ -197,7 +197,9 @@ class ConfirmationScreen extends StatelessWidget {
                               SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Please get ready 10 minutes before your appointment time',
+                                  controller.isSelectedOnline
+                                      ? 'Join from the app when your session is due. A Google Meet link is added after payment.'
+                                      : 'Please get ready 10 minutes before your appointment time',
                                   style: GoogleFonts.inter(
                                     textStyle: TextStyle(
                                       fontSize: 14,

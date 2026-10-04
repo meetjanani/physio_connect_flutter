@@ -49,6 +49,7 @@ class BookingController extends GetxController {
 
   // Session Type
   final selectedSessionType = Rx<SessionTypeModel?>(null);
+  bool get isSelectedOnline => selectedSessionType.value?.isOnline == true;
   final sessionTypes = <SessionTypeModel>[].obs;
   // Time slots data
   final selectedTimeSlot = Rx<TimeSlotModel?>(null);
@@ -400,10 +401,12 @@ class BookingController extends GetxController {
           orderId: null,
           signature: null,
           doctorNotes: 'No additional notes provided.',
-          address:
-              "${houseNameBlockNumberController.text}\n${addressController.text}",
-          latLong:
-              "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
+          address: sessionType.isOnline
+              ? 'Online session'
+              : "${houseNameBlockNumberController.text}\n${addressController.text}",
+          latLong: sessionType.isOnline
+              ? ''
+              : "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
           bookingDate: dateKey(date),
           createdAt: DateTime.now().toString(),
           isBulkAppointment: groupId != null,

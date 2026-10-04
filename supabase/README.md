@@ -8,6 +8,21 @@ Also apply newer migrations in order:
 - `migrations/20260926140000_ratings_and_doctor_privacy.sql` (ratings columns + doctor.userId index)
 - `migrations/20260930120000_doctor_privacy_indexes.sql` (booking/doctor indexes for multi-doctor filters)
 - `migrations/20261003120000_doctor_public_catalog.sql` (`doctor_public` view + optional SELECT policy for active profiles)
+- `migrations/20261004010000_online_session_meet.sql` (`session_type.mode`, `bookings.meetingUrl`)
+
+## Online sessions (Google Meet)
+
+Scheduling stays in the app (date + slot + pay). Video is a **Join** URL on the booking.
+
+1. Set `session_type.mode` to `Online` (or keep `Home Visit`).
+2. Deploy Edge Functions `verify-razorpay-payment` and `create-meet-for-booking`.
+3. Optional auto-Meet: set function secrets
+   - `GOOGLE_CALENDAR_CLIENT_ID`
+   - `GOOGLE_CALENDAR_CLIENT_SECRET`
+   - `GOOGLE_CALENDAR_REFRESH_TOKEN`
+   for one PhysioConnect Google account with Calendar API enabled.
+4. If those secrets are missing, doctors can tap **Create Meet** / **Paste link** on the appointment.
+5. WhatsApp is a backup chat (`wa.me`), not a scheduled video room.
 
 ## 5-doctor soft launch
 

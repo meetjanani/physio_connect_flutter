@@ -258,6 +258,7 @@ class BookingPaymentFlow {
     if (!paid.alreadyPaid) {
       await _notifyDoctor(bookings);
     }
+    // await _ensureMeetLinks(paid.bookingIds);
     await _logPaymentAnalytics(bookings);
     await _scheduleReminders(bookings);
     hideBusy();
@@ -290,10 +291,13 @@ class BookingPaymentFlow {
           ? '${bookings.length} sessions starting $whenLabel'
           : whenLabel;
       final timePart = slotTime.isEmpty ? '' : ' at $slotTime';
+      final online = booking.isOnlineSession;
       await _supabase.sentNotification(
         doctorUserId,
         'Booking confirmed',
-        '$patientName booked $sessionName for $extra$timePart.',
+        online
+            ? '$patientName booked an online $sessionName for $extra$timePart. Join from PhysioConnect.'
+            : '$patientName booked $sessionName for $extra$timePart.',
       );
     } catch (_) {}
   }
@@ -302,6 +306,15 @@ class BookingPaymentFlow {
     try {
       final amount = bookings.fold<int>(0, (sum, booking) => sum + booking.price);
       await AppAnalytics.instance.paymentSuccess(amount: amount);
+    } catch (_) {}
+  }
+
+  Future<void> _ensureMeetLinks(List<int> bookingIds) async {
+    try {
+      await _supabase.ensureGoogleMeetForBookings(
+        bookingIds: bookingIds,
+        userId: userId(),
+      );
     } catch (_) {}
   }
 
@@ -318,7 +331,10 @@ class BookingPaymentFlow {
         await AppointmentReminderService.instance.scheduleSessionReminders(
           bookingId: booking.id,
           sessionStart: _combineDateAndSlot(date, slotTime),
-          sessionLabel: sessionName,
+          sessionLabel: booking.isOnlineSession
+              ? '$sessionName — join from the app'
+              : sessionName,
+          includeJoinSoon: booking.isOnlineSession,
         );
       } catch (_) {}
     }

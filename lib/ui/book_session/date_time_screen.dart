@@ -28,7 +28,9 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
   void initState() {
     super.initState();
     _fetchTimeSlotAfterDateSelection(DateTime.now());
-    fetchAndSetCurrentLocation();
+    if (!controller.isSelectedOnline) {
+      fetchAndSetCurrentLocation();
+    }
   }
 
   @override
@@ -111,85 +113,107 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                     );
                   }),
                   const SizedBox(height: 16),
-                  Text(
-                    'Enter Address',
-                    style: GoogleFonts.inter(
-                      textStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                  if (controller.isSelectedOnline)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.medicalBlueLight,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.medicalBlue.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Text(
+                        'This is an online session. A Google Meet link will be added after payment. No visit address is needed.',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: AppColors.medicalBlueDark,
+                        ),
+                      ),
+                    )
+                  else ...[
+                    Text(
+                      'Enter Address',
+                      style: GoogleFonts.inter(
+                        textStyle: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Form(
-                    key: _addressFormKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller:
-                              controller.houseNameBlockNumberController,
-                          maxLines: 3,
-                          minLines: 2,
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Apartment/House name & block number is required';
-                            }
-                            return null;
-                          },
-                          decoration: InputDecoration(
-                            labelText:
-                                'Apartment/House Name & Block number *',
-                            hintText: 'Apartment Name & Block number',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 10),
+                    Form(
+                      key: _addressFormKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller:
+                                controller.houseNameBlockNumberController,
+                            maxLines: 3,
+                            minLines: 2,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Apartment/House name & block number is required';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                              labelText:
+                                  'Apartment/House Name & Block number *',
+                              hintText: 'Apartment Name & Block number',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: controller.addressController,
-                                maxLines: 3,
-                                minLines: 2,
-                                textInputAction: TextInputAction.done,
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty) {
-                                    return 'Address is required';
-                                  }
-                                  return null;
-                                },
-                                decoration: InputDecoration(
-                                  labelText: 'Address *',
-                                  hintText: 'Enter your address',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: controller.addressController,
+                                  maxLines: 3,
+                                  minLines: 2,
+                                  textInputAction: TextInputAction.done,
+                                  validator: (value) {
+                                    if (value == null ||
+                                        value.trim().isEmpty) {
+                                      return 'Address is required';
+                                    }
+                                    return null;
+                                  },
+                                  decoration: InputDecoration(
+                                    labelText: 'Address *',
+                                    hintText: 'Enter your address',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.my_location,
-                                color: AppColors.medicalBlue,
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.my_location,
+                                  color: AppColors.medicalBlue,
+                                ),
+                                tooltip: 'Use current location',
+                                onPressed: () async {
+                                  await fetchAndSetCurrentLocation();
+                                  _addressFormKey.currentState?.validate();
+                                },
                               ),
-                              tooltip: 'Use current location',
-                              onPressed: () async {
-                                await fetchAndSetCurrentLocation();
-                                _addressFormKey.currentState?.validate();
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 12),
                 ],
               ),
@@ -236,14 +260,16 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                                 );
                                 return;
                               }
-                              final formValid =
-                                  _addressFormKey.currentState?.validate() ??
-                                      false;
-                              if (!formValid) {
-                                controller.showErrorSnackbar(
-                                  'Please fill in apartment/house details and address.',
-                                );
-                                return;
+                              if (!controller.isSelectedOnline) {
+                                final formValid =
+                                    _addressFormKey.currentState?.validate() ??
+                                        false;
+                                if (!formValid) {
+                                  controller.showErrorSnackbar(
+                                    'Please fill in apartment/house details and address.',
+                                  );
+                                  return;
+                                }
                               }
                               _confirmAppointments();
                             },

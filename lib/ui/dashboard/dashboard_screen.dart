@@ -13,6 +13,7 @@ import '../../utils/theme/app_colors.dart';
 import '../../utils/units_extensions.dart';
 import '../doctors/doctor_directory_card.dart';
 import '../doctors/doctor_directory_controller.dart';
+import '../booking_history/online_session_actions.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -265,6 +266,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        if (appointment.isOnlineSession)
+          OnlineSessionActions(
+            booking: appointment,
+            isDoctor: isDoctor,
+            compact: true,
+          ),
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
