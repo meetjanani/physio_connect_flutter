@@ -230,7 +230,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           ElevatedButton.icon(
             onPressed: () => Get.toNamed(AppPage.selectServiceCity),
             icon: Icon(Icons.add),
-            label: Text('Book New Session'),
+            label: Text('Book Appointment'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.medicalBlue,
               foregroundColor: AppColors.textOnDark,

@@ -28,6 +28,7 @@ BookingsModel _$BookingsModelFromJson(Map<String, dynamic> json) =>
         doctorNotes: json['doctorNotes'] as String?,
         address: json['address'] as String?,
         latLong: json['latLong'] as String?,
+        guestEmail: json['guestEmail'] as String?,
         bookingDate: json['bookingDate'] as String,
         createdAt: json['createdAt'] as String,
         isBulkAppointment: json['isBulkAppointment'] as bool? ?? false,
@@ -80,6 +81,7 @@ Map<String, dynamic> _$BookingsModelToJson(BookingsModel instance) =>
       'ratingComment': instance.ratingComment,
       'meetingUrl': instance.meetingUrl,
       'meetingProvider': instance.meetingProvider,
+      'guestEmail': instance.guestEmail,
       'bookingDate': instance.bookingDate,
       'createdAt': instance.createdAt,
     };

@@ -35,12 +35,15 @@ class BookingController extends GetxController {
   void onClose() {
     addressController.dispose();
     houseNameBlockNumberController.dispose();
+    emailController.dispose();
     super.onClose();
   }
+
   // Add a TextEditingController for address if not present in controller
   final TextEditingController addressController = TextEditingController();
   final TextEditingController houseNameBlockNumberController =
       TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final RxString latitudeOfAddress = ''.obs;
   final RxString longitudeOfAddress = ''.obs;
   SupabaseController supabaseController = SupabaseController.to;
@@ -123,10 +126,7 @@ class BookingController extends GetxController {
       selectedDate.value.day,
     );
     appointmentDates.assignAll(
-      List.generate(
-        count,
-        (index) => start.add(Duration(days: index * step)),
-      ),
+      List.generate(count, (index) => start.add(Duration(days: index * step))),
     );
     // Re-check preferred time across the new date set.
     if (selectedTimeSlot.value != null) {
@@ -140,8 +140,8 @@ class BookingController extends GetxController {
     return recurrence.value == 'alternative_day'
         ? 2
         : recurrence.value == 'every_2_day'
-            ? 3
-            : 1;
+        ? 3
+        : 1;
   }
 
   void setBulkAppointmentCountValue(int count) {
@@ -184,8 +184,11 @@ class BookingController extends GetxController {
 
     if (index > 0) {
       final previous = appointmentDates[index - 1];
-      final previousDate =
-          DateTime(previous.year, previous.month, previous.day);
+      final previousDate = DateTime(
+        previous.year,
+        previous.month,
+        previous.day,
+      );
       if (!normalized.isAfter(previousDate)) return false;
     }
 
@@ -242,9 +245,9 @@ class BookingController extends GetxController {
         final key = dateKey(dates[i]);
         final daySlots = results[i];
         final match = daySlots.cast<TimeSlotModel?>().firstWhere(
-              (s) => s?.id == preferred.id,
-              orElse: () => null,
-            );
+          (s) => s?.id == preferred.id,
+          orElse: () => null,
+        );
         final isBooked = match == null || (match.isBooked ?? false);
         if (isBooked) {
           nextConflicts.add(key);
@@ -295,7 +298,19 @@ class BookingController extends GetxController {
     super.onInit();
     isLoading.value = true;
     userModelSupabase = await UserModelSupabase.getFromSecureStorage();
+    prefillEmailFromProfile();
     isLoading.value = false;
+  }
+
+  Future<void> initializeEmailFromProfile() async {
+    userModelSupabase ??= await UserModelSupabase.getFromSecureStorage();
+    prefillEmailFromProfile();
+  }
+
+  void prefillEmailFromProfile() {
+    if (emailController.text.trim().isEmpty) {
+      emailController.text = userModelSupabase?.guestEmail?.trim() ?? '';
+    }
   }
 
   // Load master data
@@ -337,9 +352,9 @@ class BookingController extends GetxController {
       timeSlots.addAll(response);
       if (previousPreferredId != null) {
         final stillAvailable = timeSlots.cast<TimeSlotModel?>().firstWhere(
-              (s) => s?.id == previousPreferredId && !(s?.isBooked ?? true),
-              orElse: () => null,
-            );
+          (s) => s?.id == previousPreferredId && !(s?.isBooked ?? true),
+          orElse: () => null,
+        );
         if (stillAvailable != null) {
           await selectPreferredTimeSlot(stillAvailable);
         }
@@ -355,6 +370,21 @@ class BookingController extends GetxController {
     isLoading.value = true;
 
     try {
+      await initializeEmailFromProfile();
+      final bookingEmail = emailController.text.trim();
+      final profileEmail = userModelSupabase?.guestEmail?.trim() ?? '';
+      if (bookingEmail.isNotEmpty && bookingEmail != profileEmail) {
+        final user = userModelSupabase;
+        if (user == null || user.id <= 0) {
+          throw StateError(
+            'Could not identify your profile to save the email.',
+          );
+        }
+        await supabaseController.updateUserEmail(user.id, bookingEmail);
+        user.guestEmail = bookingEmail;
+        await user.saveToSecureStorage();
+      }
+
       final doctorModel =
           selectedDoctor.value ?? await DoctorModel.getFromSecureStorage();
       final doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
@@ -407,6 +437,7 @@ class BookingController extends GetxController {
           latLong: sessionType.isOnline
               ? ''
               : "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
+          guestEmail: bookingEmail.isEmpty ? null : bookingEmail,
           bookingDate: dateKey(date),
           createdAt: DateTime.now().toString(),
           isBulkAppointment: groupId != null,
@@ -447,6 +478,7 @@ class BookingController extends GetxController {
   final serviceCities = <CityStateModel>[].obs;
   final serviceAreas = <AreaModel>[].obs;
   final areaDoctors = <DoctorModel>[].obs;
+
   /// areaId -> assigned doctor (one doctor per area for list UI).
   final areaDoctorByAreaId = <int, DoctorModel>{}.obs;
   final selectedCity = Rx<CityStateModel?>(null);
@@ -505,7 +537,6 @@ class BookingController extends GetxController {
     }
   }
 
-
   /// Not In Use
   Future<void> loadDoctorsForSelectedArea() async {
     if (selectedArea.value == null) {
@@ -548,5 +579,4 @@ class BookingController extends GetxController {
     selectedDoctor.value = doctor;
     await getSessionTypesMaster();
   }
-
 }

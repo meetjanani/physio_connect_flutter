@@ -26,7 +26,8 @@ class BookingHistoryController extends GetxController {
   UserModelSupabase? userModelSupabase;
   RxList<BookingsModel> upComingBookings = RxList();
   RxBool isDoctor = false.obs;
-  final therapistsImage = "https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9";
+  final therapistsImage =
+      "https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9";
 
   @override
   Future<void> onInit() async {
@@ -62,7 +63,7 @@ class BookingHistoryController extends GetxController {
     }
   }
 
-  Future<void> updateAppointmentStatus(BookingsModel bookingModel) async {
+  Future<void> updateAppointmentStatus(BookingsModel bookingModel, String? oldStatus) async {
     if (userModelSupabase?.id != null) {
       final isRefunded =
           bookingModel.razorpayRefundId?.trim().isNotEmpty == true ||
@@ -85,6 +86,24 @@ class BookingHistoryController extends GetxController {
           : DateFormat('MMM d, yyyy').format(parsedDate);
       final appointmentDetails =
           '${sessionType.name} session on $appointmentDate at ${timeSlot.time}';
+      final currentStatus = bookingModel.bookingStatus.trim().toLowerCase();
+      final guestEmail = bookingModel.guestEmail?.trim() ?? '';
+      if (oldStatus != null &&
+          oldStatus != currentStatus &&
+          guestEmail.isNotEmpty) {
+        try {
+          await supabaseController.sendAppointmentEmail(
+            toEmail: guestEmail,
+            patientName: patient.name ?? 'Patient',
+            status: bookingModel.bookingStatus,
+            appointmentDate: '$appointmentDate, ${timeSlot.time}',
+          );
+        } on Exception catch (error) {
+          showErrorSnackbar(
+            'Status updated, but the email could not be sent: $error',
+          );
+        }
+      }
       final notification = _bookingStatusNotification(
         bookingModel.bookingStatus,
         patient.name ?? 'The patient',
@@ -117,7 +136,10 @@ class BookingHistoryController extends GetxController {
     String doctorName,
     String appointmentDetails,
   ) {
-    final status = bookingStatus.toLowerCase().replaceAll(RegExp(r'[-_\s]'), '');
+    final status = bookingStatus.toLowerCase().replaceAll(
+      RegExp(r'[-_\s]'),
+      '',
+    );
     final title = switch (status) {
       'pending' => 'Booking awaiting confirmation',
       'confirmed' => 'Booking confirmed',
@@ -130,8 +152,7 @@ class BookingHistoryController extends GetxController {
     final patientMessage = switch (status) {
       'pending' =>
         'Your $appointmentDetails with $doctorName is awaiting confirmation.',
-      'confirmed' =>
-        'Your $appointmentDetails with $doctorName is confirmed.',
+      'confirmed' => 'Your $appointmentDetails with $doctorName is confirmed.',
       'completed' =>
         'Your $appointmentDetails with $doctorName has been completed.',
       'cancelled' || 'canceled' =>
@@ -148,12 +169,10 @@ class BookingHistoryController extends GetxController {
         '$patientName has a $appointmentDetails booking awaiting confirmation.',
       'confirmed' =>
         '$patientName has a confirmed $appointmentDetails booking.',
-      'completed' =>
-        '$patientName\'s $appointmentDetails has been completed.',
+      'completed' => '$patientName\'s $appointmentDetails has been completed.',
       'cancelled' || 'canceled' =>
         '$patientName\'s $appointmentDetails booking has been cancelled.',
-      'noshow' =>
-        '$patientName did not attend their $appointmentDetails.',
+      'noshow' => '$patientName did not attend their $appointmentDetails.',
       'refunded' =>
         'The refund for $patientName\'s $appointmentDetails booking has been processed.',
       _ =>
@@ -205,8 +224,11 @@ class BookingHistoryController extends GetxController {
         upComingBookings[index] = appointment;
       }
 
-      showSuccessSnackbar('Appointment Rescheduled' + "\n" +
-        'The appointment was moved to $bookingDate.',);
+      showSuccessSnackbar(
+        'Appointment Rescheduled' +
+            "\n" +
+            'The appointment was moved to $bookingDate.',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -253,16 +275,18 @@ class BookingHistoryController extends GetxController {
         userId,
         isOnline
             ? 'Your online session with ${doctor?.name ?? 'your doctor'} is on '
-                '$appointmentDate at ${timeSlot?.time ?? 'the scheduled time'}. '
-                'Open PhysioConnect and tap Join Google Meet.'
+                  '$appointmentDate at ${timeSlot?.time ?? 'the scheduled time'}. '
+                  'Open PhysioConnect and tap Join Google Meet.'
             : 'Your appointment with ${doctor?.name ?? 'your doctor'} is scheduled '
-                'for $appointmentDate at '
-                '${timeSlot?.time ?? 'the scheduled time'}. This is a reminder from '
-                'your doctor.',
+                  'for $appointmentDate at '
+                  '${timeSlot?.time ?? 'the scheduled time'}. This is a reminder from '
+                  'your doctor.',
         isOnline ? 'Join your online session' : 'Appointment reminder',
       );
     }
-    final recipient = isDoctorTypeUser(userModelSupabase) ? 'patient' : 'doctor';
+    final recipient = isDoctorTypeUser(userModelSupabase)
+        ? 'patient'
+        : 'doctor';
     Get.showSuccessSnackbar(
       'Your notification has been sent to the $recipient.',
     );
@@ -282,8 +306,9 @@ class BookingHistoryController extends GetxController {
       bookingId: bookingId,
       doctorId: doctorId,
     );
-    selectedAppointment.value = await supabaseController.getBookingById(bookingId);
-
+    selectedAppointment.value = await supabaseController.getBookingById(
+      bookingId,
+    );
 
     // 3. Hide Loading State
     isLoading.value = false;

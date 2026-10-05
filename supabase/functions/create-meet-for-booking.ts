@@ -96,12 +96,32 @@ async function ensureGoogleMeetForBookings(
   const { data: bookings } = await supabase
     .from("bookings")
     .select(
-      "id, sessionTypeJson, timeSlotJson, patientJson, bookingDate, meetingUrl, paymentStatus"
+      'id, "userId", "doctorId", sessionTypeJson, timeSlotJson, patientJson, bookingDate, meetingUrl, paymentStatus, guestEmail'
     )
     .in("id", bookingIds);
 
   if (!bookings) {
     return [{ error: "Could not load bookings" }];
+  }
+
+  const userIds = uniquePositiveIds(
+    bookings.flatMap((booking: any) => [booking.userId, booking.doctorId])
+  );
+
+  const guestEmailByUserId = new Map<string, string | null>();
+
+  if (userIds.length > 0) {
+    const { data: users } = await supabase
+      .from("users")
+      .select("id, guestEmail")
+      .in("id", userIds);
+
+    for (const user of users ?? []) {
+      guestEmailByUserId.set(
+        String(user.id),
+        normalizeEmail(user.guestEmail)
+      );
+    }
   }
 
   let accessToken: string | null | undefined;
@@ -143,6 +163,12 @@ async function ensureGoogleMeetForBookings(
     const session = getSessioninfo(booking.sessionTypeJson);
     const time = slotTime(booking.timeSlotJson);
 
+    const attendees = collectMeetAttendees({
+      bookingGuestEmail: booking.guestEmail,
+      patientGuestEmail: guestEmailByUserId.get(String(booking.userId)),
+      doctorGuestEmail: guestEmailByUserId.get(String(booking.doctorId)),
+    });
+
     const url = await createGoogleMeetEvent({
       accessToken,
       summary: `PhysioConnect · ${name} · ${time}`,
@@ -150,6 +176,7 @@ async function ensureGoogleMeetForBookings(
       start,
       end,
       requestId: `pc-${bookingId}-${Date.now()}`,
+      attendees,
     });
 
     if (!url) {
@@ -270,6 +297,67 @@ function getSessioninfo(json: unknown): string {
   return String(sessionName + newLine + sessionDescription + newLine + sessionDuration);
 }
 
+function uniquePositiveIds(values: unknown[]): number[] {
+  const seen = new Set<string>();
+  const ids: number[] = [];
+
+  for (const value of values) {
+    const id = Number(value);
+    if (!Number.isFinite(id) || id <= 0) continue;
+
+    const key = String(id);
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    ids.push(id);
+  }
+
+  return ids;
+}
+
+function normalizeEmail(raw: unknown): string | null {
+  const email = String(raw ?? "").trim().toLowerCase();
+  if (!email || !email.includes("@") || email.length > 254) return null;
+  return email;
+}
+
+function physioConnectEmail(): string | null {
+  return normalizeEmail(
+    Deno.env.get("PHYSIOCONNECT_EMAIL") ?? "physioconnect.app@gmail.com"
+  );
+}
+
+function collectMeetAttendees(input: {
+  bookingGuestEmail: unknown;
+  patientGuestEmail: unknown;
+  doctorGuestEmail: unknown;
+}): { email: string; displayName: string; responseStatus: string }[] {
+  const seen = new Set<string>();
+  const attendees: {
+    email: string;
+    displayName: string;
+    responseStatus: string;
+  }[] = [];
+
+  const add = (raw: unknown, displayName: string) => {
+    const email = normalizeEmail(raw);
+    if (!email || seen.has(email)) return;
+    seen.add(email);
+    attendees.push({
+      email,
+      displayName,
+      responseStatus: "needsAction",
+    });
+  };
+
+  add(input.bookingGuestEmail, "Patient");
+  add(input.patientGuestEmail, "Patient");
+  add(input.doctorGuestEmail, "Doctor");
+  add(physioConnectEmail(), "PhysioConnect");
+
+  return attendees;
+}
+
 function parseJsonField(
   value: unknown
 ): Record<string, any> | null {
@@ -320,8 +408,16 @@ async function googleAccessToken(): Promise<string | null> {
 }
 
 async function createGoogleMeetEvent(input: any) {
+  const attendees = Array.isArray(input.attendees) && input.attendees.length > 0
+    ? input.attendees
+    : undefined;
+
+  const inviteLine = attendees
+    ? `\nInvite: ${attendees.map((a: any) => a.email).join(", ")}`
+    : "";
+
   const res = await fetch(
-    `${CALENDAR_EVENTS_URL}?conferenceDataVersion=1`,
+    `${CALENDAR_EVENTS_URL}?conferenceDataVersion=1&sendUpdates=all`,
     {
       method: "POST",
       headers: {
@@ -331,7 +427,8 @@ async function createGoogleMeetEvent(input: any) {
       body: JSON.stringify({
         summary: input.summary,
         description:
-          "PhysioConnect online physiotherapy session",
+          `${input.details ?? "PhysioConnect online physiotherapy session"}` +
+          inviteLine,
 
         start: {
           dateTime: input.start.toISOString(),
@@ -342,6 +439,11 @@ async function createGoogleMeetEvent(input: any) {
           dateTime: input.end.toISOString(),
           timeZone: "Asia/Kolkata",
         },
+
+        guestsCanModify: false,
+        guestsCanInviteOthers: false,
+        guestsCanSeeOtherGuests: false,
+        ...(attendees ? { attendees } : {}),
 
         conferenceData: {
           createRequest: {

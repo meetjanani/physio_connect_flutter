@@ -199,21 +199,31 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               )
             else
               _buildInfoRow('Address', appointment.address ?? 'N/A', () async {
-              if (appointment.latLong != null) {
-                var latLongPoint = appointment.latLong!.split(
-                  LAT_LONG_SEPRATOR,
-                );
-                var lat = latLongPoint[0];
-                var long = latLongPoint[1];
-                final url =
-                    'https://www.google.com/maps/dir/?api=1&destination=$lat,$long&travelmode=driving';
-                try {
-                  await launchUrl(Uri.parse(url));
-                } catch (e) {
-                  showErrorSnackbar('Could not open the map: ${e.toString()}');
+                if (appointment.latLong != null) {
+                  var latLongPoint = appointment.latLong!.split(
+                    LAT_LONG_SEPRATOR,
+                  );
+                  var lat = latLongPoint[0];
+                  var long = latLongPoint[1];
+                  final url =
+                      'https://www.google.com/maps/dir/?api=1&destination=$lat,$long&travelmode=driving';
+                  try {
+                    await launchUrl(Uri.parse(url));
+                  } catch (e) {
+                    showErrorSnackbar(
+                      'Could not open the map: ${e.toString()}',
+                    );
+                  }
                 }
-              }
-            }, Icons.location_pin),
+              }, Icons.location_pin),
+            if (appointment.isOnlineSession &&
+                (appointment.guestEmail ?? '').trim().isNotEmpty)
+              _buildInfoRow(
+                'Invite email',
+                appointment.guestEmail!.trim(),
+                () {},
+                Icons.email_outlined,
+              ),
             _buildInfoRow(
               'Session Type',
               "${appointment.aSessionType().name}\n\n${appointment.aSessionType().description}",
@@ -584,6 +594,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     BookingsModel appointment,
     String newStatus,
   ) async {
+    var oldStatus = appointment.bookingStatus.toLowerCase();
     if (_isUpdatingAppointmentStatus ||
         newStatus == appointment.bookingStatus.toLowerCase()) {
       return;
@@ -594,7 +605,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       appointment.bookingStatus = newStatus;
     });
     try {
-      await controller.updateAppointmentStatus(appointment);
+      await controller.updateAppointmentStatus(appointment, oldStatus);
     } catch (error) {
       showErrorSnackbar('Could not update appointment status: $error');
     } finally {
@@ -635,6 +646,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       _buildRescheduleButton(context, appointment),
       _buildDoctorFundReleaseButton(appointment),
       _buildInvoiceButton(context, appointment),
+      if (_canIncludeInInvoice(appointment))
+        _buildDoctorDocumentButton(
+          label: 'Share Invoice',
+          onPressed: () => _shareInvoice(context, appointment),
+        ),
       _buildRefundAction(context, appointment),
       _buildDoctorDocumentButton(
         label: 'Generate Prescription',
@@ -802,10 +818,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       if (doctorId <= 0) return;
                       Get.toNamed(
                         AppPage.doctorProfile,
-                        arguments: {
-                          'doctorId': doctorId,
-                          'preview': doctor,
-                        },
+                        arguments: {'doctorId': doctorId, 'preview': doctor},
                       );
                     },
               borderRadius: BorderRadius.circular(12),
@@ -1241,6 +1254,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       return;
     }
 
+    var oldStatus = appointment.bookingStatus.toLowerCase();
     final result = await controller.processRefundForPatient(
       appointment.id.toString(),
       appointment.doctorId.toString(),
@@ -1254,7 +1268,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _refundUnlocked = false;
         _refundLongPressCount = 0;
       });
-      await controller.updateAppointmentStatus(appointment);
+      await controller.updateAppointmentStatus(appointment, oldStatus);
     }
   }
 
@@ -1837,8 +1851,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     if (shouldCancel != true) return;
 
+    var oldStatus = appointment.bookingStatus.toLowerCase();
     appointment.bookingStatus = BookingStatus.cancelled.name;
-    await controller.updateAppointmentStatus(appointment);
+    await controller.updateAppointmentStatus(appointment, oldStatus);
     setState(() {});
     Get.snackbar('Cancelled', 'Your appointment was cancelled.');
   }
@@ -1847,47 +1862,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     BuildContext context,
     BookingsModel appointment,
   ) async {
-    late final List<BookingsModel> invoiceAppointments;
-    try {
-      invoiceAppointments = await _getAppointmentGroup(appointment);
-    } catch (error) {
-      Get.snackbar(
-        'Could not validate invoice',
-        'Please try again. ${error.toString()}',
-        backgroundColor: AppColors.errorLight,
-        colorText: AppColors.error,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    if (invoiceAppointments.isEmpty) {
-      Get.snackbar(
-        'Invoice unavailable',
-        'No appointments were found for this booking.',
-        backgroundColor: AppColors.errorLight,
-        colorText: AppColors.error,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    final ineligibleAppointments = invoiceAppointments
-        .where((booking) => !_canIncludeInInvoice(booking))
-        .toList();
-    if (ineligibleAppointments.isNotEmpty) {
-      Get.snackbar(
-        'Invoice not ready',
-        'All appointments must be Completed, Refunded, or No-show, and '
-            'payment must be Paid or Refunded. '
-            '${ineligibleAppointments.length} appointment(s) still need updating.',
-        backgroundColor: AppColors.errorLight,
-        colorText: AppColors.error,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 6),
-      );
-      return;
-    }
+    final invoiceAppointments = await _prepareInvoiceAppointments(appointment);
+    if (invoiceAppointments == null) return;
 
     Get.dialog(
       Center(
@@ -1944,6 +1920,135 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
+  }
+
+  Future<void> _shareInvoice(
+    BuildContext context,
+    BookingsModel appointment,
+  ) async {
+    final invoiceAppointments = await _prepareInvoiceAppointments(appointment);
+    if (invoiceAppointments == null) return;
+
+    final emailController = TextEditingController(
+      text: appointment.guestEmail?.trim() ?? '',
+    );
+    final formKey = GlobalKey<FormState>();
+    try {
+      final recipient = await Get.dialog<String>(
+        AlertDialog(
+          title: const Text('Share Invoice'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Recipient email',
+                hintText: 'name@example.com',
+              ),
+              validator: (value) {
+                final email = value?.trim() ?? '';
+                return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)
+                    ? null
+                    : 'Enter a valid email address';
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() == true) {
+                  Get.back(result: emailController.text.trim());
+                }
+              },
+              child: const Text('Send Invoice'),
+            ),
+          ],
+        ),
+      );
+      if (recipient == null) return;
+
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+      try {
+        final pdfFile = await InvoiceService.generateInvoice(
+          appointment,
+          appointments: invoiceAppointments,
+        );
+        final patient = appointment.aPatient();
+        final parsedDate = DateTime.tryParse(appointment.bookingDate);
+        final appointmentDate = parsedDate == null
+            ? appointment.bookingDate
+            : DateFormat('dd MMM yyyy').format(parsedDate.toLocal());
+        await controller.supabaseController.sendAppointmentEmail(
+          toEmail: recipient,
+          patientName: patient.name ?? 'Patient',
+          status: appointment.bookingStatus,
+          appointmentDate: '$appointmentDate, ${appointment.aTimeslot().time}',
+          pdfBytes: await pdfFile.readAsBytes(),
+        );
+        Get.back();
+        showSuccessSnackbar('Invoice sent to $recipient.');
+      } catch (error) {
+        Get.back();
+        showErrorSnackbar('Could not send invoice: $error');
+      }
+    } finally {
+      emailController.dispose();
+    }
+  }
+
+  Future<List<BookingsModel>?> _prepareInvoiceAppointments(
+    BookingsModel appointment,
+  ) async {
+    late final List<BookingsModel> invoiceAppointments;
+    try {
+      invoiceAppointments = await _getAppointmentGroup(appointment);
+    } catch (error) {
+      Get.snackbar(
+        'Could not validate invoice',
+        'Please try again. ${error.toString()}',
+        backgroundColor: AppColors.errorLight,
+        colorText: AppColors.error,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return null;
+    }
+
+    if (invoiceAppointments.isEmpty) {
+      Get.snackbar(
+        'Invoice unavailable',
+        'No appointments were found for this booking.',
+        backgroundColor: AppColors.errorLight,
+        colorText: AppColors.error,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return null;
+    }
+
+    final ineligibleAppointments = invoiceAppointments
+        .where((booking) => !_canIncludeInInvoice(booking))
+        .toList();
+    if (ineligibleAppointments.isNotEmpty) {
+      Get.snackbar(
+        'Invoice not ready',
+        'All appointments must be Completed, Refunded, or No-show, and '
+            'payment must be Paid or Refunded. '
+            '${ineligibleAppointments.length} appointment(s) still need updating.',
+        backgroundColor: AppColors.errorLight,
+        colorText: AppColors.error,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 6),
+      );
+      return null;
+    }
+    return invoiceAppointments;
   }
 
   Widget _buildPatientRating(BookingsModel appointment) {

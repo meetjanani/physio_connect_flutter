@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:get/get.dart';
 import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/model/time_slots_model.dart';
@@ -112,6 +115,16 @@ class SupabaseController {
           .eq(DatabaseSchema.usersId, userId)
           .select();
     }
+  }
+
+  Future<void> updateUserEmail(int userId, String email) async {
+    if (userId <= 0) {
+      throw ArgumentError('A valid user ID is required to update email.');
+    }
+    await supabaseClient
+        .from(DatabaseSchema.usersTable)
+        .update({DatabaseSchema.usersGuestEmail: email.trim()})
+        .eq(DatabaseSchema.usersId, userId);
   }
 
   Future<void> updateDoctorNote(
@@ -323,8 +336,8 @@ class SupabaseController {
       final payment =
           (row[DatabaseSchema.bookingsPaymentStatus] as String? ?? '')
               .toLowerCase();
-      final status =
-          (row[DatabaseSchema.bookingsStatus] as String? ?? '').toLowerCase();
+      final status = (row[DatabaseSchema.bookingsStatus] as String? ?? '')
+          .toLowerCase();
       if (status == 'cancelled' ||
           status == 'canceled' ||
           status == 'refunded') {
@@ -863,10 +876,13 @@ class SupabaseController {
     String provider = 'pasted',
   }) async {
     if (bookingId <= 0) return;
-    await supabaseClient.from(DatabaseSchema.bookingsTable).update({
-      DatabaseSchema.bookingsMeetingUrl: meetingUrl.trim(),
-      DatabaseSchema.bookingsMeetingProvider: provider,
-    }).eq(DatabaseSchema.bookingsId, bookingId);
+    await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .update({
+          DatabaseSchema.bookingsMeetingUrl: meetingUrl.trim(),
+          DatabaseSchema.bookingsMeetingProvider: provider,
+        })
+        .eq(DatabaseSchema.bookingsId, bookingId);
   }
 
   Future<List<Map<String, dynamic>>> ensureGoogleMeetForBookings({
@@ -883,13 +899,40 @@ class SupabaseController {
       if (data is Map && data['results'] is List) {
         return List<Map<String, dynamic>>.from(
           (data['results'] as List).whereType<Map>().map(
-                (row) => Map<String, dynamic>.from(row),
-              ),
+            (row) => Map<String, dynamic>.from(row),
+          ),
         );
       }
     } catch (e) {
       print('Error creating Meet links: $e');
     }
     return [];
+  }
+
+  Future<void> sendAppointmentEmail({
+    required String toEmail,
+    required String patientName,
+    required String status,
+    required String appointmentDate,
+    Uint8List? pdfBytes,
+  }) async {
+    final pdfBase64 = pdfBytes == null ? null : base64Encode(pdfBytes);
+    final response = await supabaseClient.functions.invoke(
+      'send-email',
+      body: {
+        'toEmail': toEmail,
+        'patientName': patientName,
+        'status': status,
+        'appointmentDate': appointmentDate,
+        if (pdfBase64 != null) 'pdfBase64': pdfBase64,
+        if (pdfBase64 != null)
+          'invoiceName':
+              'PhysioConnect_Invoice_${DateTime.now().millisecondsSinceEpoch}.pdf',
+      },
+    );
+
+    if (response.data is! Map || response.data['success'] != true) {
+      throw Exception('The email service did not confirm delivery.');
+    }
   }
 }

@@ -15,8 +15,9 @@ class ProfileAboutUsController extends GetxController {
   RxBool isLoading = false.obs;
   RxBool isDoctor = false.obs;
   Rx<UserModelSupabase?> userModelSupabase = Rx<UserModelSupabase?>(null);
-  Rx<DoctorModel?> doctor =  Rx<DoctorModel?>(null);
-  String patientProfileImage = "https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9";
+  Rx<DoctorModel?> doctor = Rx<DoctorModel?>(null);
+  String patientProfileImage =
+      "https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9";
 
   @override
   void onInit() {
@@ -35,11 +36,17 @@ class ProfileAboutUsController extends GetxController {
   }
 
   Future<void> fetchUserProfile() async {
-    var mobileNumber = await secureStorageRepository.read(SecureStorage.userMobileNumberSessionStorage) ?? '';
+    var mobileNumber =
+        await secureStorageRepository.read(
+          SecureStorage.userMobileNumberSessionStorage,
+        ) ??
+        '';
     userModelSupabase.value = await UserModelSupabase.getFromSecureStorage();
     isDoctor.value = isDoctorTypeUser(userModelSupabase.value);
     if (userModelSupabase.value?.id == null && mobileNumber.isNotEmpty) {
-      userModelSupabase.value = await authController.fetchUserProfile(mobileNumber);
+      userModelSupabase.value = await authController.fetchUserProfile(
+        mobileNumber,
+      );
     }
   }
 
@@ -69,6 +76,23 @@ class ProfileAboutUsController extends GetxController {
       userModelSupabase.value = user;
       userModelSupabase.refresh();
       Get.snackbar('Updated', 'Your name was saved.');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> updateEmailAddress(String email) async {
+    final user = userModelSupabase.value;
+    if (user == null || user.id <= 0) return;
+    final normalizedEmail = email.trim();
+    isLoading.value = true;
+    try {
+      await supabaseController.updateUserEmail(user.id, normalizedEmail);
+      user.guestEmail = normalizedEmail;
+      await user.saveToSecureStorage();
+      userModelSupabase.value = user;
+      userModelSupabase.refresh();
+      Get.snackbar('Updated', 'Your email address was saved.');
     } finally {
       isLoading.value = false;
     }

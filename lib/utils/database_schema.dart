@@ -9,6 +9,7 @@ class DatabaseSchema extends GetxController {
   static const String usersDoctorId = "doctorId";
   static const String userName = "name";
   static const String userMobileNumber = "mobileNumber";
+  static const String usersGuestEmail = "guestEmail";
   static const String usersUserType = "userType";
   static const String userFirebaseToken = "firebaseToken";
   static const String userCreateAt = "createAt";
@@ -76,6 +77,7 @@ class DatabaseSchema extends GetxController {
   static const String bookingsRatingComment = "ratingComment";
   static const String bookingsMeetingUrl = "meetingUrl";
   static const String bookingsMeetingProvider = "meetingProvider";
+  static const String bookingsGuestEmail = "guestEmail";
 
   // Session Types table
   static const String sessionTypeTable = "session_type";
@@ -109,8 +111,10 @@ class DatabaseSchema extends GetxController {
   static const String doctorIsActive = "isActive";
   static const String doctorUserId = "userId";
   static const String doctorPercentageSplit = "percentageSplit";
+
   /// Comma-separated master session_type ids this doctor offers (e.g. "1,2,5").
   static const String doctorSessionTypeId = "sessionTypeId";
+
   /// Comma-separated master time_slot ids enabled for this doctor (e.g. "1,2,5").
   static const String doctorTimeSlotId = "timeSlotId";
 

@@ -21,6 +21,7 @@ Scheduling stays in the app (date + slot + pay). Video is a **Join** URL on the 
    - `GOOGLE_CALENDAR_CLIENT_SECRET`
    - `GOOGLE_CALENDAR_REFRESH_TOKEN`
    for one PhysioConnect Google account with Calendar API enabled.
+   Optional: `PHYSIOCONNECT_EMAIL` (defaults to `physioconnect.app@gmail.com`) is always added as a Meet attendee, along with the patient's and doctor's `users.guestEmail`.
 4. If those secrets are missing, doctors can tap **Create Meet** / **Paste link** on the appointment.
 5. WhatsApp is a backup chat (`wa.me`), not a scheduled video room.
 

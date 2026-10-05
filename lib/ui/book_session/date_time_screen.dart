@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 
 import '../../model/time_slots_model.dart';
 import '../../route/route_module.dart';
+import '../../utils/field_validations.dart';
 import '../../utils/view_extension.dart';
 import 'booking_controller.dart';
 
@@ -23,10 +24,12 @@ class DateTimeScreen extends StatefulWidget {
 class _DateTimeScreenState extends State<DateTimeScreen> {
   final BookingController controller = Get.find<BookingController>();
   final _addressFormKey = GlobalKey<FormState>();
+  final _emailFormKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
+    controller.initializeEmailFromProfile();
     _fetchTimeSlotAfterDateSelection(DateTime.now());
     if (!controller.isSelectedOnline) {
       fetchAndSetCurrentLocation();
@@ -112,28 +115,70 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                       ),
                     );
                   }),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Add your email to receive appointment status updates, invoices, and online session invites (optional)',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Form(
+                    key: _emailFormKey,
+                    child: TextFormField(
+                      controller: controller.emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.done,
+                      validator: (value) {
+                        final email = value?.trim() ?? '';
+                        if (email.isEmpty ||
+                            RegExp(emailPattern).hasMatch(email)) {
+                          return null;
+                        }
+                        return 'Enter a valid email, or leave this blank';
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Email (optional)',
+                        hintText: 'name@example.com',
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   if (controller.isSelectedOnline)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.medicalBlueLight,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.medicalBlue.withValues(alpha: 0.25),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.medicalBlueLight,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.medicalBlue.withValues(
+                                alpha: 0.25,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'This is an online session. After payment we add a Google Meet link. You can optionally share an email so the calendar invite is sent to you.',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: AppColors.medicalBlueDark,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'This is an online session. A Google Meet link will be added after payment. No visit address is needed.',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          height: 1.4,
-                          color: AppColors.medicalBlueDark,
-                        ),
-                      ),
+                      ],
                     )
                   else ...[
+                    const SizedBox(height: 10),
                     Text(
                       'Enter Address',
                       style: GoogleFonts.inter(
@@ -181,8 +226,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                                   minLines: 2,
                                   textInputAction: TextInputAction.done,
                                   validator: (value) {
-                                    if (value == null ||
-                                        value.trim().isEmpty) {
+                                    if (value == null || value.trim().isEmpty) {
                                       return 'Address is required';
                                     }
                                     return null;
@@ -254,16 +298,26 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                       onPressed: !canContinue
                           ? null
                           : () {
-                              if (controller.selectedSessionType.value == null) {
+                              if (controller.selectedSessionType.value ==
+                                  null) {
                                 controller.showErrorSnackbar(
                                   'Please select a session type before proceeding.',
+                                );
+                                return;
+                              }
+                              final emailValid =
+                                  _emailFormKey.currentState?.validate() ??
+                                  true;
+                              if (!emailValid) {
+                                controller.showErrorSnackbar(
+                                  'Please enter a valid email, or leave it blank.',
                                 );
                                 return;
                               }
                               if (!controller.isSelectedOnline) {
                                 final formValid =
                                     _addressFormKey.currentState?.validate() ??
-                                        false;
+                                    false;
                                 if (!formValid) {
                                   controller.showErrorSnackbar(
                                     'Please fill in apartment/house details and address.',
@@ -397,9 +451,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
     }
 
     return GestureDetector(
-      onTap: isBooked
-          ? null
-          : () => controller.selectPreferredTimeSlot(slot),
+      onTap: isBooked ? null : () => controller.selectPreferredTimeSlot(slot),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         alignment: Alignment.center,
@@ -407,10 +459,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: border,
-            width: isSelected ? 1.5 : 1,
-          ),
+          border: Border.all(color: border, width: isSelected ? 1.5 : 1),
           boxShadow: [
             if (isSelected)
               BoxShadow(
@@ -694,10 +743,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
     if (slot == null) {
       return Text(
         'Waiting for time',
-        style: GoogleFonts.inter(
-          fontSize: 11,
-          color: AppColors.textMuted,
-        ),
+        style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMuted),
       );
     }
     return Text(
@@ -731,8 +777,9 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                 final loading =
                     snapshot.connectionState != ConnectionState.done;
                 final daySlots = snapshot.data ?? const <TimeSlotModel>[];
-                final available =
-                    daySlots.where((s) => !(s.isBooked ?? false)).toList();
+                final available = daySlots
+                    .where((s) => !(s.isBooked ?? false))
+                    .toList();
 
                 return Column(
                   mainAxisSize: MainAxisSize.min,
@@ -816,8 +863,9 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                               },
                               child: Container(
                                 alignment: Alignment.center,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(10),
