@@ -1,10 +1,13 @@
 // lib/ui/booking/history/booking_history_controller.dart
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:physio_connect/utils/view_extension.dart';
 
 import '../../model/bookings_model.dart';
 import '../../model/refund_response_model.dart';
+import '../../model/time_slots_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
 import '../../utils/constants.dart';
@@ -206,15 +209,51 @@ class BookingHistoryController extends GetxController {
     }
   }
 
+  Future<List<TimeSlotModel>> loadRescheduleSlots({
+    required BookingsModel appointment,
+    required DateTime date,
+  }) async {
+    List<int>? configuredIds;
+    try {
+      configuredIds = appointment.aDoctor().timeSlotId
+          ?.split(',')
+          .map((value) => int.tryParse(value.trim()))
+          .whereType<int>()
+          .where((id) => id > 0)
+          .toSet()
+          .toList();
+      if (configuredIds != null && configuredIds.isEmpty) {
+        configuredIds = null;
+      }
+    } catch (_) {
+      configuredIds = null;
+    }
+
+    return supabaseController.getTimeSlotsMaster(
+      date,
+      appointment.doctorId,
+      timeSlotIds: configuredIds,
+      excludeBookingId: appointment.id,
+    );
+  }
+
   Future<void> rescheduleAppointment(
     BookingsModel appointment,
     DateTime newDate,
+    TimeSlotModel newSlot,
   ) async {
     isLoading.value = true;
     try {
       final bookingDate = DateFormat('yyyy-MM-dd').format(newDate);
-      await supabaseController.updateBookingDate(appointment.id, bookingDate);
+      await supabaseController.updateBookingDate(
+        appointment.id,
+        bookingDate,
+        timeSlotId: newSlot.id,
+        timeSlotJson: jsonEncode(newSlot.toJson()),
+      );
       appointment.bookingDate = bookingDate;
+      appointment.timeSlotId = newSlot.id;
+      appointment.timeSlotJson = jsonEncode(newSlot.toJson());
       selectedAppointment.value = appointment;
 
       final index = upComingBookings.indexWhere((booking) {
@@ -225,9 +264,8 @@ class BookingHistoryController extends GetxController {
       }
 
       showSuccessSnackbar(
-        'Appointment Rescheduled' +
-            "\n" +
-            'The appointment was moved to $bookingDate.',
+        'Appointment rescheduled\n'
+        'Moved to $bookingDate at ${newSlot.time}.',
       );
     } finally {
       isLoading.value = false;

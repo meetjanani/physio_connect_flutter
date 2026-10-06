@@ -74,7 +74,6 @@ Deno.serve(async (req) => {
     const releaseData = await releaseResponse.json();
 
     if (!releaseResponse.ok) {
-      console.error("Razorpay release error:", releaseData);
       return jsonResponse({ error: "Razorpay failed to release payment", details: releaseData }, 500);
     }
 
@@ -85,7 +84,6 @@ Deno.serve(async (req) => {
       .in("id", bookingIds);
 
     if (updateError) {
-      console.error("DB Update Error:", updateError);
       return jsonResponse({ error: "Payment released, but DB update failed" }, 500);
     }
 
@@ -95,8 +93,7 @@ Deno.serve(async (req) => {
       transferId: transferId
     });
 
-  } catch (error) {
-    console.error("Unexpected error:", error);
+  } catch (_error) {
     return jsonResponse({ error: "Internal server error" }, 500);
   }
 });

@@ -260,7 +260,8 @@ class BookingPaymentFlow {
     }
     // await _ensureMeetLinks(paid.bookingIds);
     await _logPaymentAnalytics(bookings);
-    await _scheduleReminders(bookings);
+    await AppointmentReminderService.instance
+        .scheduleRemindersForBookings(bookings);
     hideBusy();
     await onPaid(paid);
   }
@@ -316,43 +317,6 @@ class BookingPaymentFlow {
         userId: userId(),
       );
     } catch (_) {}
-  }
-
-  Future<void> _scheduleReminders(List<BookingsModel> bookings) async {
-    for (final booking in bookings) {
-      try {
-        final date = DateTime.tryParse(booking.bookingDate) ?? DateTime.now();
-        var slotTime = '09:00';
-        var sessionName = 'Physio session';
-        try {
-          slotTime = booking.aTimeslot().time;
-          sessionName = booking.aSessionType().name;
-        } catch (_) {}
-        await AppointmentReminderService.instance.scheduleSessionReminders(
-          bookingId: booking.id,
-          sessionStart: _combineDateAndSlot(date, slotTime),
-          sessionLabel: booking.isOnlineSession
-              ? '$sessionName — join from the app'
-              : sessionName,
-          includeJoinSoon: booking.isOnlineSession,
-        );
-      } catch (_) {}
-    }
-  }
-
-  DateTime _combineDateAndSlot(DateTime date, String slotTime) {
-    final cleaned = slotTime.trim().toUpperCase();
-    final match = RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)?').firstMatch(cleaned);
-    var hour = 9;
-    var minute = 0;
-    if (match != null) {
-      hour = int.tryParse(match.group(1) ?? '9') ?? 9;
-      minute = int.tryParse(match.group(2) ?? '0') ?? 0;
-      final ampm = match.group(3);
-      if (ampm == 'PM' && hour < 12) hour += 12;
-      if (ampm == 'AM' && hour == 12) hour = 0;
-    }
-    return DateTime(date.year, date.month, date.day, hour, minute);
   }
 
   Future<void> _deleteUnpaidDrafts(List<int> ids) async {

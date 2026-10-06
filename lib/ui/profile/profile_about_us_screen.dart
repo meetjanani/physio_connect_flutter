@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/route/route_module.dart';
+import 'package:physio_connect/custom_widget/booking_reminder_opt_in_card.dart';
 import 'package:physio_connect/custom_widget/physio_progress_bar.dart';
 import 'package:physio_connect/ui/profile/profile_about_us_controller.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
@@ -399,6 +400,8 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                           ),
                         ),
 
+                      const SizedBox(height: 24),
+                      const BookingReminderOptInCard(),
                       const SizedBox(height: 24),
 
                       // Doctor info card

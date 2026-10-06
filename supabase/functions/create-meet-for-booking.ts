@@ -77,9 +77,7 @@ Deno.serve(async (req) => {
       success: true,
       results,
     });
-  } catch (error) {
-    console.error("Meet generator error:", error);
-
+  } catch (_error) {
     return jsonResponse(
       { error: "Internal server error" },
       500

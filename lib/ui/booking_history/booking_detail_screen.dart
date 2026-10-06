@@ -5,7 +5,9 @@ import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:physio_connect/custom_widget/time_slot_chip_grid.dart';
 import 'package:physio_connect/model/bookings_model.dart';
+import 'package:physio_connect/model/time_slots_model.dart';
 import 'package:physio_connect/services/letter_head_service.dart';
 import 'package:physio_connect/ui/booking_history/show_html_editor_for_doctor_note.dart';
 import 'package:physio_connect/utils/common_appbar.dart';
@@ -1435,94 +1437,226 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   ) async {
     final currentDate =
         DateTime.tryParse(appointment.bookingDate) ?? DateTime.now();
-    DateTime? selectedDate = currentDate;
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    DateTime selectedDate = currentDate.isBefore(todayDate)
+        ? todayDate
+        : currentDate;
+    TimeSlotModel? selectedSlot;
+    try {
+      selectedSlot = appointment.aTimeslot();
+    } catch (_) {}
+    final currentSlotId = selectedSlot?.id ?? appointment.timeSlotId;
+    List<TimeSlotModel> slots = const [];
+    var loadingSlots = true;
+    Object? slotsError;
+    var slotsRequestId = 0;
+    var didKickoffLoad = false;
 
-    final action = await showDialog<String>(
+    final result = await showDialog<_ReschedulePick>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            Future<void> loadSlots(DateTime date) async {
+              final requestId = ++slotsRequestId;
+              setDialogState(() {
+                loadingSlots = true;
+                slotsError = null;
+              });
+              try {
+                final loaded = await controller.loadRescheduleSlots(
+                  appointment: appointment,
+                  date: date,
+                );
+                if (requestId != slotsRequestId) return;
+                TimeSlotModel? nextSelected;
+                if (selectedSlot != null) {
+                  nextSelected = loaded.cast<TimeSlotModel?>().firstWhere(
+                    (s) =>
+                        s?.id == selectedSlot!.id && !(s?.isBooked ?? true),
+                    orElse: () => null,
+                  );
+                }
+                setDialogState(() {
+                  slots = loaded;
+                  selectedSlot = nextSelected;
+                  loadingSlots = false;
+                });
+              } catch (e) {
+                if (requestId != slotsRequestId) return;
+                setDialogState(() {
+                  slots = const [];
+                  selectedSlot = null;
+                  loadingSlots = false;
+                  slotsError = e;
+                });
+              }
+            }
+
+            if (!didKickoffLoad) {
+              didKickoffLoad = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                loadSlots(selectedDate);
+              });
+            }
+
+            final dateChanged = DateFormat('yyyy-MM-dd').format(selectedDate) !=
+                DateFormat('yyyy-MM-dd').format(currentDate);
+            final slotChanged = selectedSlot != null &&
+                selectedSlot!.id != currentSlotId;
+            final canConfirm = !loadingSlots &&
+                selectedSlot != null &&
+                !(selectedSlot!.isBooked ?? false) &&
+                (dateChanged || slotChanged);
+
             return AlertDialog(
               title: Text(
                 'Reschedule Appointment',
                 style: GoogleFonts.inter(
-                  textStyle: TextStyle(fontWeight: FontWeight.bold),
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Please confirm a new date for this appointment.',
-                    style: GoogleFonts.inter(),
-                  ),
-                  SizedBox(height: 12),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.warningLight,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.warning.withOpacity(0.3),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pick a new date, then choose an available time slot. Occupied slots are shown in red and cannot be selected.',
+                        style: GoogleFonts.inter(fontSize: 13),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.warning_amber_rounded,
-                          color: AppColors.warningDark,
-                          size: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'The appointment date will be updated for the patient.',
-                            style: GoogleFonts.inter(
-                              textStyle: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.warningDark,
-                              ),
-                            ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.warningLight,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.warning.withValues(alpha: 0.3),
                           ),
                         ),
-                      ],
-                    ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              color: AppColors.warningDark,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Date and time will be updated for this appointment only.',
+                                style: GoogleFonts.inter(
+                                  textStyle: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.warningDark,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Date',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: dialogContext,
+                            initialDate: selectedDate.isBefore(todayDate)
+                                ? todayDate
+                                : selectedDate,
+                            firstDate: todayDate,
+                            lastDate: todayDate.add(const Duration(days: 365)),
+                          );
+                          if (picked != null) {
+                            setDialogState(() {
+                              selectedDate = picked;
+                              loadingSlots = true;
+                              slots = const [];
+                            });
+                            await loadSlots(picked);
+                          }
+                        },
+                        icon: const Icon(Icons.calendar_month),
+                        label: Text(
+                          DateFormat('EEEE, MMMM d, yyyy').format(selectedDate),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Time slot',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (loadingSlots)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.medicalBlue,
+                            ),
+                          ),
+                        )
+                      else if (slotsError != null)
+                        Text(
+                          'Could not load time slots. Try another date.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.errorDark,
+                          ),
+                        )
+                      else if (slots.isEmpty)
+                        Text(
+                          'No time slots for this date.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        )
+                      else
+                        TimeSlotChipGrid(
+                          slots: slots,
+                          selectedId: selectedSlot?.id,
+                          onSelect: (slot) {
+                            setDialogState(() => selectedSlot = slot);
+                          },
+                        ),
+                    ],
                   ),
-                  SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: dialogContext,
-                        initialDate: selectedDate!.isBefore(DateTime.now())
-                            ? DateTime.now()
-                            : selectedDate!,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(Duration(days: 365)),
-                      );
-                      if (picked != null) {
-                        setDialogState(() {
-                          selectedDate = picked;
-                        });
-                      }
-                    },
-                    icon: Icon(Icons.calendar_month),
-                    label: Text(
-                      DateFormat('EEEE, MMMM d, yyyy').format(selectedDate!),
-                    ),
-                  ),
-                ],
+                ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, 'keep'),
-                  child: Text('Keep Current Date'),
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: selectedDate == currentDate
-                      ? null
-                      : () => Navigator.pop(dialogContext, 'reschedule'),
-                  child: Text('Confirm Date'),
+                  onPressed: canConfirm
+                      ? () => Navigator.pop(
+                            dialogContext,
+                            _ReschedulePick(
+                              date: selectedDate,
+                              slot: selectedSlot!,
+                            ),
+                          )
+                      : null,
+                  child: const Text('Confirm'),
                 ),
               ],
             );
@@ -1531,8 +1665,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       },
     );
 
-    if (action == 'reschedule' && selectedDate != null) {
-      await controller.rescheduleAppointment(appointment, selectedDate!);
+    if (result != null) {
+      await controller.rescheduleAppointment(
+        appointment,
+        result.date,
+        result.slot,
+      );
       if (mounted) {
         setState(() {});
       }
@@ -2141,4 +2279,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       appointment.ratingComment = comment;
     });
   }
+}
+
+class _ReschedulePick {
+  const _ReschedulePick({required this.date, required this.slot});
+
+  final DateTime date;
+  final TimeSlotModel slot;
 }

@@ -155,11 +155,25 @@ class SupabaseController {
     }
   }
 
-  Future<void> updateBookingDate(int bookingID, String bookingDate) async {
+  Future<void> updateBookingDate(
+    int bookingID,
+    String bookingDate, {
+    int? timeSlotId,
+    String? timeSlotJson,
+  }) async {
     if (bookingID > 0 && bookingDate.isNotEmpty) {
+      final payload = <String, dynamic>{
+        DatabaseSchema.bookingsDate: bookingDate,
+      };
+      if (timeSlotId != null) {
+        payload[DatabaseSchema.bookingsTimeSlotId] = timeSlotId;
+      }
+      if (timeSlotJson != null) {
+        payload[DatabaseSchema.bookingsTimeSlotJson] = timeSlotJson;
+      }
       await supabaseClient
           .from(DatabaseSchema.bookingsTable)
-          .update({DatabaseSchema.bookingsDate: bookingDate})
+          .update(payload)
           .eq(DatabaseSchema.bookingsId, bookingID)
           .select();
     }
@@ -308,6 +322,7 @@ class SupabaseController {
     DateTime bookingDate,
     int doctorUserId, {
     List<int>? timeSlotIds,
+    int? excludeBookingId,
   }) async {
     final String formattedDate = bookingDate.toIso8601String().split('T')[0];
     var query = supabaseClient
@@ -326,13 +341,17 @@ class SupabaseController {
     final bookingsResponse = await supabaseClient
         .from(DatabaseSchema.bookingsTable)
         .select(
-          'timeSlotId,${DatabaseSchema.bookingsPaymentStatus},${DatabaseSchema.bookingsCreatedAt},${DatabaseSchema.bookingsStatus}',
+          '${DatabaseSchema.bookingsId},timeSlotId,${DatabaseSchema.bookingsPaymentStatus},${DatabaseSchema.bookingsCreatedAt},${DatabaseSchema.bookingsStatus}',
         )
         .eq(DatabaseSchema.bookingsDoctorId, doctorUserId)
         .eq(DatabaseSchema.bookingsDate, formattedDate);
 
     final bookedTimeslotList = <dynamic>[];
     for (final row in bookingsResponse) {
+      final rowId = int.tryParse('${row[DatabaseSchema.bookingsId]}') ?? 0;
+      if (excludeBookingId != null && rowId == excludeBookingId) {
+        continue;
+      }
       final payment =
           (row[DatabaseSchema.bookingsPaymentStatus] as String? ?? '')
               .toLowerCase();
@@ -344,7 +363,9 @@ class SupabaseController {
         continue;
       }
       if ((payment == 'paid') || (payment == 'pending')) {
-        bookedTimeslotList.add(row['timeSlotId']);
+        bookedTimeslotList.add(
+          int.tryParse('${row[DatabaseSchema.bookingsTimeSlotId]}') ?? -1,
+        );
         continue;
       }
     }

@@ -66,7 +66,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ..signature = paid.signature;
       controller.bookingsModel.refresh();
     }
-    controller.pendingBookingIds.clear();
     if (mounted) {
       Get.toNamed(
         AppPage.bookingConfirmation,

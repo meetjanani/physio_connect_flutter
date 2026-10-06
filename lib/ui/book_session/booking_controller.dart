@@ -15,6 +15,7 @@ import '../../model/area_model.dart';
 import '../../model/session_type_model.dart';
 import '../../model/time_slots_model.dart';
 import '../../model/user_model_supabase.dart';
+import '../../services/appointment_reminder_service.dart';
 import '../../supabase/supabase_controller.dart';
 import '../../utils/constants.dart';
 
@@ -67,7 +68,7 @@ class BookingController extends GetxController {
 
   final isCheckingConflicts = false.obs;
 
-  final selectedDate = DateTime.now().obs;
+  final selectedDate = DateTime.now().add(const Duration(days: 1)).obs;
   final isBulkAppointment = false.obs;
   final bulkAppointmentCount = 1.obs;
   final recurrence = 'every_day'.obs;
@@ -566,6 +567,33 @@ class BookingController extends GetxController {
     serviceAreas.clear();
     areaDoctorByAreaId.clear();
     areaDoctors.clear();
+  }
+
+  /// Schedules local alarms only if reminder permission is already granted.
+  Future<void> scheduleLocalRemindersIfAllowed() async {
+    final dates = appointmentDates.isEmpty
+        ? [selectedDate.value]
+        : appointmentDates.toList();
+    final ids = pendingBookingIds.toList();
+    final sessionName = selectedSessionType.value?.name ?? 'Physio session';
+    final online = isSelectedOnline;
+    for (var i = 0; i < dates.length; i++) {
+      final date = dates[i];
+      final slot = timeSlotForDate(date) ?? selectedTimeSlot.value;
+      final bookingId = i < ids.length
+          ? ids[i]
+          : (bookingsModel.value?.id ?? 0);
+      if (bookingId <= 0) continue;
+      await AppointmentReminderService.instance.scheduleSessionReminders(
+        bookingId: bookingId,
+        sessionStart: AppointmentReminderService.combineDateAndSlot(
+          date,
+          slot?.time ?? '09:00',
+        ),
+        sessionLabel: online ? '$sessionName — join from the app' : sessionName,
+        includeJoinSoon: online,
+      );
+    }
   }
 
   /// Sets city / area / assigned doctor and loads that doctor's session types.

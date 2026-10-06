@@ -76,7 +76,6 @@ Deno.serve(async (req) => {
 
     const gmailJson = await gmailRes.json();
     if (!gmailRes.ok) {
-      console.error("Gmail send failed:", gmailJson);
       return jsonResponse(
         {
           error: "Gmail could not send the email",
@@ -90,8 +89,7 @@ Deno.serve(async (req) => {
       success: true,
       messageId: gmailJson.id ?? null,
     });
-  } catch (error) {
-    console.error("send-email failed:", error);
+  } catch (_error) {
     return jsonResponse({ error: "Internal server error" }, 500);
   }
 });
@@ -109,7 +107,6 @@ async function googleAccessToken() {
   const refreshToken = Deno.env.get("GOOGLE_CALENDAR_REFRESH_TOKEN")?.trim();
 
   if (!clientId || !clientSecret || !refreshToken) {
-    console.error("Missing Google credentials in environment variables.");
     return null;
   }
 
@@ -128,7 +125,6 @@ async function googleAccessToken() {
   const json = await res.json();
   const token = String(json.access_token ?? "").trim();
   if (!res.ok || !token) {
-    console.error("Google token refresh failed:", json);
     return null;
   }
   return token;

@@ -87,8 +87,7 @@ Deno.serve(async (req) => {
       amount: paymentData.payment.amount,
     });
 
-  } catch (error) {
-    console.error("Unexpected error:", error);
+  } catch (_error) {
     return jsonResponse({ error: "Internal server error" }, 500);
   }
 });
@@ -112,8 +111,7 @@ async function markBookingsPaid(
         transferStatus = transferData.items[0].status;
       }
     }
-  } catch (err) {
-    console.warn("Could not fetch transfer details:", err);
+  } catch (_err) {
   }
 
   // TypeScript fix applied here: Record
@@ -140,8 +138,7 @@ async function markBookingsPaid(
     });
     if (invokeError) throw invokeError;
     meetResults = data?.results || [];
-  } catch (meetError) {
-    console.warn("Invoking Google Meet function failed. Can be retried manually.", meetError);
+  } catch (_meetError) {
   }
 
   return jsonResponse({
@@ -202,13 +199,12 @@ async function recordPaymentFailure(supabase: any, { bookingIds, userId, razorpa
     }
   }
 
-  const { error: failureUpdateError } = await supabase.from("bookings").update({
+  const { error: _failureUpdateError } = await supabase.from("bookings").update({
     paymentFailureReason: failureMessage,
     orderId: razorpayOrderId ?? null,
     paymentId: razorpayPaymentId ?? null,
   }).in("id", bookingIds).neq("paymentStatus", "paid").neq("paymentStatus", "refunded");
 
-  if (failureUpdateError) console.error("Payment failure update error:", failureUpdateError);
   return jsonResponse({ success: false, error: failureMessage, message: failureMessage });
 }
 

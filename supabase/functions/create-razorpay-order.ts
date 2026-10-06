@@ -80,7 +80,6 @@ Deno.serve(async (req) => {
       .in("id", bookingIds);
 
     if (bookingsError || !bookings || bookings.length === 0) {
-      console.error("Booking fetch error:", bookingsError);
       return jsonResponse({ error: "Bookings not found" }, 404);
     }
 
@@ -122,7 +121,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (doctorError || !doctor) {
-      console.error("Doctor error:", doctorError);
       return jsonResponse({ error: "Doctor not found" }, 404);
     }
 
@@ -159,7 +157,6 @@ Deno.serve(async (req) => {
     const rawKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
 
     if (!rawKeyId || !rawKeySecret) {
-      console.error("FATAL: Razorpay keys are missing in the environment!");
       return jsonResponse({ error: "Server configuration error: Missing Razorpay keys" }, 500);
     }
 
@@ -172,7 +169,6 @@ Deno.serve(async (req) => {
     // -----------------------------------------
     // Moved down so we can return the calculated amounts and keyId
     if (bookings[0].orderId) {
-      console.log("Returning existing order:", bookings[0].orderId);
       return jsonResponse({
         success: true,
         orderId: bookings[0].orderId,
@@ -191,14 +187,6 @@ Deno.serve(async (req) => {
     const receiptString = isBulkAppointment
       ? `bulk_${bulkAppointmentId.substring(0, 30)}`
       : `bk_${bookingIds[0]}`;
-
-    console.log("SENDING TO RAZORPAY:", {
-      amountPaise,
-      receiptString,
-      isBulkAppointment,
-      doctorAccountId: doctor.razorpayAccountId,
-      keyIdLength: razorpayKeyId.length,
-    });
 
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
@@ -225,7 +213,6 @@ Deno.serve(async (req) => {
     const razorpayData = await razorpayResponse.json();
 
     if (!razorpayResponse.ok) {
-      console.error("Razorpay error:", razorpayData);
       return jsonResponse({ error: "Razorpay order creation failed", razorpay: razorpayData, status: razorpayResponse.status }, 500);
     }
 
@@ -248,7 +235,6 @@ Deno.serve(async (req) => {
       .in("id", bookingIds);
 
     if (updateError) {
-      console.error("Database update error:", updateError);
       return jsonResponse({ error: "Unable to save payment information to database" }, 500);
     }
 
@@ -265,7 +251,6 @@ Deno.serve(async (req) => {
       platformFeeAmount: platformFeePaise,
     });
   } catch (error) {
-    console.error("Unexpected error:", error);
     return jsonResponse({ error: error instanceof Error ? error.message : String(error) }, 500);
   }
 });

@@ -57,6 +57,7 @@ class DatabaseSchema extends GetxController {
   static const String bookingsPrice = "price";
   static const String bookingsUserId = "userId";
   static const String bookingsTimeSlotId = "timeSlotId";
+  static const String bookingsTimeSlotJson = "timeSlotJson";
   static const String bookingsDoctorId = "doctorId";
   static const String bookingsCityId = "cityId";
   static const String bookingsAreaId = "areaId";

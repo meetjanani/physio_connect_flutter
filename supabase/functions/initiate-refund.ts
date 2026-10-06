@@ -40,7 +40,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (bookingError || !booking) {
-      console.error("Booking fetch error:", bookingError);
       return jsonResponse({ error: "Booking not found" }, 404);
     }
 
@@ -93,7 +92,6 @@ Deno.serve(async (req) => {
     const refundData = await refundResponse.json();
 
     if (!refundResponse.ok) {
-      console.error("Razorpay refund error:", refundData);
       return jsonResponse({ error: "Razorpay failed to process refund", details: refundData }, 500);
     }
 
@@ -112,7 +110,6 @@ Deno.serve(async (req) => {
       .eq("id", booking.id);
 
     if (updateError) {
-      console.error("Failed to update booking status:", updateError);
       return jsonResponse({ error: "Refund processed at Razorpay, but DB update failed" }, 500);
     }
 
@@ -122,8 +119,7 @@ Deno.serve(async (req) => {
       refundId: refundData.id,
     });
 
-  } catch (error) {
-    console.error("Unexpected error:", error);
+  } catch (_error) {
     return jsonResponse({ error: "Internal server error" }, 500);
   }
 });
