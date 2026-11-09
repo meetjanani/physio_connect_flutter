@@ -1,4 +1,38 @@
 {
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/doctor",
+        "destination": "/physio_connect_doctor_onboarding_deck.html"
+      },
+      {
+        "source": "/patient",
+        "destination": "/physio_connect_patient_experience_deck.html"
+      },
+      {
+        "source": "/hub",
+        "destination": "/physio_connect_marketing_hub.html"
+      },
+      {
+        "source": "/dhanteras",
+        "destination": "/dhanteras_campaign.html"
+      },
+      {
+        "source": "/festive",
+        "destination": "/festive_campaigns.html"
+      },
+      {
+        "source": "/diwali",
+        "destination": "/festive_campaigns.html"
+      }
+    ]
+  },
   "functions": [
     {
       "source": "functions",
