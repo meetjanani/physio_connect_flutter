@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -29,6 +30,9 @@ class DashboardController extends GetxController {
 
   Future<void> fetchFirebaseToken() async {
     userModelSupabase = await UserModelSupabase.getFromSecureStorage();
+    // Push notifications are mobile-only (no service worker / VAPID key on
+    // the website); getToken() throws there and would skip the rest of init.
+    if (kIsWeb) return;
     final messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
     if(token != null && ((userModelSupabase?.id ?? 0) > 0) && userModelSupabase?.firebaseToken != token) {

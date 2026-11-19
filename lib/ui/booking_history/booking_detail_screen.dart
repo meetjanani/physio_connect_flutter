@@ -26,7 +26,10 @@ import '../../route/route_module.dart';
 import 'online_session_actions.dart';
 
 class BookingDetailScreen extends StatefulWidget {
-  BookingDetailScreen({Key? key}) : super(key: key);
+  BookingDetailScreen({Key? key, this.initialAppointment}) : super(key: key);
+
+  /// Booking to show. Falls back to `Get.arguments` (in-app navigation).
+  final BookingsModel? initialAppointment;
 
   @override
   State<BookingDetailScreen> createState() => _BookingDetailScreenState();
@@ -38,7 +41,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       ? Get.find<BookingHistoryController>()
       : Get.put(BookingHistoryController());
 
-  final BookingsModel appointment = Get.arguments as BookingsModel;
+  late final BookingsModel appointment =
+      widget.initialAppointment ?? Get.arguments as BookingsModel;
   int _refundLongPressCount = 0;
   bool _refundUnlocked = false;
   bool _isReleasingDoctorPayment = false;
@@ -820,7 +824,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       final doctorId = doctor.id ?? 0;
                       if (doctorId <= 0) return;
                       Get.toNamed(
-                        AppPage.doctorProfile,
+                        AppPage.doctorProfileFor(doctorId),
                         arguments: {'doctorId': doctorId, 'preview': doctor},
                       );
                     },

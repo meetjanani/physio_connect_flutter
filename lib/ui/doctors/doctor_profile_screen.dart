@@ -40,6 +40,10 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
     } else if (args is int) {
       doctorId = args;
     }
+    if (doctorId <= 0) {
+      // Opened from the URL (website refresh / shared link).
+      doctorId = int.tryParse(Get.parameters['id'] ?? '') ?? 0;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.openProfile(
         doctorId: doctorId,

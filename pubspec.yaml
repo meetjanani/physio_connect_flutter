@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Clean website URLs (/dashboard instead of /#/dashboard).
+  flutter_web_plugins:
+    sdk: flutter
   get: ^4.7.2
   firebase_core: ^4.0.0
   firebase_messaging: ^16.0.0

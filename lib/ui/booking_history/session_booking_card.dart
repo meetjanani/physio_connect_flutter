@@ -263,7 +263,7 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
                       bookingController.selectedAppointment.value =
                           widget.appointment;
                       Get.toNamed(
-                        AppPage.bookingDetail,
+                        AppPage.bookingDetailFor(widget.appointment.id),
                         arguments: widget.appointment,
                       )?.then((value) {
                         if (mounted) setState(() {});
