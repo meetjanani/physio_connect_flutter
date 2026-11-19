@@ -11,9 +11,11 @@ The same Flutter code base now builds for the browser. The site layout is:
 
 ## One-time setup
 
-1. Your existing pages (doctor / patient decks, marketing hub) are already in
-   `web/pages/`. `/doctor`, `/patient` and `/hub` now redirect to
-   `/pages/doctor`, `/pages/patient`, `/pages/hub`.
+1. Static pages (doctor / patient decks, marketing hub, festive campaigns) live
+   in `web/pages/` (images in `web/pages/assets/`). Short links redirect:
+   `/doctor`, `/patient`, `/hub`, `/festive`, `/diwali`, `/dhanteras` →
+   `/pages/<name>`. Add new short links in `firebase.json` (`redirects` +
+   matching `/pages/<name>` rewrite). The old `public/` folder is no longer used.
 2. **Firebase Web app**: done. "PhysioConnect Web" is registered and its
    config is in `lib/firebase_web_options.dart`.
 3. **Phone OTP login on web** — Console → Authentication → Settings →

@@ -2129,7 +2129,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           patientName: patient.name ?? 'Patient',
           status: appointment.bookingStatus,
           appointmentDate: '$appointmentDate, ${appointment.aTimeslot().time}',
-          pdfBytes: await pdfFile.readAsBytes(),
+          pdfBytes: pdfFile,
         );
         Get.back();
         showSuccessSnackbar('Invoice sent to $recipient.');

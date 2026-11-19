@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:physio_connect/model/doctor_model.dart';
+import 'package:physio_connect/utils/app_network_image.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
 class DoctorAvatar extends StatelessWidget {
@@ -26,17 +26,19 @@ class DoctorAvatar extends StatelessWidget {
         height: size,
         color: AppColors.medicalBlueLight,
         child: photo.isNotEmpty
-            ? CachedNetworkImage(
+            ? AppNetworkImage(
                 imageUrl: photo,
+                width: size,
+                height: size,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => const Center(
+                placeholder: (_) => const Center(
                   child: SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
-                errorWidget: (_, __, ___) => _initials(),
+                errorWidget: (_) => _initials(),
               )
             : _initials(),
       ),

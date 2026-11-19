@@ -1,55 +1,5 @@
 {
   "hosting": {
-    "public": "public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/doctor",
-        "destination": "/physio_connect_doctor_onboarding_deck.html"
-      },
-      {
-        "source": "/patient",
-        "destination": "/physio_connect_patient_experience_deck.html"
-      },
-      {
-        "source": "/hub",
-        "destination": "/physio_connect_marketing_hub.html"
-      },
-      {
-        "source": "/dhanteras",
-        "destination": "/dhanteras_campaign.html"
-      },
-      {
-        "source": "/festive",
-        "destination": "/festive_campaigns.html"
-      },
-      {
-        "source": "/diwali",
-        "destination": "/festive_campaigns.html"
-      }
-    ]
-  },
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint"
-      ]
-    }
-  ],
-  "hosting": {
     "public": "build/web",
     "ignore": [
       "firebase.json",
@@ -72,6 +22,41 @@
       {
         "source": "/hub",
         "destination": "/pages/hub",
+        "type": 301
+      },
+      {
+        "source": "/festive",
+        "destination": "/pages/festive",
+        "type": 301
+      },
+      {
+        "source": "/diwali",
+        "destination": "/pages/diwali",
+        "type": 301
+      },
+      {
+        "source": "/dhanteras",
+        "destination": "/pages/dhanteras",
+        "type": 301
+      },
+      {
+        "source": "/dhanteras_campaign.html",
+        "destination": "/pages/dhanteras_campaign.html",
+        "type": 301
+      },
+      {
+        "source": "/dhanteras_campaign",
+        "destination": "/pages/dhanteras_campaign.html",
+        "type": 301
+      },
+      {
+        "source": "/festive_campaigns.html",
+        "destination": "/pages/festive_campaigns.html",
+        "type": 301
+      },
+      {
+        "source": "/festive_campaigns",
+        "destination": "/pages/festive_campaigns.html",
         "type": 301
       },
       {
@@ -119,6 +104,18 @@
         "destination": "/pages/physio_connect_marketing_hub.html"
       },
       {
+        "source": "/pages/festive",
+        "destination": "/pages/festive_campaigns.html"
+      },
+      {
+        "source": "/pages/diwali",
+        "destination": "/pages/festive_campaigns.html"
+      },
+      {
+        "source": "/pages/dhanteras",
+        "destination": "/pages/dhanteras_campaign.html"
+      },
+      {
         "source": "/pages/**",
         "destination": "/pages/404.html"
       },
@@ -160,5 +157,21 @@
         ]
       }
     ]
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ]
 }
