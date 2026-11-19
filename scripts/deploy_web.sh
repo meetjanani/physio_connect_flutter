@@ -8,6 +8,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+python3 scripts/generate_landing_pages.py
 python3 scripts/sync_page_redirects.py
 # shellcheck disable=SC2086
 flutter build web --release --base-href / ${FLUTTER_WEB_FLAGS:-}

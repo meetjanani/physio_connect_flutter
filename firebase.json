@@ -155,6 +155,24 @@
             "value": "strict-origin-when-cross-origin"
           }
         ]
+      },
+      {
+        "source": "/@(splash|login|register|dashboard|doctorDashboard|selectServiceCity|selectServiceArea|selectDoctor|selectSessionType|selectDateAndTime|performPayment|bookingConfirmation|booking-history|booking-detail|user-profile|doctors|doctor-profile|generate-prescription|manage-time-slot|not-found)",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
+        "source": "/@(splash|login|register|dashboard|doctorDashboard|selectServiceCity|selectServiceArea|selectDoctor|selectSessionType|selectDateAndTime|performPayment|bookingConfirmation|booking-history|booking-detail|user-profile|doctors|doctor-profile|generate-prescription|manage-time-slot|not-found)/**",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
       }
     ]
   },
