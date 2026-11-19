@@ -19,3 +19,20 @@ class BaseBinding extends Bindings {
     );
   }
 }
+/// App-wide services registered once at start-up (`initialBinding`).
+///
+/// `fenix: true` re-creates a service if GetX disposed it together with the
+/// page that first used it, so pages without their own binding (and pages
+/// opened directly from a website URL) can always find them.
+class AppBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => FirebaseAuthController(), fenix: true);
+    Get.lazyPut(() => SupabaseController(), fenix: true);
+    Get.lazyPut(() => DatabaseSchema(), fenix: true);
+    Get.lazyPut<SecureStorageRepository>(
+      () => SecureStorageRepository(),
+      fenix: true,
+    );
+  }
+}

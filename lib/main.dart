@@ -1,11 +1,14 @@
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:physio_connect/base_code/base_binding.dart';
 import 'package:physio_connect/firebase_web_options.dart';
 import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/supabase/firebase_notification.dart';
@@ -17,6 +20,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 
 void main() async {
+  // Website: real paths (/dashboard) instead of /#/dashboard. Firebase
+  // Hosting rewrites every app path to index.html, so refresh and deep links
+  // work. No-op on Android/iOS.
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   // Only bypass TLS in debug — never in Play Store / release builds.
   // (dart:io HttpOverrides do not exist in the browser.)
@@ -38,6 +45,16 @@ void main() async {
         ? const AndroidDebugProvider()
         : const AndroidPlayIntegrityProvider(),
   );
+  if (kIsWeb) {
+    // The browser restores the signed-in user asynchronously. Wait for it so
+    // a refresh or deep link to a protected page doesn't bounce to login.
+    try {
+      await FirebaseAuth.instance
+          .authStateChanges()
+          .first
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {}
+  }
   if (!kIsWeb) {
     // Local notifications, background FCM handlers and topic subscriptions
     // are Android/iOS-only.
@@ -147,9 +164,13 @@ class _MyAppState extends State<MyApp> {
       // localizationsDelegates: const [
       //   flc.CountryLocalizations.delegate,
       // ],
+      title: 'PhysioConnect',
+      // Shared services (Supabase, auth, storage) for every page, so a page
+      // opened directly from a website URL finds them too.
+      initialBinding: AppBinding(),
       initialRoute: AppPage.splashScreen,
-      routes: {AppPage.splashScreen: (context) => const SplashScreen()},
       getPages: AppPage.routes,
+      unknownRoute: AppPage.unknownRoute,
     ),
   );
 }

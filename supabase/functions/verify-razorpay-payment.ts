@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
     if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
     const body = await req.json();
-    const { bookingIds, userId, razorpayOrderId, razorpayPaymentId, razorpaySignature, paymentFailure } = body;
+    const { bookingIds, userId, razorpayOrderId, razorpayPaymentId, razorpaySignature, paymentFailure, checkStatusOnly } = body;
 
     if (!bookingIds || !Array.isArray(bookingIds) || bookingIds.length === 0) {
       return jsonResponse({ error: "bookingIds array is required" }, 400);
@@ -24,6 +24,13 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const secretKeys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS")!);
     const supabase = createClient(supabaseUrl, secretKeys["default"]);
+
+    // Website (Payment Link / UPI QR): read-only status poll. Never records a
+    // failure; marks the bookings paid only once Razorpay reports a captured
+    // payment for the link / QR saved by create-razorpay-order.
+    if (checkStatusOnly === true) {
+      return await checkWebPaymentStatus(supabase, { bookingIds, userId });
+    }
 
     const failureMessage = typeof paymentFailure?.message === "string" ? paymentFailure.message.trim() : "";
     if (failureMessage) {
@@ -115,7 +122,7 @@ async function markBookingsPaid(
   }
 
   // TypeScript fix applied here: Record
-  const updatePayload: Record = {
+  const updatePayload: Record<string, unknown> = {
     paymentStatus: "paid",
     bookingStatus: "confirmed",
     paymentVerifiedAt: new Date().toISOString(),
@@ -127,7 +134,11 @@ async function markBookingsPaid(
   };
   if (razorpaySignature) updatePayload.signature = razorpaySignature;
 
-  const { error: finalUpdateError } = await supabase.from("bookings").update(updatePayload).in("id", bookingIds);
+  const { error: finalUpdateError } = await supabase
+    .from("bookings")
+    .update(updatePayload)
+    .in("id", bookingIds)
+    .neq("paymentStatus", "refunded");
   if (finalUpdateError) return jsonResponse({ error: "Booking final status update failed" }, 500);
 
   // Invoke Google Meet Edge Function Async
@@ -151,6 +162,119 @@ async function markBookingsPaid(
     amount,
     meetResults,
   });
+}
+
+async function checkWebPaymentStatus(supabase: any, { bookingIds, userId }: any) {
+  const loaded = await loadOwnedBookings(supabase, bookingIds, userId);
+  if (loaded.response) return loaded.response;
+
+  if (loaded.bookings.every((b: any) => b.paymentStatus === "paid")) {
+    return jsonResponse({ success: true, status: "SUCCESS", alreadyPaid: true });
+  }
+
+  const rawKeyId = Deno.env.get("RAZORPAY_KEY_ID")?.trim();
+  const rawKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET")?.trim();
+  if (!rawKeyId || !rawKeySecret) throw new Error("Razorpay credentials missing");
+  const basicAuth = btoa(`${rawKeyId}:${rawKeySecret}`);
+  const get = async (url: string) => {
+    try {
+      const r = await fetch(url, { headers: { Authorization: `Basic ${basicAuth}` } });
+      return r.ok ? await r.json() : null;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const expectedAmountPaise = Math.round(
+    loaded.bookings.reduce((sum: number, b: any) => sum + (Number(b.price) || 0), 0) * 100,
+  );
+  const linkId = loaded.bookings.find((b: any) => b.webPaymentLinkId)?.webPaymentLinkId;
+  const qrId = loaded.bookings.find((b: any) => b.webQrCodeId)?.webQrCodeId;
+  if (!linkId && !qrId) return jsonResponse({ success: false, status: "PENDING" });
+
+  let paymentId: string | null = null;
+  let viaQr = false;
+  let linkClosed = !linkId;
+  let qrClosed = !qrId;
+
+  if (linkId) {
+    const link = await get(`https://api.razorpay.com/v1/payment_links/${linkId}`);
+    if (link?.status === "paid") {
+      paymentId = (link.payments ?? []).find((p: any) => p.status === "captured")?.payment_id ?? null;
+    }
+    linkClosed = link?.status === "expired" || link?.status === "cancelled";
+  }
+  if (!paymentId && qrId) {
+    const list = await get(`https://api.razorpay.com/v1/payments/qr_codes/${qrId}/payments`);
+    const captured = (list?.items ?? []).find((p: any) => p.status === "captured");
+    if (captured) {
+      paymentId = captured.id;
+      viaQr = true;
+    } else {
+      const qr = await get(`https://api.razorpay.com/v1/payments/qr_codes/${qrId}`);
+      qrClosed = qr?.status === "closed";
+    }
+  }
+
+  if (!paymentId) {
+    return jsonResponse({ success: false, status: linkClosed && qrClosed ? "FAILED" : "PENDING" });
+  }
+
+  const paymentData = await fetchRazorpayPayment(paymentId, basicAuth);
+  if (paymentData.response) return paymentData.response;
+  const payment = paymentData.payment;
+  if (payment.status !== "captured" || Number(payment.amount) !== expectedAmountPaise) {
+    return jsonResponse({ success: false, status: "PENDING", error: "Payment could not be matched" });
+  }
+
+  // QR payments can't carry Route transfers, so create the doctor's held
+  // transfer after capture (same split as the original order).
+  if (viaQr) await ensureDoctorTransfer(supabase, { bookingIds, paymentId, basicAuth });
+
+  const marked = await markBookingsPaid(supabase, {
+    bookingIds,
+    userId,
+    razorpayPaymentId: paymentId,
+    razorpayOrderId: payment.order_id ?? null,
+    razorpaySignature: null,
+    basicAuth,
+    amount: payment.amount,
+  });
+  if (marked.status !== 200) return marked;
+  return jsonResponse({ success: true, status: "SUCCESS", paymentId });
+}
+
+async function ensureDoctorTransfer(supabase: any, { bookingIds, paymentId, basicAuth }: any) {
+  try {
+    const existing = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}/transfers`, {
+      headers: { Authorization: `Basic ${basicAuth}` },
+    }).then((r) => (r.ok ? r.json() : null));
+    if (existing?.items?.length) return;
+
+    const { data: rows } = await supabase
+      .from("bookings")
+      .select(`"doctorId", "doctorAmount"`)
+      .in("id", bookingIds);
+    if (!rows?.length) return;
+    const doctorAmountPaise = Math.round(
+      rows.reduce((sum: number, r: any) => sum + (Number(r.doctorAmount) || 0), 0) * 100,
+    );
+    const { data: doctor } = await supabase
+      .from("doctor")
+      .select(`"razorpayAccountId"`)
+      .eq("userId", rows[0].doctorId)
+      .single();
+    if (!doctor?.razorpayAccountId || doctorAmountPaise <= 0) return;
+
+    await fetch(`https://api.razorpay.com/v1/payments/${paymentId}/transfers`, {
+      method: "POST",
+      headers: { Authorization: `Basic ${basicAuth}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        transfers: [{ account: doctor.razorpayAccountId, amount: doctorAmountPaise, currency: "INR", on_hold: 1 }],
+      }),
+    });
+  } catch (_err) {
+  }
 }
 
 async function recordPaymentFailure(supabase: any, { bookingIds, userId, razorpayOrderId, razorpayPaymentId, failureMessage }: any) {
@@ -211,7 +335,7 @@ async function recordPaymentFailure(supabase: any, { bookingIds, userId, razorpa
 async function loadOwnedBookings(supabase: any, bookingIds: any, userId: any) {
   const { data: bookings, error: bookingsError } = await supabase
     .from("bookings")
-    .select(`id, "userId", price, "paymentStatus", "bookingStatus", "orderId"`)
+    .select(`id, "userId", price, "paymentStatus", "bookingStatus", "orderId", "webPaymentLinkId", "webQrCodeId"`)
     .in("id", bookingIds);
 
   if (bookingsError || !bookings || bookings.length === 0) return { bookings: [], response: jsonResponse({ error: "Bookings not found" }, 404) };

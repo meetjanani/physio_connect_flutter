@@ -125,7 +125,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
   void _openProfile(DoctorModel doctor) {
     Get.toNamed(
-      AppPage.doctorProfile,
+      AppPage.doctorProfileFor(doctor.id ?? 0),
       arguments: {
         'doctorId': doctor.id ?? 0,
         'preview': doctor,

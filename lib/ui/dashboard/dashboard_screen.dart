@@ -380,7 +380,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 doctor: doctor,
                 coverageLabel: directory.firstCoverageLabel(doctor),
                 onTap: () => Get.toNamed(
-                  AppPage.doctorProfile,
+                  AppPage.doctorProfileFor(doctor.id ?? 0),
                   arguments: {
                     'doctorId': doctor.id ?? 0,
                     'preview': doctor,
@@ -396,7 +396,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _openAppointment(BookingsModel appointment) {
     Get.put(BookingHistoryController()).selectedAppointment.value = appointment;
-    Get.toNamed(AppPage.bookingDetail, arguments: appointment);
+    Get.toNamed(
+      AppPage.bookingDetailFor(appointment.id),
+      arguments: appointment,
+    );
   }
 
   List<Widget> _buildHealthTipCards() {

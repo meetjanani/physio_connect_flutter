@@ -297,7 +297,9 @@ class _ServiceAreaScreenState extends State<ServiceAreaScreen> {
                                             child: TextButton(
                                               onPressed: () {
                                                 Get.toNamed(
-                                                  AppPage.doctorProfile,
+                                                  AppPage.doctorProfileFor(
+                                                    doctor!.id ?? 0,
+                                                  ),
                                                   arguments: {
                                                     'doctorId': doctor!.id,
                                                     'preview': doctor,

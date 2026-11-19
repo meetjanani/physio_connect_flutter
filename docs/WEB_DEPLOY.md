@@ -26,9 +26,9 @@ The same Flutter code base now builds for the browser. The site layout is:
    registered under Console → App Check with that key. Otherwise Firebase
    calls from the website will be rejected if enforcement is on.
 5. **Payments** — until Razorpay approves the website domain, the website
-   pays via Payment Link + UPI QR. This needs the server change in
-   [WEB_PAYMENTS_SERVER.md](WEB_PAYMENTS_SERVER.md); before that the website
-   asks users to pay in the Android app.
+   pays via Payment Link + UPI QR. Deploy the migration, functions and webhook
+   listed in [WEB_PAYMENTS_SERVER.md](WEB_PAYMENTS_SERVER.md); before that the
+   website asks users to pay in the Android app.
 6. **Firebase CLI account** — sign in with the Google account that owns
    `physio-connect-app`: `firebase login:add` then `firebase login:use <email>`.
 7. If your existing pages are on a *non-default* Hosting site, add
@@ -50,6 +50,22 @@ flutter build web --release && firebase emulators:start --only hosting
 
 Open http://localhost:5000 — the hosting emulator applies the same redirects
 and rewrites as production.
+
+## Website URLs
+
+The app uses real paths (`/dashboard`, `/booking-history`), not `/#/…`.
+Firebase Hosting rewrites every app path to `index.html`, so refresh, bookmarks
+and shared links work. Rules on direct visits:
+
+- Signed-out visitors opening a protected page go to `/login`.
+- Booking steps (`/selectServiceArea` … `/bookingConfirmation`) keep their
+  choices in memory; on refresh they restart at `/selectServiceCity`.
+- `/booking-detail?id=<id>` and `/doctor-profile?id=<id>` load from the URL.
+  A booking is shown only to its patient or doctor.
+- Unknown paths go to the dashboard (or login).
+
+Local testing needs a server with the same SPA fallback (`firebase emulators`
+does this); `python -m http.server` will 404 on refresh.
 
 ## What behaves differently on web
 

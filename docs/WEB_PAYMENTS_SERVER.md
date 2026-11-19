@@ -1,111 +1,74 @@
-# Website payments: Payment Link + UPI QR (server changes)
+# Website payments: Payment Link + UPI QR
 
 Razorpay hasn't approved the website domain for embedded Checkout yet, so the
-**website** pays through a Razorpay **Payment Link** and a **UPI QR code**
-(the same approach as GIFTCity Carpool). The **Android app is unchanged** and
-keeps using the native Razorpay SDK + signature verification.
+**website** pays through a Razorpay **Payment Link** (Razorpay-hosted payment
+page: UPI apps, cards, wallets) and a **UPI QR code**. Neither needs the website
+to be approved. The **Android app is unchanged** and keeps using the native
+Razorpay SDK + signature verification.
 
-The Flutter side is done. Until the two Supabase Edge Functions below are
-updated, the website shows *"Online payment on the website is not available
-yet. Please complete this booking in the PhysioConnect Android app."*. No
-broken checkout is ever shown.
+The server code is in this repo (`supabase/functions/`). Until it is deployed,
+the website shows *"Online payment on the website is not available yet. Please
+complete this booking in the PhysioConnect Android app."* No broken checkout is
+ever shown.
 
-The function source isn't in this repo; it lives in the Supabase project
-`cjnxrkzrmeetzragwrlm`.
+## How it works
 
-## 1. `create-razorpay-order`
+1. The website calls `create-razorpay-order` with `"channel": "web"`. After the
+   normal order, the function creates (or reuses, if still open and the same
+   amount) a Payment Link and a UPI QR, saves their ids on the bookings
+   (`webPaymentLinkId`, `webQrCodeId`) and returns `paymentLinkUrl` /
+   `qrCodeUrl`.
+2. The website shows a dialog: **Pay on this device** opens the link in a new
+   tab; **Scan QR** shows the UPI QR (Razorpay's QR image, or a QR of the
+   payment link if the QR could not be created).
+3. The website polls `verify-razorpay-payment` with `checkStatusOnly: true`
+   every 3 s. The function asks Razorpay whether the link / QR has a captured
+   payment for the right amount and, if so, marks the bookings paid with the
+   same code the Android flow uses. It never records a failure.
+4. `razorpay-webhook` confirms the bookings even if the patient closes the tab
+   right after paying.
 
-The app now sends `"channel": "web"` from the website. When present, after the
-normal order is created, also create a Payment Link and a UPI QR and return
-their URLs:
+**Doctor payouts (Route):** the Payment Link carries the same held transfer as
+the Android order (`options.order.transfers`, `on_hold`). QR payments can't
+carry transfers, so the held transfer is created right after capture.
+`release-doctor-payment` works the same for all three.
 
-```ts
-// After `order` is created (Android flow unchanged when channel !== "web")
-if (body.channel === "web") {
-  const notes = { order_id: order.id, booking_ids: bookingIds.join(","), user_id: String(userId) };
-  const auth = `Basic ${btoa(`${keyId}:${keySecret}`)}`;
+## Deploy (one time)
 
-  const [link, qr] = await Promise.all([
-    fetch("https://api.razorpay.com/v1/payment_links", {
-      method: "POST",
-      headers: { Authorization: auth, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: order.amount,
-        currency: "INR",
-        accept_partial: false,
-        description: "PhysioConnect session booking",
-        customer: { contact: patientPhone },
-        notify: { sms: false, email: false },
-        reminder_enable: false,
-        upi_link: false,          // true = UPI-only link (no card page)
-        expire_by: Math.floor(Date.now() / 1000) + 30 * 60,
-        notes,
-        // Keep doctor payouts (Route) working for link payments:
-        // options: { order: { transfers: sameTransfersAsTheOrder } },
-      }),
-    }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    fetch("https://api.razorpay.com/v1/payments/qr_codes", {
-      method: "POST",
-      headers: { Authorization: auth, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "upi_qr",
-        name: "PhysioConnect",
-        usage: "single_use",
-        fixed_amount: true,
-        payment_amount: order.amount,
-        description: "PhysioConnect session booking",
-        close_by: Math.floor(Date.now() / 1000) + 30 * 60,
-        notes,
-      }),
-    }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-  ]);
+```bash
+# 1. DB columns
+supabase db push        # or run migrations/20261119150000_web_payment_link_qr.sql in the SQL editor
 
-  // Save link.id / qr.id against the bookings (e.g. bookings.notes or a new
-  // column), so verify-razorpay-payment can look them up.
-  await saveWebPaymentRefs(bookingIds, { paymentLinkId: link?.id, qrCodeId: qr?.id });
-
-  response.paymentLinkUrl = link?.short_url ?? null;
-  response.qrCodeUrl = qr?.image_url ?? null;
-}
+# 2. Functions
+supabase functions deploy create-razorpay-order
+supabase functions deploy verify-razorpay-payment
+supabase functions deploy razorpay-webhook --no-verify-jwt
+supabase secrets set RAZORPAY_WEBHOOK_SECRET=<any long random string>
 ```
 
-Response fields read by the app (`CreateRazorPayOrderModel`):
-`paymentLinkUrl` and `qrCodeUrl` (snake_case `payment_link_url` / `qr_code_url` also accepted).
+3. Razorpay Dashboard → Settings → Webhooks → Add:
+   URL `https://cjnxrkzrmeetzragwrlm.supabase.co/functions/v1/razorpay-webhook`,
+   secret = the value above, events `payment_link.paid` and `qr_code.credited`.
+   Do this in **test mode** and again in **live mode** (they are separate).
 
-## 2. `verify-razorpay-payment`: add `checkStatusOnly`
+## Testing in Razorpay test mode
 
-The website polls every 3 s with:
+Use **test** keys (`rzp_test_…`) in the `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET`
+function secrets.
 
-```json
-{ "bookingIds": [12, 13], "userId": 5, "razorpayOrderId": "order_…", "checkStatusOnly": true }
-```
+- **Payment Link: works in test mode.** Open the link and pay with a test
+  card or the test UPI id `success@razorpay`; the website confirms within a
+  few seconds.
+- **UPI QR: can't be paid in test mode.** A real UPI app can't pay a test QR.
+  The QR Codes API also needs the QR / Smart Collect feature on the account;
+  if it isn't enabled, `qrCodeUrl` is a QR of the payment link instead (scan
+  it with a phone, it opens the same payment page), so this still works.
+- Embedded Checkout (`checkout.js`) is not used on the website. It would work
+  with test keys on any domain, but in live mode it needs the website approved.
 
-When `checkStatusOnly` is true:
+## Going live
 
-1. **Never** record a failure or change bookings to failed. This call is a read.
-2. If the bookings are already paid → `{ "success": true, "status": "SUCCESS", "alreadyPaid": true }`.
-3. Otherwise fetch the saved link / QR from Razorpay:
-   - `GET /v1/payment_links/{id}` → `status === "paid"` → take `payments[0].payment_id`
-   - `GET /v1/payments/qr_codes/{id}/payments` → first item with `status === "captured"`
-4. If paid: run the **same "mark bookings paid" code** used after a successful
-   signature check (payment id, order id, doctor transfer / fund hold), then
-   return `{ "success": true, "status": "SUCCESS" }`.
-5. If the link is `expired`/`cancelled` → `{ "success": false, "status": "FAILED" }`.
-6. Otherwise → `{ "success": false, "status": "PENDING" }`.
-
-Make step 4 idempotent (polling and a webhook may both see the payment).
-
-## 3. Recommended: webhook
-
-Subscribe the existing (or a new) webhook to `payment_link.paid` and
-`qr_code.credited`, verify `X-Razorpay-Signature`, and mark the bookings from
-`notes.booking_ids` paid with the same idempotent code. Then bookings are
-confirmed even if the user closes the browser tab right after paying.
-
-## 4. Doctor payouts (Route)
-
-Payment Link / QR payments create **their own** Razorpay order, so transfers
-configured on the original order do not apply. Either pass the transfers in
-the link's `options.order.transfers`, or create the transfer after capture
-(`POST /v1/payments/{payment_id}/transfers`) in step 4. QR codes don't support
-transfers at creation, so use the post-capture transfer for them.
+Live keys need the Razorpay account activated (KYC). Payment Links work on an
+activated account without the website being approved. For the live UPI QR,
+ask Razorpay support to enable QR Codes if `qrCodeUrl` comes back from the
+QR-of-link fallback.
