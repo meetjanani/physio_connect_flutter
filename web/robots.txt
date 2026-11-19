@@ -1,0 +1,6 @@
+# App screens that need a login send `X-Robots-Tag: noindex` (see firebase.json)
+# rather than being blocked here, so Google can see that header.
+User-agent: *
+Allow: /
+
+Sitemap: https://physio-connect-app.web.app/sitemap.xml

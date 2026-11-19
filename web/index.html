@@ -11,13 +11,69 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="PhysioConnect – book trusted physiotherapy sessions at your doorstep, manage appointments and pay securely.">
+  <meta name="description" content="Book verified physiotherapists for home visits in Ahmedabad and Gandhinagar, or online video sessions across India. See fees upfront, pay securely and track your recovery.">
   <meta name="theme-color" content="#0EA5E9">
+  <link rel="canonical" href="https://physio-connect-app.web.app/">
 
   <!-- Social previews -->
-  <meta property="og:title" content="PhysioConnect">
-  <meta property="og:description" content="Book trusted physiotherapy sessions at your doorstep.">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PhysioConnect">
+  <meta property="og:locale" content="en_IN">
+  <meta property="og:title" content="PhysioConnect – Physiotherapy at home, booked online">
+  <meta property="og:description" content="Book verified physiotherapists for home visits in Ahmedabad and Gandhinagar, or online video sessions across India. See fees upfront, pay securely and track your recovery.">
+  <meta property="og:url" content="https://physio-connect-app.web.app/">
+  <meta property="og:image" content="https://physio-connect-app.web.app/site-assets/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PhysioConnect – Physiotherapy at home, booked online">
+  <meta name="twitter:description" content="Book verified physiotherapists for home visits in Ahmedabad and Gandhinagar, or online video sessions across India. See fees upfront, pay securely and track your recovery.">
+  <meta name="twitter:image" content="https://physio-connect-app.web.app/site-assets/og-image.jpg">
+
+  <!-- Structured data. Keep in sync with scripts/generate_landing_pages.py (ORG). -->
+  <script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Organization",
+   "@id": "https://physio-connect-app.web.app/#organization",
+   "name": "PhysioConnect",
+   "url": "https://physio-connect-app.web.app/",
+   "logo": "https://physio-connect-app.web.app/icons/Icon-512.png",
+   "email": "physioconnect.app@gmail.com",
+   "sameAs": [
+    "https://play.google.com/store/apps/details?id=com.physio.connect.physio_connect&hl=en_IN"
+   ]
+  },
+  {
+   "@type": "WebSite",
+   "@id": "https://physio-connect-app.web.app/#website",
+   "url": "https://physio-connect-app.web.app/",
+   "name": "PhysioConnect",
+   "publisher": {
+    "@id": "https://physio-connect-app.web.app/#organization"
+   },
+   "inLanguage": "en-IN"
+  },
+  {
+   "@type": "MobileApplication",
+   "name": "PhysioConnect",
+   "operatingSystem": "ANDROID",
+   "applicationCategory": "MedicalApplication",
+   "installUrl": "https://play.google.com/store/apps/details?id=com.physio.connect.physio_connect&hl=en_IN",
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "INR"
+   },
+   "publisher": {
+    "@id": "https://physio-connect-app.web.app/#organization"
+   }
+  }
+ ]
+}
+  </script>
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -28,7 +84,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>PhysioConnect</title>
+  <title>PhysioConnect – Physiotherapy at Home in Ahmedabad &amp; Gandhinagar | Book Online</title>
   <link rel="manifest" href="manifest.json">
 
   <style>
@@ -46,15 +102,33 @@
       animation: pc-spin 0.9s linear infinite;
     }
     @keyframes pc-spin { to { transform: rotate(360deg); } }
+    #pc-loading .pc-seo { max-width: 520px; padding: 0 16px; text-align: center; font-size: 14px; opacity: .9; }
+    #pc-loading .pc-seo p { margin: 0 0 8px; }
+    #pc-loading .pc-seo nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
+    #pc-loading .pc-seo a { color: #fff; }
   </style>
 </head>
 <body>
   <!-- Shown until Flutter paints its first frame. -->
   <div id="pc-loading" aria-live="polite">
-    <strong style="font-size: 28px; letter-spacing: .3px;">PhysioConnect</strong>
+    <h1 style="font-size: 28px; letter-spacing: .3px; margin: 0;">PhysioConnect</h1>
     <div class="spinner" role="progressbar" aria-label="Loading"></div>
+    <!-- Plain-HTML summary for search engines and visitors without JavaScript.
+         Flutter paints over this once it starts. -->
+    <div class="pc-seo">
+      <p>Physiotherapy at home in Ahmedabad and Gandhinagar, and online video sessions across India, with verified BPT / MPT physiotherapists.</p>
+      <nav aria-label="Physiotherapy services">
+        <a href="/physiotherapy-at-home-ahmedabad/">Physiotherapy at home in Ahmedabad</a>
+        <a href="/physiotherapy-at-home-gandhinagar/">Physiotherapy at home in Gandhinagar</a>
+        <a href="/online-physiotherapy-consultation/">Online physiotherapy consultation</a>
+        <a href="/conditions-we-treat/">Conditions we treat</a>
+        <a href="/for-physiotherapists/">Join as a physiotherapist</a>
+      </nav>
+    </div>
   </div>
-  <noscript>PhysioConnect needs JavaScript enabled to run.</noscript>
+  <noscript>PhysioConnect needs JavaScript enabled to book sessions. Learn more about
+    <a href="/physiotherapy-at-home-ahmedabad/">physiotherapy at home in Ahmedabad</a> and
+    <a href="/physiotherapy-at-home-gandhinagar/">Gandhinagar</a>.</noscript>
 
   <script>
     window.addEventListener('flutter-first-frame', function () {
