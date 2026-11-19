@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:physio_connect/utils/theme/app_colors.dart';
@@ -40,7 +38,7 @@ class LetterHeadData {
 }
 
 class LetterHeadService {
-  static Future<File> generateLetterHead({
+  static Future<Uint8List> generateLetterHead({
     String? doctorName,
     String? doctorRegNumber,
     String? doctorDegree,
@@ -153,18 +151,14 @@ class LetterHeadService {
       ),
     );
 
-    final output = await getTemporaryDirectory();
-    final file = File(
-      '${output.path}/prescription_${DateFormat('yyyyMMddHHmmss').format(DateTime.now())}.pdf',
-    );
-    await file.writeAsBytes(await pdf.save());
-
-    return file;
+    // Return the PDF bytes (works on Android, iOS and Web).
+    return pdf.save();
   }
 
-  static Future<void> openPdf(File file) async {
+  static Future<void> openPdf(Uint8List bytes, {String name = 'document.pdf'}) async {
     await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => file.readAsBytes(),
+      name: name,
+      onLayout: (PdfPageFormat format) async => bytes,
     );
   }
 

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhysioConnect — Patient Care & Healing Journey Presentation</title>
+  <style>
+    :root {
+      --primary: #047857;
+      --primary-light: #10B981;
+      --bg: #064E3B;
+      --card-bg: #064E3B;
+      --text-main: #FFFFFF;
+      --text-muted: #A7F3D0;
+      --border: rgba(255, 255, 255, 0.15);
+      --slide-gradient: linear-gradient(135deg, #022C22 0%, #064E3B 55%, #047857 100%);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif; }
+    body { background: #022C22; color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+    
+    .presentation-container {
+      width: 100%;
+      max-width: 1100px;
+      background: #064E3B;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-bar {
+      padding: 16px 28px;
+      background: rgba(2, 44, 34, 0.85);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #6EE7B7;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-title span { color: white; font-weight: 500; font-size: 13.5px; }
+    .slide-counter {
+      background: rgba(110, 231, 183, 0.2);
+      color: #A7F3D0;
+      border: 1px solid rgba(110, 231, 183, 0.35);
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .slide-viewport {
+      min-height: 520px;
+      padding: 40px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--slide-gradient);
+    }
+
+    .slide-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(110, 231, 183, 0.15);
+      border: 1px solid rgba(110, 231, 183, 0.3);
+      color: #6EE7B7;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .slide-heading {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 14px;
+      color: #F0FDF4;
+      letter-spacing: -0.3px;
+    }
+    .slide-body {
+      font-size: 15.5px;
+      line-height: 1.65;
+      color: #E2E8F0;
+      max-width: 950px;
+    }
+    .slide-body strong { color: #6EE7B7; }
+    .slide-body ul, .slide-body ol { margin-left: 24px; margin-top: 10px; }
+    .slide-body li { margin-bottom: 8px; }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 768px) {
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .slide-viewport { padding: 24px; min-height: auto; }
+      .slide-heading { font-size: 22px; }
+    }
+
+    .card-dark {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(8px);
+    }
+    .card-dark .cd-icon { font-size: 22px; margin-bottom: 4px; }
+    .card-dark .cd-title { font-size: 14px; font-weight: 800; color: #A7F3D0; margin-bottom: 3px; }
+    .card-dark .cd-desc { font-size: 12px; color: #CBD5E1; line-height: 1.45; }
+
+    .footer-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: #94A3B8;
+    }
+
+    .bottom-controls {
+      padding: 16px 28px;
+      background: rgba(2, 44, 34, 0.85);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .nav-btn {
+      background: #047857;
+      color: white;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13.5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover:not(:disabled) { background: #059669; transform: translateY(-1px); }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .dots-container { display: flex; gap: 6px; align-items: center; }
+    .dot { width: 9px; height: 9px; border-radius: 999px; background: #065F46; cursor: pointer; transition: 0.2s; }
+    .dot.active { width: 26px; background: #34D399; }
+
+    .btn-action {
+      background: #059669;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+    .btn-action:hover { background: #047857; }
+
+    /* PRINT DECK STYLING (FOR ENTIRE PPT EXPORT) */
+    #print-deck-container {
+      display: none;
+    }
+
+    @media print {
+      @page {
+        size: landscape;
+        margin: 0;
+      }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #022C22 !important;
+        color: #FFFFFF !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100% !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      .presentation-container {
+        display: none !important;
+      }
+      #print-deck-container {
+        display: block !important;
+        width: 100% !important;
+      }
+      .print-slide {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        box-sizing: border-box !important;
+        padding: 36px 48px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        background: linear-gradient(135deg, #022C22 0%, #064E3B 55%, #047857 100%) !important;
+        color: #FFFFFF !important;
+        overflow: hidden !important;
+      }
+      .slide-heading {
+        color: #F0FDF4 !important;
+        font-size: 24px !important;
+        margin-bottom: 12px !important;
+      }
+      .slide-body {
+        color: #E2E8F0 !important;
+        font-size: 13.5px !important;
+        line-height: 1.55 !important;
+      }
+      .slide-body strong {
+        color: #6EE7B7 !important;
+      }
+      .slide-body ul, .slide-body ol {
+        margin-top: 6px !important;
+      }
+      .slide-body li {
+        margin-bottom: 5px !important;
+      }
+      .card-dark {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        padding: 10px 14px !important;
+      }
+      .card-dark .cd-title {
+        color: #A7F3D0 !important;
+        font-size: 13px !important;
+      }
+      .card-dark .cd-desc {
+        color: #CBD5E1 !important;
+        font-size: 11px !important;
+      }
+      .footer-bar {
+        border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+        color: #94A3B8 !important;
+        margin-top: 12px !important;
+        padding-top: 10px !important;
+        font-size: 11px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- INTERACTIVE SCREEN VIEWER (1 SLIDE AT A TIME) -->
+  <div class="presentation-container">
+    <div class="top-bar">
+      <div class="brand-title">
+        👤 PhysioConnect <span>| Patient Experience & Care Journey</span>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button class="btn-action" onclick="downloadFullPdf()">📥 Download Full PPT (PDF)</button>
+        <span class="slide-counter" id="counter">Slide 1 / 11</span>
+      </div>
+    </div>
+
+    <div class="slide-viewport" id="viewport">
+      <!-- Dynamic slide content -->
+    </div>
+
+    <div class="bottom-controls">
+      <button class="nav-btn" id="prev-btn" onclick="changeSlide(-1)">← Previous</button>
+      <div class="dots-container" id="dots"></div>
+      <button class="nav-btn" id="next-btn" onclick="changeSlide(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- DEDICATED PRINT CONTAINER (ALL 11 SLIDES RENDERED FOR FULL PDF CONVERSION) -->
+  <div id="print-deck-container"></div>
+
+  <script>
+    const slides = [
+      {
+        tag: "Slide 1 • Overview",
+        title: "PhysioConnect: Professional Physiotherapy at Your Doorstep 🏠✨",
+        body: `
+          <strong>Healing made comfortable, certified, and completely hassle-free.</strong><br><br>
+          No more traveling in painful traffic or waiting in crowded clinic lobbies. PhysioConnect brings licensed, verified physiotherapists directly to your home or onto your screen via Google Meet.
+          <div class="grid-3">
+            <div class="card-dark">
+              <div class="cd-icon">🩺</div>
+              <div class="cd-title">100% Certified Doctors</div>
+              <div class="cd-desc">Verified council registration numbers, BPT / MPT degrees, and proven clinical experience.</div>
+            </div>
+            <div class="card-dark">
+              <div class="cd-icon">🛋️</div>
+              <div class="cd-title">Bedside Home Comfort</div>
+              <div class="cd-desc">Therapist arrives equipped at your residence for personalized, private 1-on-1 rehabilitation.</div>
+            </div>
+            <div class="card-dark">
+              <div class="cd-icon">💳</div>
+              <div class="cd-title">Cashless & Transparent</div>
+              <div class="cd-desc">Zero hidden charges. Pay via UPI, Cards, or Netbanking with instant GST invoices & digital prescriptions.</div>
+            </div>
+          </div>
+        `,
+        footer: "Your recovery starts where you are most comfortable"
+      },
+      {
+        tag: "Slide 2 • Clinical Quality",
+        title: "100% Council-Registered & Vetted Physiotherapists 🛡️",
+        body: `
+          Your health deserves verified clinical hands. Every physiotherapist on PhysioConnect undergoes multi-step verification:
+          <ul>
+            <li><strong>State Council Registration Check:</strong> We verify each doctor's official registration number (drRegNumber).</li>
+            <li><strong>Degree Verification:</strong> Only graduates and postgraduates from accredited universities (BPT / MPT) are approved.</li>
+            <li><strong>Clinical Specializations:</strong> Clear tags showing expertise in Orthopedic, Neuro, Sports Injury, and Pediatric therapy.</li>
+            <li><strong>Verified Patient Reviews:</strong> Read real feedback and ratings from previously treated patients before booking.</li>
+          </ul>
+        `,
+        footer: "Zero compromise on clinical quality and safety"
+      },
+      {
+        tag: "Slide 3 • Session Formats",
+        title: "Choose How You Heal: In-Home Care or Online Tele-Rehab 🏠💻",
+        body: `
+          Select the modality that fits your medical condition, mobility, and convenience:
+          <div class="grid-2">
+            <div class="card-dark">
+              <div class="cd-icon">🏠</div>
+              <div class="cd-title">Doorstep Home Visits</div>
+              <div class="cd-desc">
+                • Ideal for severe joint pain, post-surgical recovery, elderly bedridden patients, and stroke rehabilitation.<br>
+                • Doctor brings necessary therapy tools and guides exercises directly at your home.<br>
+                • Pinpoint your location with exact address, block number, and GPS pin.
+              </div>
+            </div>
+            <div class="card-dark">
+              <div class="cd-icon">💻</div>
+              <div class="cd-title">Online Video Consultation</div>
+              <div class="cd-desc">
+                • Connect with top specialized therapists anywhere via Google Meet.<br>
+                • Perfect for postural evaluation, ergonomic assessments, exercise correction, and quick follow-ups.<br>
+                • 1-tap join button right inside your appointment details screen.
+              </div>
+            </div>
+          </div>
+        `,
+        footer: "Flexible healing formats tailored to your lifestyle"
+      },
+      {
+        tag: "Slide 4 • Local Coverage",
+        title: "Neighborhood Matchmaking Across Your City 📍",
+        body: `
+          Get paired with the best nearby doctors for punctual, reliable home visits:
+          <ul>
+            <li><strong>City & Service Area Selection:</strong> Select your city and neighborhood (Ahmedabad, Gandhinagar, and expanding).</li>
+            <li><strong>Radius-Based Proximity Matching:</strong> Find active physiotherapists serving your exact sector or locality to minimize travel delays.</li>
+            <li><strong>Doctor Directory Card:</strong> View therapist photo, bio, years of practice, available time slots, and consultation fee upfront.</li>
+            <li><strong>Transparent Booking:</strong> Book your preferred doctor or let the system recommend the nearest top-rated specialist.</li>
+          </ul>
+        `,
+        footer: "Prompt, neighborhood-level physical therapy access"
+      },
+      {
+        tag: "Slide 5 • Clinical Specialties",
+        title: "Comprehensive Physical Rehabilitation Specialties ⚕️",
+        body: `
+          Expert therapeutic care for a wide spectrum of physical conditions:
+          <ul>
+            <li><strong>Orthopedic & Spine Care:</strong> Cervical spondylosis, slip disc, sciatica, chronic lower back pain, frozen shoulder, and osteoarthritis.</li>
+            <li><strong>Post-Surgical Rehabilitation:</strong> Total Knee Replacement (TKR), Total Hip Replacement (THR), ACL reconstruction, fracture rehabilitation.</li>
+            <li><strong>Neurological Rehabilitation:</strong> Stroke (paralysis) recovery, Parkinson's disease, Bell's palsy, neuropathy, and balance training.</li>
+            <li><strong>Sports & Soft Tissue Recovery:</strong> Ligament tears, muscle strains, tennis elbow, runner's knee, and athletic conditioning.</li>
+            <li><strong>Geriatric Mobility:</strong> Fall prevention, joint stiffness, posture maintenance, and independent mobility for seniors.</li>
+          </ul>
+        `,
+        footer: "Evidence-based clinical rehabilitation tailored to your specific condition"
+      },
+      {
+        tag: "Slide 6 • Treatment Plans",
+        title: "Single Visits or Multi-Day Healing Packages 🔁",
+        body: `
+          Rehabilitation requires consistency. PhysioConnect makes continuous care effortless:
+          <ul>
+            <li><strong>Single Diagnostic Consultation:</strong> Great for initial clinical assessments, pain diagnosis, and exercise guidance.</li>
+            <li><strong>Bulk Rehabilitation Packages:</strong> Book 5, 10, or 15-day comprehensive rehabilitation courses at bundled rates.</li>
+            <li><strong>Flexible Recurrence:</strong> Schedule sessions 'Every Day' or 'Alternate Days' according to your doctor's clinical prescription.</li>
+            <li><strong>Automated Calendar Synchronization:</strong> Pre-reserves your preferred time slot across the entire treatment duration with instant conflict detection.</li>
+          </ul>
+        `,
+        footer: "Complete treatment plans ensuring sustained recovery and healing"
+      },
+      {
+        tag: "Slide 7 • Digital Payments",
+        title: "100% Cashless, Secure Payments via Razorpay 💳",
+        body: `
+          No awkward cash payments or ATM runs during doctor visits:
+          <ul>
+            <li><strong>All Major Payment Methods:</strong> Pay securely using UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, or Net Banking.</li>
+            <li><strong>Transparent Pricing:</strong> Clear breakdown of session fee with zero hidden surcharges or surprise clinic fees.</li>
+            <li><strong>Instant Confirmation:</strong> Automated SMS and in-app receipt confirming your slot immediately upon checkout.</li>
+            <li><strong>Secure Escrow Settlement:</strong> Funds are safely processed via Razorpay Route, ensuring accountability on every visit.</li>
+          </ul>
+        `,
+        footer: "Fast, transparent, and completely cashless transactions"
+      },
+      {
+        tag: "Slide 8 • Medical Records",
+        title: "Digital Prescriptions & GST Invoices on Demand 📄",
+        body: `
+          Access all your medical paperwork anytime right from your smartphone:
+          <ul>
+            <li><strong>Official Digital Prescriptions:</strong> View and download doctor-signed clinical prescriptions containing exercise protocols, dosages, and precautions.</li>
+            <li><strong>GST Tax Invoices:</strong> Download compliant tax invoices in 1 tap for insurance reimbursements and medical recordkeeping.</li>
+            <li><strong>Permanent History:</strong> Every past appointment, doctor's note, and payment receipt remains securely saved in your booking history.</li>
+            <li><strong>Easy Sharing:</strong> Share prescriptions via WhatsApp or email with family members or treating orthopedicians.</li>
+          </ul>
+        `,
+        footer: "Your complete physical therapy medical records organized in one app"
+      },
+      {
+        tag: "Slide 9 • Flexibility & Trust",
+        title: "Hassle-Free Rescheduling & Transparent Refund Policy 🛡️",
+        body: `
+          We understand health schedules can be unpredictable:
+          <ul>
+            <li><strong>1-Tap Rescheduling:</strong> Need to move your appointment? Easily pick a new date and available time slot directly in the app.</li>
+            <li><strong>Patient-Friendly Cancellation:</strong> Clear, fair cancellation rules with automated refund processing back to your original payment method.</li>
+            <li><strong>Automated Session Reminders:</strong> Push notifications and reminders so you are always prepared before the therapist arrives.</li>
+            <li><strong>In-App Support Center:</strong> Reach our help team anytime for assistance with bookings, payments, or doctor coordination.</li>
+          </ul>
+        `,
+        footer: "Patient-first flexibility with complete peace of mind"
+      },
+      {
+        tag: "Slide 10 • Patient Community",
+        title: "Verified Reviews & Direct Doctor Communication 💬",
+        body: `
+          Experience compassionate, transparent care at every step:
+          <ul>
+            <li><strong>Direct WhatsApp & Call Bridge:</strong> Connect directly with your assigned therapist to share landmark instructions or clarify preparation tips.</li>
+            <li><strong>Verified Patient Ratings:</strong> Share honest 5-star feedback and reviews after completing treatment to help fellow patients choose the right therapist.</li>
+            <li><strong>Continuous Progress Tracking:</strong> Doctors record clinical progress notes after each session to track mobility improvements.</li>
+            <li><strong>Family Friendly:</strong> Book appointments for aging parents, children, or spouse from a single account.</li>
+          </ul>
+        `,
+        footer: "Empathetic healthcare built around patient well-being"
+      },
+      {
+        tag: "Slide 11 • Get Started Today",
+        title: "Start Your Recovery in 4 Simple Steps Today! 🚀",
+        body: `
+          <ol style="line-height: 1.8; font-size: 14.5px; margin-left: 20px;">
+            <li><strong>Download PhysioConnect App:</strong> Available on Android Play Store or book directly via the Web platform.</li>
+            <li><strong>Choose Care Mode:</strong> Select Doorstep Home Visit or Online Video Consultation.</li>
+            <li><strong>Pick Your Specialist:</strong> Browse verified doctors by specialty, ratings, and available time slots.</li>
+            <li><strong>Confirm & Heal:</strong> Pay securely and your certified therapist will arrive punctually at your door!</li>
+          </ol>
+          <div style="display:flex; justify-content:center; gap:24px; margin-top:14px;">
+            <div style="background:white; padding:8px 14px; border-radius:12px; text-align:center;">
+              <img style="width:80px; height:80px; display:block; margin:0 auto 4px;" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.physioconnect.app" alt="Patient App">
+              <span style="color:#047857; font-weight:800; font-size:11.5px;">Android Patient App</span>
+            </div>
+            <div style="background:white; padding:8px 14px; border-radius:12px; text-align:center;">
+              <img style="width:80px; height:80px; display:block; margin:0 auto 4px;" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https%3A%2F%2Fphysioconnect.in%2Fbook" alt="Web Booking">
+              <span style="color:#047857; font-weight:800; font-size:11.5px;">Instant Web Booking</span>
+            </div>
+          </div>
+        `,
+        footer: "Book your first session in under 2 minutes"
+      }
+    ];
+
+    let current = 0;
+
+    function renderScreenSlide() {
+      const s = slides[current];
+      document.getElementById('viewport').innerHTML = `
+        <div>
+          <span class="slide-tag">${s.tag}</span>
+          <div class="slide-heading">${s.title}</div>
+          <div class="slide-body">${s.body}</div>
+        </div>
+        <div class="footer-bar">
+          <span style="color:#6EE7B7; font-weight:800;">👤 PhysioConnect • Patient Experience Guide</span>
+          <span>${s.footer}</span>
+        </div>
+      `;
+      document.getElementById('counter').innerText = `Slide ${current + 1} / ${slides.length}`;
+      document.getElementById('prev-btn').disabled = current === 0;
+      document.getElementById('next-btn').disabled = current === slides.length - 1;
+
+      // Render dots
+      const dotsEl = document.getElementById('dots');
+      dotsEl.innerHTML = slides.map((_, i) => `<div class="dot ${i === current ? 'active' : ''}" onclick="jump(${i})"></div>`).join('');
+    }
+
+    // PREPARE ALL 11 SLIDES FOR FULL PRINT/PDF EXPORT
+    function renderPrintDeck() {
+      const container = document.getElementById('print-deck-container');
+      container.innerHTML = slides.map((s, idx) => `
+        <div class="print-slide">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <span class="slide-tag">${s.tag}</span>
+              <span style="font-size:12px; color:#A7F3D0; font-weight:800; background:rgba(110,231,183,0.2); padding:4px 12px; border-radius:999px;">Slide ${idx + 1} / ${slides.length}</span>
+            </div>
+            <div class="slide-heading">${s.title}</div>
+            <div class="slide-body">${s.body}</div>
+          </div>
+          <div class="footer-bar">
+            <span style="color:#6EE7B7; font-weight:800;">👤 PhysioConnect • Patient Experience Guide</span>
+            <span>${s.footer}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function changeSlide(dir) {
+      current = Math.max(0, Math.min(slides.length - 1, current + dir));
+      renderScreenSlide();
+    }
+
+    function jump(idx) {
+      current = idx;
+      renderScreenSlide();
+    }
+
+    function downloadFullPdf() {
+      renderPrintDeck();
+      setTimeout(() => {
+        window.print();
+      }, 100);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space') changeSlide(1);
+      else if (e.key === 'ArrowLeft') changeSlide(-1);
+    });
+
+    // Initialize both on load
+    renderScreenSlide();
+    renderPrintDeck();
+  </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/model/time_slots_model.dart';
@@ -500,6 +501,9 @@ class SupabaseController {
           'userId': userId,
           'isBulkAppointment': isBulkAppointment,
           'bulkAppointmentId': bulkAppointmentId,
+          // Website asks the server for a Payment Link + UPI QR instead of
+          // an embedded Checkout (domain not yet approved by Razorpay).
+          if (kIsWeb) 'channel': 'web',
         },
       );
       return CreateRazorPayOrderModel.fromJson(response.data);
@@ -572,6 +576,39 @@ class SupabaseController {
         success: false,
         error: isFailure ? reason : e.toString(),
       );
+    }
+  }
+
+  /// Website payment-link flow: asks the server whether the Payment Link / QR
+  /// for these bookings has been paid. Read-only — never records a failure.
+  /// Returns 'SUCCESS', 'FAILED' or 'PENDING'.
+  Future<String> checkWebPaymentStatus({
+    required List<int> bookingIds,
+    required int userId,
+    required String? razorpayOrderId,
+  }) async {
+    if (bookingIds.isEmpty) return 'PENDING';
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'verify-razorpay-payment',
+        body: {
+          'bookingIds': bookingIds,
+          'userId': userId,
+          'razorpayOrderId': razorpayOrderId,
+          'checkStatusOnly': true,
+        },
+      );
+      final data = response.data;
+      if (data is! Map) return 'PENDING';
+      final status = data['status']?.toString().toUpperCase();
+      if (data['success'] == true || status == 'SUCCESS' || status == 'PAID') {
+        await _clearPaymentFailureReason(bookingIds);
+        return 'SUCCESS';
+      }
+      if (status == 'FAILED') return 'FAILED';
+      return 'PENDING';
+    } catch (_) {
+      return 'PENDING';
     }
   }
 

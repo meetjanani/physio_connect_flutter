@@ -14,6 +14,12 @@ class CreateRazorPayOrderModel {
   int platformFeeAmount;
   String message;
 
+  /// Web only: Razorpay Payment Link (UPI intent / hosted page) and UPI QR
+  /// image created by `create-razorpay-order` when `channel == 'web'`.
+  /// The website can't embed Razorpay Checkout until the domain is approved.
+  String? paymentLinkUrl;
+  String? qrCodeUrl;
+
   CreateRazorPayOrderModel({
     required this.success,
     required this.orderId,
@@ -23,6 +29,8 @@ class CreateRazorPayOrderModel {
     required this.doctorAmount,
     required this.platformFeeAmount,
     required this.message,
+    this.paymentLinkUrl,
+    this.qrCodeUrl,
   });
 
   factory CreateRazorPayOrderModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +43,8 @@ class CreateRazorPayOrderModel {
       doctorAmount: _parseInt(json['doctorAmount']) ?? 0,
       platformFeeAmount: _parseInt(json['platformFeeAmount']) ?? 0,
       message: json['message']?.toString() ?? "",
+      paymentLinkUrl: _nonEmpty(json['paymentLinkUrl'] ?? json['payment_link_url']),
+      qrCodeUrl: _nonEmpty(json['qrCodeUrl'] ?? json['qr_code_url']),
     );
   }
 
@@ -48,6 +58,8 @@ class CreateRazorPayOrderModel {
       'doctorAmount': doctorAmount,
       'platformFeeAmount': platformFeeAmount,
       'message': message,
+      'paymentLinkUrl': paymentLinkUrl,
+      'qrCodeUrl': qrCodeUrl,
     };
   }
 
@@ -57,6 +69,13 @@ class CreateRazorPayOrderModel {
     if (value is double) return value.toInt();
     return int.tryParse(value.toString());
   }
+
+  static String? _nonEmpty(dynamic value) {
+    final text = value?.toString().trim();
+    return (text == null || text.isEmpty || text == 'null') ? null : text;
+  }
+
+  bool get hasWebPaymentOption => paymentLinkUrl != null || qrCodeUrl != null;
 
   bool get hasOrder => success && (orderId?.isNotEmpty ?? false);
 

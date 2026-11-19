@@ -10,6 +10,8 @@ class AppAnalytics {
   FirebaseAnalytics get _analytics => FirebaseAnalytics.instance;
 
   Future<void> init() async {
+    // Crashlytics has no web SDK; analytics still works on web.
+    if (kIsWeb) return;
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
     PlatformDispatcher.instance.onError = (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);

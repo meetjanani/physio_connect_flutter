@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +12,7 @@ import '../services/appointment_reminder_service.dart';
 import '../supabase/supabase_controller.dart';
 import '../utils/theme/app_colors.dart';
 import 'razorpay_checkout.dart';
+import 'web_upi_payment_dialog.dart';
 
 class PaidPaymentResult {
   PaidPaymentResult({
@@ -98,6 +100,10 @@ class BookingPaymentFlow {
       hideBusy();
       await Future<void>.delayed(const Duration(milliseconds: 300));
       if (_disposed) return;
+      if (kIsWeb) {
+        await _collectOnWeb(order, description);
+        return;
+      }
       _checkout.open(
         order: order,
         description: description,
@@ -108,6 +114,60 @@ class BookingPaymentFlow {
       await onCreateFailed?.call();
       snackbar('Payment failed', 'Unable to start payment process');
     }
+  }
+
+  /// Website: Razorpay hasn't approved the web domain for embedded Checkout,
+  /// so pay via the server-created Payment Link / UPI QR and poll the server
+  /// until the payment is confirmed (verified server-side, no signature).
+  Future<void> _collectOnWeb(
+    CreateRazorPayOrderModel order,
+    String description,
+  ) async {
+    final ids = bookingIds();
+    if (!order.hasWebPaymentOption) {
+      if (deleteDraftsIfNoPaymentId) await _deleteUnpaidDrafts(ids);
+      await onCheckoutFailed(
+        const RazorpayFailureDetails(
+          message: 'Online payment on the website is not available yet. '
+              'Please complete this booking in the PhysioConnect Android app.',
+          reason: 'web_payment_unavailable',
+        ),
+      );
+      return;
+    }
+
+    final orderId = order.orderId;
+    final result = await showWebUpiPaymentDialog(
+      amountPaise: order.amount,
+      description: description,
+      paymentLinkUrl: order.paymentLinkUrl,
+      qrCodeUrl: order.qrCodeUrl,
+      checkStatus: () => _supabase.checkWebPaymentStatus(
+        bookingIds: ids,
+        userId: userId(),
+        razorpayOrderId: orderId,
+      ),
+    );
+    if (_disposed) return;
+
+    if (result == WebUpiPaymentResult.paid) {
+      await _completePaid(PaidPaymentResult(bookingIds: ids, orderId: orderId));
+      return;
+    }
+    // Drafts are kept on web: the link stays payable after the dialog closes,
+    // and the server confirms the booking if the user pays later.
+    await onCheckoutFailed(
+      result == WebUpiPaymentResult.failed
+          ? RazorpayFailureDetails(
+              message: 'Payment failed. Please try again.',
+              orderId: orderId,
+            )
+          : RazorpayFailureDetails(
+              message: 'Payment cancelled',
+              reason: 'payment_cancelled',
+              orderId: orderId,
+            ),
+    );
   }
 
   void showBusy(String message) {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../model/create_razorpay_order_model.dart';
@@ -73,13 +74,17 @@ class RazorpayCheckout {
   }) : _onSuccess = onSuccess,
        _onError = onError,
        _onExternalWallet = onExternalWallet {
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _forwardError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _forwardWallet);
+    // The native plugin has no web implementation; the website pays via
+    // Payment Link / UPI QR instead (BookingPaymentFlow._collectOnWeb).
+    if (!kIsWeb) {
+      _razorpay = Razorpay()
+        ..on(Razorpay.EVENT_PAYMENT_SUCCESS, _onSuccess)
+        ..on(Razorpay.EVENT_PAYMENT_ERROR, _forwardError)
+        ..on(Razorpay.EVENT_EXTERNAL_WALLET, _forwardWallet);
+    }
   }
 
-  late final Razorpay _razorpay;
+  Razorpay? _razorpay;
   final void Function(PaymentSuccessResponse response) _onSuccess;
   final void Function(RazorpayFailureDetails failure) _onError;
   final void Function(ExternalWalletResponse response)? _onExternalWallet;
@@ -97,7 +102,7 @@ class RazorpayCheckout {
     required String description,
     required String contact,
   }) {
-    _razorpay.open({
+    final options = <String, dynamic>{
       'key': order.keyId,
       'amount': order.amount,
       'order_id': order.orderId,
@@ -122,8 +127,15 @@ class RazorpayCheckout {
           ],
         },
       },
-    });
+    };
+
+    // Web never embeds Checkout (see BookingPaymentFlow._collectOnWeb).
+    final razorpay = _razorpay;
+    if (razorpay == null) {
+      throw UnsupportedError('Native Razorpay checkout is mobile-only.');
+    }
+    razorpay.open(options);
   }
 
-  void dispose() => _razorpay.clear();
+  void dispose() => _razorpay?.clear();
 }

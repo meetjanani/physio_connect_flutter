@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -918,6 +919,11 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+      controller.latitudeOfAddress.value = position.latitude.toString();
+      controller.longitudeOfAddress.value = position.longitude.toString();
+      // Reverse geocoding has no web implementation; web users type the
+      // address manually while still sharing their coordinates.
+      if (kIsWeb) return;
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,

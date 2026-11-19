@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -24,8 +22,10 @@ class AppointmentReminderService {
   static const _channelId = 'session_reminders';
   static const _channelName = 'Session reminders';
 
+  /// Scheduled local notifications are not available in the browser, so every
+  /// public method is a no-op on web.
   Future<void> ensureInitialized() async {
-    if (_ready) return;
+    if (kIsWeb || _ready) return;
 
     tzdata.initializeTimeZones();
     await _configureLocalTimeZone();
@@ -73,8 +73,9 @@ class AppointmentReminderService {
   /// True when notifications (and Android exact alarms) are already allowed.
   /// Never opens a system settings screen.
   Future<bool> hasPermissions() async {
+    if (kIsWeb) return false;
     await ensureInitialized();
-    if (!Platform.isAndroid) {
+    if (defaultTargetPlatform != TargetPlatform.android) {
       final ios = _plugin.resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin>();
       final options = await ios?.checkPermissions();
@@ -91,8 +92,9 @@ class AppointmentReminderService {
 
   /// User-initiated prompt. Android 12+ may open Alarms & reminders settings.
   Future<bool> requestPermissions() async {
+    if (kIsWeb) return false;
     await ensureInitialized();
-    if (!Platform.isAndroid) {
+    if (defaultTargetPlatform != TargetPlatform.android) {
       final ios = _plugin.resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin>();
       return await ios?.requestPermissions(
@@ -114,6 +116,7 @@ class AppointmentReminderService {
   }
 
   Future<void> scheduleRemindersForBookings(List<BookingsModel> bookings) async {
+    if (kIsWeb) return;
     if (!await hasPermissions()) {
       if (kDebugMode) {
         print('[Reminder] Skip scheduling — permission not granted');
@@ -153,6 +156,7 @@ class AppointmentReminderService {
     required String sessionLabel,
     bool includeJoinSoon = false,
   }) async {
+    if (kIsWeb) return;
     await ensureInitialized();
     if (!await hasPermissions()) {
       if (kDebugMode) {
