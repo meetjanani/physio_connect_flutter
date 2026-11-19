@@ -138,6 +138,8 @@ class _SelectDoctorScreenState extends State<SelectDoctorScreen> {
                                                     true)
                                                 ? Image.network(
                                                     doctor.profilePhotoUrl!,
+                                                    // <img> element on web: no CORS needed for remote images.
+                                                    webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
                                                     fit: BoxFit.cover,
                                                     errorBuilder: (_, __, ___) =>
                                                         Icon(

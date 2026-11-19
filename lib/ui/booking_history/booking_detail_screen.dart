@@ -1,6 +1,7 @@
 // lib/ui/booking/history/booking_detail_screen.dart
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:physio_connect/utils/app_network_image.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -828,10 +829,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: NetworkImage(controller.therapistsImage),
                     backgroundColor: AppColors.medicalBlueLight,
                     child: ClipOval(
-                      child: CachedNetworkImage(
+                      child: AppNetworkImage(
                         imageUrl: controller.isDoctor.value
                             ? controller.therapistsImage
                             : doctor.profilePhotoUrl ??
@@ -839,14 +839,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                         fit: BoxFit.cover,
                         width: 80,
                         height: 80,
-                        placeholder: (_, __) => const Center(
+                        placeholder: (_) => const Center(
                           child: SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),
-                        errorWidget: (_, __, ___) =>
+                        errorWidget: (_) =>
                             const Icon(Icons.person, color: Colors.white),
                       ),
                     ),

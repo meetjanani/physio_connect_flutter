@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:physio_connect/utils/app_network_image.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/custom_widget/booking_reminder_opt_in_card.dart';
@@ -113,7 +114,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                             ),
                                           ),
                                           child: ClipOval(
-                                            child: CachedNetworkImage(
+                                            child: AppNetworkImage(
                                               imageUrl:
                                                   controller.isDoctor.value
                                                   ? controller
@@ -127,7 +128,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                               fit: BoxFit.cover,
                                               width: 80,
                                               height: 80,
-                                              placeholder: (_, __) => const Center(
+                                              placeholder: (_) => const Center(
                                                 child: SizedBox(
                                                   width: 18,
                                                   height: 18,
@@ -137,7 +138,7 @@ class _ProfileAboutUsScreenState extends State<ProfileAboutUsScreen> {
                                                       ),
                                                 ),
                                               ),
-                                              errorWidget: (_, __, ___) =>
+                                              errorWidget: (_) =>
                                                   const Icon(
                                                     Icons.person,
                                                     color: Colors.white,

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:physio_connect/utils/app_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -430,10 +431,10 @@ class _DoctorAvatar extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 56),
         color: AppColors.medicalBlueLight,
         child: photo.isNotEmpty
-            ? CachedNetworkImage(
+            ? AppNetworkImage(
                 imageUrl: photo,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => const Center(
+                placeholder: (_) => const Center(
                   child: SizedBox(
                     width: 18,
                     height: 18,
@@ -443,7 +444,7 @@ class _DoctorAvatar extends StatelessWidget {
                     ),
                   ),
                 ),
-                errorWidget: (_, __, ___) => _initials(initials),
+                errorWidget: (_) => _initials(initials),
               )
             : _initials(initials),
       ),

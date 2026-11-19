@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:physio_connect/utils/app_network_image.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
 
-class CatchedImageWidget extends StatefulWidget {
+class CatchedImageWidget extends StatelessWidget {
   final String? imageUrl;
   final double? width;
   final double? height;
@@ -17,39 +17,22 @@ class CatchedImageWidget extends StatefulWidget {
   });
 
   @override
-  State<CatchedImageWidget> createState() => _CatchedImageWidgetState();
-}
-
-class _CatchedImageWidgetState extends State<CatchedImageWidget> {
-  get boxfit => null;
-
-  @override
   Widget build(BuildContext context) {
-    // If no image URL, return fallback immediately
-    if (widget.imageUrl == null || widget.imageUrl!.isEmpty) {
-      return fallbackWidget;
-    }
+    if (imageUrl == null || imageUrl!.trim().isEmpty) return _fallback;
 
-    return CachedNetworkImage(
-      color: Colors.transparent,
-      width: widget.width,
-      height: widget.height,
-      fit: boxfit,
-      imageBuilder: (context, imageProvider) => Container(
-        width: widget.width, // 80.0
-        height: widget.height, // 80.0
-        decoration: BoxDecoration(
-          shape: BoxShape.rectangle,
-          image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
-        ),
-      ),
-      imageUrl: widget.imageUrl!,
-      placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-      errorWidget: (context, url, error) => fallbackWidget,
+    // Same look as before (cover-fit), but via AppNetworkImage so it also
+    // renders on the website (a DecorationImage can't use an <img> element).
+    return AppNetworkImage(
+      imageUrl: imageUrl!,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      placeholder: (_) => const Center(child: CircularProgressIndicator()),
+      errorWidget: (_) => _fallback,
     );
   }
 
-  Widget fallbackWidget = Container(
+  static final Widget _fallback = Container(
     height: 160,
     color: AppColors.therapyPurple.withOpacity(0.3),
     child: Center(

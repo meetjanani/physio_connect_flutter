@@ -415,6 +415,8 @@ class _ScanQr extends StatelessWidget {
           ),
           child: Image.network(
             qrImage,
+            // <img> element on web: no CORS needed for remote images.
+            webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
             width: 220,
             height: 220,
             fit: BoxFit.contain,
