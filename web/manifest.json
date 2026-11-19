@@ -1,11 +1,11 @@
 {
-    "name": "physio_connect",
-    "short_name": "physio_connect",
-    "start_url": ".",
+    "name": "PhysioConnect",
+    "short_name": "PhysioConnect",
+    "start_url": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#0EA5E9",
+    "description": "Book trusted physiotherapy sessions at your doorstep.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

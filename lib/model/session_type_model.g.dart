@@ -14,6 +14,7 @@ SessionTypeModel _$SessionTypeModelFromJson(Map<String, dynamic> json) =>
       duration: json['duration'] as String,
       price: (json['price'] as num).toInt(),
       imageUrl: json['imageUrl'] as String?,
+      mode: json['mode'] as String?,
     );
 
 Map<String, dynamic> _$SessionTypeModelToJson(SessionTypeModel instance) =>
@@ -24,4 +25,5 @@ Map<String, dynamic> _$SessionTypeModelToJson(SessionTypeModel instance) =>
       'duration': instance.duration,
       'price': instance.price,
       'imageUrl': instance.imageUrl,
+      'mode': instance.mode,
     };

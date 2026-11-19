@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/model/doctor_model.dart';
 import 'package:physio_connect/model/time_slots_model.dart';
@@ -114,6 +118,16 @@ class SupabaseController {
     }
   }
 
+  Future<void> updateUserEmail(int userId, String email) async {
+    if (userId <= 0) {
+      throw ArgumentError('A valid user ID is required to update email.');
+    }
+    await supabaseClient
+        .from(DatabaseSchema.usersTable)
+        .update({DatabaseSchema.usersGuestEmail: email.trim()})
+        .eq(DatabaseSchema.usersId, userId);
+  }
+
   Future<void> updateDoctorNote(
     int bookingID,
     BookingsModel? updatedBooking,
@@ -142,11 +156,25 @@ class SupabaseController {
     }
   }
 
-  Future<void> updateBookingDate(int bookingID, String bookingDate) async {
+  Future<void> updateBookingDate(
+    int bookingID,
+    String bookingDate, {
+    int? timeSlotId,
+    String? timeSlotJson,
+  }) async {
     if (bookingID > 0 && bookingDate.isNotEmpty) {
+      final payload = <String, dynamic>{
+        DatabaseSchema.bookingsDate: bookingDate,
+      };
+      if (timeSlotId != null) {
+        payload[DatabaseSchema.bookingsTimeSlotId] = timeSlotId;
+      }
+      if (timeSlotJson != null) {
+        payload[DatabaseSchema.bookingsTimeSlotJson] = timeSlotJson;
+      }
       await supabaseClient
           .from(DatabaseSchema.bookingsTable)
-          .update({DatabaseSchema.bookingsDate: bookingDate})
+          .update(payload)
           .eq(DatabaseSchema.bookingsId, bookingID)
           .select();
     }
@@ -215,10 +243,51 @@ class SupabaseController {
     if (ids.isEmpty) return <DoctorModel>[];
     final response = await supabaseClient
         .from(DatabaseSchema.doctorTable)
-        .select('*')
+        .select(DatabaseSchema.doctorPublicColumns)
         .inFilter(DatabaseSchema.doctorId, ids)
-        .eq('isActive', true);
+        .eq(DatabaseSchema.doctorIsActive, true);
     return DoctorModel.fromJsonList(response);
+  }
+
+  Future<List<DoctorModel>> getActiveDoctors() async {
+    final response = await supabaseClient
+        .from(DatabaseSchema.doctorTable)
+        .select(DatabaseSchema.doctorPublicColumns)
+        .eq(DatabaseSchema.doctorIsActive, true)
+        .order(DatabaseSchema.doctorName, ascending: true);
+    return DoctorModel.fromJsonList(response);
+  }
+
+  Future<DoctorModel?> getDoctorPublicById(int doctorId) async {
+    if (doctorId <= 0) return null;
+    final response = await supabaseClient
+        .from(DatabaseSchema.doctorTable)
+        .select(DatabaseSchema.doctorPublicColumns)
+        .eq(DatabaseSchema.doctorId, doctorId)
+        .eq(DatabaseSchema.doctorIsActive, true)
+        .limit(1);
+    if (response.isEmpty) return null;
+    return DoctorModel.fromJson(response.first);
+  }
+
+  Future<List<AreaModel>> getAreasServedByDoctor(int doctorId) async {
+    if (doctorId <= 0) return <AreaModel>[];
+    final response = await supabaseClient
+        .from(DatabaseSchema.areaTable)
+        .select('*')
+        .eq(DatabaseSchema.areaDoctorId, doctorId)
+        .eq(DatabaseSchema.areaIsActive, true)
+        .order(DatabaseSchema.areaOrderBy, ascending: false);
+    return AreaModel.fromJsonList(response);
+  }
+
+  Future<List<AreaModel>> getActiveServiceAreas() async {
+    final response = await supabaseClient
+        .from(DatabaseSchema.areaTable)
+        .select('*')
+        .eq(DatabaseSchema.areaIsActive, true)
+        .order(DatabaseSchema.areaOrderBy, ascending: false);
+    return AreaModel.fromJsonList(response);
   }
 
   Future<List<DoctorModel>> getDoctorsForArea(int areaId) async {
@@ -254,6 +323,7 @@ class SupabaseController {
     DateTime bookingDate,
     int doctorUserId, {
     List<int>? timeSlotIds,
+    int? excludeBookingId,
   }) async {
     final String formattedDate = bookingDate.toIso8601String().split('T')[0];
     var query = supabaseClient
@@ -272,25 +342,31 @@ class SupabaseController {
     final bookingsResponse = await supabaseClient
         .from(DatabaseSchema.bookingsTable)
         .select(
-          'timeSlotId,${DatabaseSchema.bookingsPaymentStatus},${DatabaseSchema.bookingsCreatedAt},${DatabaseSchema.bookingsStatus}',
+          '${DatabaseSchema.bookingsId},timeSlotId,${DatabaseSchema.bookingsPaymentStatus},${DatabaseSchema.bookingsCreatedAt},${DatabaseSchema.bookingsStatus}',
         )
         .eq(DatabaseSchema.bookingsDoctorId, doctorUserId)
         .eq(DatabaseSchema.bookingsDate, formattedDate);
 
     final bookedTimeslotList = <dynamic>[];
     for (final row in bookingsResponse) {
+      final rowId = int.tryParse('${row[DatabaseSchema.bookingsId]}') ?? 0;
+      if (excludeBookingId != null && rowId == excludeBookingId) {
+        continue;
+      }
       final payment =
           (row[DatabaseSchema.bookingsPaymentStatus] as String? ?? '')
               .toLowerCase();
-      final status =
-          (row[DatabaseSchema.bookingsStatus] as String? ?? '').toLowerCase();
+      final status = (row[DatabaseSchema.bookingsStatus] as String? ?? '')
+          .toLowerCase();
       if (status == 'cancelled' ||
           status == 'canceled' ||
           status == 'refunded') {
         continue;
       }
       if ((payment == 'paid') || (payment == 'pending')) {
-        bookedTimeslotList.add(row['timeSlotId']);
+        bookedTimeslotList.add(
+          int.tryParse('${row[DatabaseSchema.bookingsTimeSlotId]}') ?? -1,
+        );
         continue;
       }
     }
@@ -425,6 +501,9 @@ class SupabaseController {
           'userId': userId,
           'isBulkAppointment': isBulkAppointment,
           'bulkAppointmentId': bulkAppointmentId,
+          // Website asks the server for a Payment Link + UPI QR instead of
+          // an embedded Checkout (domain not yet approved by Razorpay).
+          if (kIsWeb) 'channel': 'web',
         },
       );
       return CreateRazorPayOrderModel.fromJson(response.data);
@@ -497,6 +576,39 @@ class SupabaseController {
         success: false,
         error: isFailure ? reason : e.toString(),
       );
+    }
+  }
+
+  /// Website payment-link flow: asks the server whether the Payment Link / QR
+  /// for these bookings has been paid. Read-only — never records a failure.
+  /// Returns 'SUCCESS', 'FAILED' or 'PENDING'.
+  Future<String> checkWebPaymentStatus({
+    required List<int> bookingIds,
+    required int userId,
+    required String? razorpayOrderId,
+  }) async {
+    if (bookingIds.isEmpty) return 'PENDING';
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'verify-razorpay-payment',
+        body: {
+          'bookingIds': bookingIds,
+          'userId': userId,
+          'razorpayOrderId': razorpayOrderId,
+          'checkStatusOnly': true,
+        },
+      );
+      final data = response.data;
+      if (data is! Map) return 'PENDING';
+      final status = data['status']?.toString().toUpperCase();
+      if (data['success'] == true || status == 'SUCCESS' || status == 'PAID') {
+        await _clearPaymentFailureReason(bookingIds);
+        return 'SUCCESS';
+      }
+      if (status == 'FAILED') return 'FAILED';
+      return 'PENDING';
+    } catch (_) {
+      return 'PENDING';
     }
   }
 
@@ -813,6 +925,72 @@ class SupabaseController {
     } catch (e) {
       print('Error in send notification: $e');
       return false;
+    }
+  }
+
+  Future<void> updateBookingMeetingUrl({
+    required int bookingId,
+    required String meetingUrl,
+    String provider = 'pasted',
+  }) async {
+    if (bookingId <= 0) return;
+    await supabaseClient
+        .from(DatabaseSchema.bookingsTable)
+        .update({
+          DatabaseSchema.bookingsMeetingUrl: meetingUrl.trim(),
+          DatabaseSchema.bookingsMeetingProvider: provider,
+        })
+        .eq(DatabaseSchema.bookingsId, bookingId);
+  }
+
+  Future<List<Map<String, dynamic>>> ensureGoogleMeetForBookings({
+    required List<int> bookingIds,
+    required int userId,
+  }) async {
+    if (bookingIds.isEmpty || userId <= 0) return [];
+    try {
+      final response = await supabaseClient.functions.invoke(
+        'create-meet-for-booking',
+        body: {'bookingIds': bookingIds, 'userId': userId},
+      );
+      final data = response.data;
+      if (data is Map && data['results'] is List) {
+        return List<Map<String, dynamic>>.from(
+          (data['results'] as List).whereType<Map>().map(
+            (row) => Map<String, dynamic>.from(row),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error creating Meet links: $e');
+    }
+    return [];
+  }
+
+  Future<void> sendAppointmentEmail({
+    required String toEmail,
+    required String patientName,
+    required String status,
+    required String appointmentDate,
+    Uint8List? pdfBytes,
+  }) async {
+    final pdfBase64 = pdfBytes == null ? null : base64Encode(pdfBytes);
+    final response = await supabaseClient.functions.invoke(
+      'send-email',
+      body: {
+        'toEmail': toEmail,
+        'patientName': patientName,
+        'status': status,
+        'appointmentDate': appointmentDate,
+        if (pdfBase64 != null) 'pdfBase64': pdfBase64,
+        if (pdfBase64 != null)
+          'invoiceName':
+              'PhysioConnect_Invoice_${DateTime.now().millisecondsSinceEpoch}.pdf',
+      },
+    );
+
+    if (response.data is! Map || response.data['success'] != true) {
+      throw Exception('The email service did not confirm delivery.');
     }
   }
 }

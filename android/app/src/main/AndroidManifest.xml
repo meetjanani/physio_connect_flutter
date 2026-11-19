@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <!-- Exact alarms so T-24h / T-1h fire on time (Android 12+). Runtime prompt via requestExactAlarmsPermission(). -->
+    <!-- Exact alarms (Android 12+). Requested only from in-app reminder opt-in, never at launch. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 
     <application

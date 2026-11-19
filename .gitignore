@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase deploy cache
+.firebase/
+# Supabase CLI local state
+supabase/.temp/

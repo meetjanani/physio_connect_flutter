@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:physio_connect/route/route_module.dart';
@@ -15,6 +16,10 @@ class FirebaseAuthController extends GetxController {
 
   var isLoginRequest = true;
   var userRegisterData = null;
+
+  /// Web-only: result of [FirebaseAuth.signInWithPhoneNumber], used to confirm
+  /// the OTP (browsers don't support `verifyPhoneNumber`).
+  ConfirmationResult? _webConfirmation;
 
   void fbLogin(String phoneNumber) async {
     await secureStorageRepository.write(SecureStorage.userMobileNumberSessionStorage, phoneNumber);
@@ -63,6 +68,16 @@ class FirebaseAuthController extends GetxController {
       showProgress();
       //  FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true,
       //  forceRecaptchaFlow: true);
+      if (kIsWeb) {
+        // Shows an invisible reCAPTCHA, then sends the SMS.
+        _webConfirmation =
+            await FirebaseAuth.instance.signInWithPhoneNumber(phoneNumber);
+        hideProgressBar();
+        navigateToOTPScreen(
+            verificationId: _webConfirmation!.verificationId,
+            phoneNumber: phoneNumber);
+        return;
+      }
       await FirebaseAuth.instance.verifyPhoneNumber(
         timeout: const Duration(seconds: 60),
         phoneNumber: phoneNumber,
@@ -81,6 +96,9 @@ class FirebaseAuthController extends GetxController {
         },
         codeAutoRetrievalTimeout: (String ConverificationId) {},
       );
+    } on FirebaseAuthException catch (e) {
+      hideProgressBar();
+      Get.showErrorSnackbar(e.message);
     } catch (e) {
       print(e.toString());
     }
@@ -119,6 +137,11 @@ class FirebaseAuthController extends GetxController {
     try {
       showProgress();
       String smsCode = otp;
+      if (kIsWeb && _webConfirmation != null) {
+        await _webConfirmation!.confirm(smsCode);
+        await getUserFromPhoneNumber(phoneNumber);
+        return;
+      }
       PhoneAuthCredential credential = await PhoneAuthProvider.credential(
           verificationId: verificationId, smsCode: smsCode);
       await FirebaseAuth.instance

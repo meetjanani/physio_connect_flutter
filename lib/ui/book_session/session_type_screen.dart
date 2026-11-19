@@ -138,6 +138,33 @@ class SessionTypeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: session.isOnline
+                                ? AppColors.therapyPurple.withValues(alpha: 0.15)
+                                : AppColors.wellnessGreenLight,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            session.isOnline ? 'Online' : 'Home visit',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: session.isOnline
+                                  ? AppColors.therapyPurple
+                                  : AppColors.wellnessGreenDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Expanded(

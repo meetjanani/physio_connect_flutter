@@ -9,6 +9,7 @@ class DatabaseSchema extends GetxController {
   static const String usersDoctorId = "doctorId";
   static const String userName = "name";
   static const String userMobileNumber = "mobileNumber";
+  static const String usersGuestEmail = "guestEmail";
   static const String usersUserType = "userType";
   static const String userFirebaseToken = "firebaseToken";
   static const String userCreateAt = "createAt";
@@ -56,6 +57,7 @@ class DatabaseSchema extends GetxController {
   static const String bookingsPrice = "price";
   static const String bookingsUserId = "userId";
   static const String bookingsTimeSlotId = "timeSlotId";
+  static const String bookingsTimeSlotJson = "timeSlotJson";
   static const String bookingsDoctorId = "doctorId";
   static const String bookingsCityId = "cityId";
   static const String bookingsAreaId = "areaId";
@@ -74,6 +76,9 @@ class DatabaseSchema extends GetxController {
   static const String bookingsBulkAppointmentId = "bulkAppointmentId";
   static const String bookingsRating = "rating";
   static const String bookingsRatingComment = "ratingComment";
+  static const String bookingsMeetingUrl = "meetingUrl";
+  static const String bookingsMeetingProvider = "meetingProvider";
+  static const String bookingsGuestEmail = "guestEmail";
 
   // Session Types table
   static const String sessionTypeTable = "session_type";
@@ -85,6 +90,7 @@ class DatabaseSchema extends GetxController {
   static const String sessionTypeImageUrl = "imageUrl";
   static const String sessionTypeIsActive = "isActive";
   static const String sessionTypeOrderBy = "orderBy";
+  static const String sessionTypeMode = "mode";
 
   // Time Slots table
   static const String timeSlotTable = "time_slot";
@@ -106,8 +112,18 @@ class DatabaseSchema extends GetxController {
   static const String doctorIsActive = "isActive";
   static const String doctorUserId = "userId";
   static const String doctorPercentageSplit = "percentageSplit";
+
+  /// Comma-separated master session_type ids this doctor offers (e.g. "1,2,5").
+  static const String doctorSessionTypeId = "sessionTypeId";
+
   /// Comma-separated master time_slot ids enabled for this doctor (e.g. "1,2,5").
   static const String doctorTimeSlotId = "timeSlotId";
+
+  /// Patient-safe doctor columns. Omits payout and admin fields.
+  static const String doctorPublicColumns =
+      '$doctorId,$doctorName,$doctorDegree,$doctorExperience,'
+      '$doctorDrRegNumber,$doctorBiodata,$doctorProfilePhotoUrl,'
+      '$doctorUserId,$doctorSessionTypeId,$doctorTimeSlotId';
 
   // common string
   static const String projectName = "PHYSIO CONNECT";

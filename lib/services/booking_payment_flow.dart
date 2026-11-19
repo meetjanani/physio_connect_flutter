@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +12,7 @@ import '../services/appointment_reminder_service.dart';
 import '../supabase/supabase_controller.dart';
 import '../utils/theme/app_colors.dart';
 import 'razorpay_checkout.dart';
+import 'web_upi_payment_dialog.dart';
 
 class PaidPaymentResult {
   PaidPaymentResult({
@@ -98,6 +100,10 @@ class BookingPaymentFlow {
       hideBusy();
       await Future<void>.delayed(const Duration(milliseconds: 300));
       if (_disposed) return;
+      if (kIsWeb) {
+        await _collectOnWeb(order, description);
+        return;
+      }
       _checkout.open(
         order: order,
         description: description,
@@ -108,6 +114,60 @@ class BookingPaymentFlow {
       await onCreateFailed?.call();
       snackbar('Payment failed', 'Unable to start payment process');
     }
+  }
+
+  /// Website: Razorpay hasn't approved the web domain for embedded Checkout,
+  /// so pay via the server-created Payment Link / UPI QR and poll the server
+  /// until the payment is confirmed (verified server-side, no signature).
+  Future<void> _collectOnWeb(
+    CreateRazorPayOrderModel order,
+    String description,
+  ) async {
+    final ids = bookingIds();
+    if (!order.hasWebPaymentOption) {
+      if (deleteDraftsIfNoPaymentId) await _deleteUnpaidDrafts(ids);
+      await onCheckoutFailed(
+        const RazorpayFailureDetails(
+          message: 'Online payment on the website is not available yet. '
+              'Please complete this booking in the PhysioConnect Android app.',
+          reason: 'web_payment_unavailable',
+        ),
+      );
+      return;
+    }
+
+    final orderId = order.orderId;
+    final result = await showWebUpiPaymentDialog(
+      amountPaise: order.amount,
+      description: description,
+      paymentLinkUrl: order.paymentLinkUrl,
+      qrCodeUrl: order.qrCodeUrl,
+      checkStatus: () => _supabase.checkWebPaymentStatus(
+        bookingIds: ids,
+        userId: userId(),
+        razorpayOrderId: orderId,
+      ),
+    );
+    if (_disposed) return;
+
+    if (result == WebUpiPaymentResult.paid) {
+      await _completePaid(PaidPaymentResult(bookingIds: ids, orderId: orderId));
+      return;
+    }
+    // Drafts are kept on web: the link stays payable after the dialog closes,
+    // and the server confirms the booking if the user pays later.
+    await onCheckoutFailed(
+      result == WebUpiPaymentResult.failed
+          ? RazorpayFailureDetails(
+              message: 'Payment failed. Please try again.',
+              orderId: orderId,
+            )
+          : RazorpayFailureDetails(
+              message: 'Payment cancelled',
+              reason: 'payment_cancelled',
+              orderId: orderId,
+            ),
+    );
   }
 
   void showBusy(String message) {
@@ -172,7 +232,6 @@ class BookingPaymentFlow {
         razorpayPaymentId: response.paymentId,
         razorpaySignature: response.signature,
       );
-      hideBusy();
       if (result?.success == true) {
         await _completePaid(
           PaidPaymentResult(
@@ -185,6 +244,7 @@ class BookingPaymentFlow {
         );
         return;
       }
+      hideBusy();
       await onVerifyFailed?.call();
       snackbar(
         'Payment verification failed',
@@ -258,8 +318,11 @@ class BookingPaymentFlow {
     if (!paid.alreadyPaid) {
       await _notifyDoctor(bookings);
     }
+    // await _ensureMeetLinks(paid.bookingIds);
     await _logPaymentAnalytics(bookings);
-    await _scheduleReminders(bookings);
+    await AppointmentReminderService.instance
+        .scheduleRemindersForBookings(bookings);
+    hideBusy();
     await onPaid(paid);
   }
 
@@ -289,10 +352,13 @@ class BookingPaymentFlow {
           ? '${bookings.length} sessions starting $whenLabel'
           : whenLabel;
       final timePart = slotTime.isEmpty ? '' : ' at $slotTime';
+      final online = booking.isOnlineSession;
       await _supabase.sentNotification(
         doctorUserId,
         'Booking confirmed',
-        '$patientName booked $sessionName for $extra$timePart.',
+        online
+            ? '$patientName booked an online $sessionName for $extra$timePart. Join from PhysioConnect.'
+            : '$patientName booked $sessionName for $extra$timePart.',
       );
     } catch (_) {}
   }
@@ -304,38 +370,13 @@ class BookingPaymentFlow {
     } catch (_) {}
   }
 
-  Future<void> _scheduleReminders(List<BookingsModel> bookings) async {
-    for (final booking in bookings) {
-      try {
-        final date = DateTime.tryParse(booking.bookingDate) ?? DateTime.now();
-        var slotTime = '09:00';
-        var sessionName = 'Physio session';
-        try {
-          slotTime = booking.aTimeslot().time;
-          sessionName = booking.aSessionType().name;
-        } catch (_) {}
-        await AppointmentReminderService.instance.scheduleSessionReminders(
-          bookingId: booking.id,
-          sessionStart: _combineDateAndSlot(date, slotTime),
-          sessionLabel: sessionName,
-        );
-      } catch (_) {}
-    }
-  }
-
-  DateTime _combineDateAndSlot(DateTime date, String slotTime) {
-    final cleaned = slotTime.trim().toUpperCase();
-    final match = RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)?').firstMatch(cleaned);
-    var hour = 9;
-    var minute = 0;
-    if (match != null) {
-      hour = int.tryParse(match.group(1) ?? '9') ?? 9;
-      minute = int.tryParse(match.group(2) ?? '0') ?? 0;
-      final ampm = match.group(3);
-      if (ampm == 'PM' && hour < 12) hour += 12;
-      if (ampm == 'AM' && hour == 12) hour = 0;
-    }
-    return DateTime(date.year, date.month, date.day, hour, minute);
+  Future<void> _ensureMeetLinks(List<int> bookingIds) async {
+    try {
+      await _supabase.ensureGoogleMeetForBookings(
+        bookingIds: bookingIds,
+        userId: userId(),
+      );
+    } catch (_) {}
   }
 
   Future<void> _deleteUnpaidDrafts(List<int> ids) async {

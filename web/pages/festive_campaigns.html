@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhysioConnect — Festive Marketing Master Suite (Dhanteras, Diwali, New Year)</title>
+  <!-- html2canvas for instant 1-click high-res PNG export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --primary: #0EA5E9;
+      --primary-dark: #0369A1;
+      --accent-green: #22C55E;
+      --gold-1: #FFE082;
+      --gold-2: #FFD54F;
+      --gold-3: #FFB300;
+      --gold-gradient: linear-gradient(135deg, #FFF8E1 0%, #FFD54F 40%, #FFB300 70%, #FF8F00 100%);
+      --brand-gradient: linear-gradient(135deg, #0EA5E9 0%, #22C55E 100%);
+      --bg: #0B0F19;
+      --card-bg: #151D2F;
+      --text-main: #FFFFFF;
+      --text-muted: #94A3B8;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif; }
+    body { background: var(--bg); color: var(--text-main); padding: 24px; min-height: 100vh; line-height: 1.5; }
+    .suite-container { max-width: 1280px; margin: 0 auto; }
+
+    /* HEADER */
+    header { text-align: center; margin-bottom: 28px; }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 213, 79, 0.12);
+      border: 1px solid rgba(255, 213, 79, 0.35);
+      color: #FFD54F;
+      padding: 6px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    header h1 { font-size: 34px; font-weight: 900; letter-spacing: -0.5px; }
+    header h1 span { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    header p.subtitle { color: var(--text-muted); font-size: 15.5px; margin-top: 6px; }
+
+    /* CAMPAIGN SWITCHER TABS */
+    .campaign-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .camp-tab {
+      background: #1E293B;
+      color: #94A3B8;
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .camp-tab:hover { color: #FFFFFF; border-color: #38BDF8; }
+    .camp-tab.active {
+      background: var(--gold-gradient);
+      color: #3E2723;
+      border-color: #FFD54F;
+      box-shadow: 0 4px 18px rgba(255, 179, 0, 0.4);
+    }
+    .camp-tab.tab-diwali.active {
+      background: linear-gradient(135deg, #FF6B6B 0%, #FFA07A 50%, #FFD700 100%);
+      color: #2D0A0A;
+      box-shadow: 0 4px 18px rgba(255, 107, 107, 0.4);
+    }
+    .camp-tab.tab-newyear.active {
+      background: linear-gradient(135deg, #0EA5E9 0%, #10B981 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 18px rgba(14, 165, 233, 0.4);
+    }
+
+    /* ACTION BAR */
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      padding: 14px 24px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .ratio-toggles { display: flex; gap: 8px; }
+    .btn-ratio {
+      background: #1E293B;
+      color: #94A3B8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-ratio:hover { color: #FFFFFF; border-color: #38BDF8; }
+    .btn-ratio.active { background: #0EA5E9; color: #FFFFFF; border-color: #0EA5E9; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35); }
+
+    .btn-download-img {
+      background: var(--gold-gradient);
+      color: #3E2723;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(255, 179, 0, 0.35);
+      transition: all 0.2s;
+    }
+    .btn-download-img:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255, 179, 0, 0.5); }
+
+    /* STUDIO GRID */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 580px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    @media (max-width: 1060px) {
+      .studio-grid { grid-template-columns: 1fr; }
+    }
+
+    /* CREATIVE CANVAS CONTAINER */
+    .stage-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .creative-canvas {
+      width: 520px;
+      height: 520px;
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+      border: 1.5px solid rgba(255, 213, 79, 0.3);
+      transition: all 0.3s ease;
+    }
+    .creative-canvas.story-mode {
+      width: 420px;
+      height: 746px; /* 9:16 ratio */
+      padding: 36px 28px;
+    }
+
+    /* THEMES FOR THE 3 CAMPAIGNS */
+    /* Campaign 1: Dhanteras */
+    .creative-canvas.theme-dhanteras {
+      background: radial-gradient(circle at 50% 25%, #1E1B4B 0%, #0F172A 50%, #030712 100%);
+      border-color: rgba(255, 213, 79, 0.35);
+    }
+    /* Campaign 2: Diwali */
+    .creative-canvas.theme-diwali {
+      background: radial-gradient(circle at 50% 30%, #3B0764 0%, #1E1B4B 45%, #09090B 100%);
+      border-color: rgba(244, 63, 94, 0.4);
+    }
+    /* Campaign 3: New Year / Bestu Varas */
+    .creative-canvas.theme-newyear {
+      background: radial-gradient(circle at 50% 25%, #064E3B 0%, #062F38 50%, #021B21 100%);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    /* AMBIENT GLOWS */
+    .ambient-glow {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      top: 25%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .theme-dhanteras .ambient-glow { background: radial-gradient(circle, rgba(255, 179, 0, 0.22) 0%, transparent 70%); }
+    .theme-diwali .ambient-glow { background: radial-gradient(circle, rgba(244, 63, 94, 0.25) 0%, transparent 70%); }
+    .theme-newyear .ambient-glow { background: radial-gradient(circle, rgba(34, 197, 94, 0.25) 0%, transparent 70%); }
+
+    /* CARD HEADER */
+    .card-top {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 14px 6px 8px;
+      border-radius: 999px;
+    }
+    .brand-pill img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      object-fit: cover;
+      display: block;
+    }
+    .brand-pill .b-text {
+      font-size: 14px;
+      font-weight: 900;
+      color: #FFFFFF;
+    }
+    .brand-pill .b-text span { color: #38BDF8; }
+
+    .festive-tag-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .theme-dhanteras .festive-tag-badge { background: rgba(255, 213, 79, 0.15); color: #FFD54F; border: 1px solid rgba(255, 213, 79, 0.3); }
+    .theme-diwali .festive-tag-badge { background: rgba(244, 63, 94, 0.18); color: #FDA4AF; border: 1px solid rgba(244, 63, 94, 0.35); }
+    .theme-newyear .festive-tag-badge { background: rgba(34, 197, 94, 0.18); color: #86EFAC; border: 1px solid rgba(34, 197, 94, 0.35); }
+
+    /* CENTER VISUAL ART */
+    .card-center {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .art-frame {
+      width: 170px;
+      height: 170px;
+      margin: 0 auto 12px;
+    }
+    .story-mode .art-frame {
+      width: 210px;
+      height: 210px;
+      margin-bottom: 20px;
+    }
+
+    /* HEADLINES */
+    .headline-container { text-align: center; }
+    .sub-eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .theme-dhanteras .sub-eyebrow { color: #FFD54F; }
+    .theme-diwali .sub-eyebrow { color: #FDA4AF; }
+    .theme-newyear .sub-eyebrow { color: #86EFAC; }
+
+    .main-title {
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #FFFFFF;
+      letter-spacing: -0.3px;
+      margin-bottom: 8px;
+    }
+    .story-mode .main-title { font-size: 25px; margin-bottom: 12px; }
+
+    .sub-title {
+      font-size: 13px;
+      color: #CBD5E1;
+      font-weight: 500;
+      line-height: 1.45;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .chips-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .c-chip {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #E2E8F0;
+    }
+
+    /* CARD FOOTER */
+    .card-bottom {
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cta-pill-mock {
+      background: var(--brand-gradient);
+      color: #FFFFFF;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .url-mock {
+      font-size: 10.5px;
+      color: #94A3B8;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .url-mock strong { color: #38BDF8; }
+
+    .store-mock {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #FFD54F;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    .email-mock {
+      font-size: 10px;
+      color: #94A3B8;
+      margin-top: 3px;
+      text-align: right;
+    }
+
+    /* RIGHT COLUMN COPY CARDS */
+    .copy-column {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .copy-block {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+    }
+    .cb-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cb-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cb-pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(14, 165, 233, 0.15);
+      color: #38BDF8;
+      font-weight: 700;
+    }
+    .btn-copy-code {
+      background: #0284C7;
+      color: white;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-copy-code:hover { background: #0369A1; }
+
+    .copy-text-area {
+      background: #0B0F19;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 13.5px;
+      color: #CBD5E1;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="suite-container">
+    <header>
+      <div class="badge-pill">✨ PHYSIOCONNECT FESTIVE GROWTH & MARKETING MASTER SUITE</div>
+      <h1>3 Festive Campaigns <span>Ready to Publish</span></h1>
+      <p class="subtitle">Dhanteras • Diwali • Hindu New Year (Bestu Varas) — Complete Creatives, Stories & Copy</p>
+    </header>
+
+    <!-- TABS TO SWITCH CAMPAIGN -->
+    <div class="campaign-tabs">
+      <div class="camp-tab active" id="tab-c1" onclick="switchCampaign(1)">
+        🪙 Campaign 1: Dhanteras (The Wealth of Mobility)
+      </div>
+      <div class="camp-tab tab-diwali" id="tab-c2" onclick="switchCampaign(2)">
+        🪔 Campaign 2: Happy Diwali (Light Up Joy, Not Back Pain)
+      </div>
+      <div class="camp-tab tab-newyear" id="tab-c3" onclick="switchCampaign(3)">
+        🌅 Campaign 3: New Year / Bestu Varas (Step Strong)
+      </div>
+    </div>
+
+    <!-- ACTION CONTROLS BAR -->
+    <div class="controls-bar">
+      <div class="ratio-toggles">
+        <button class="btn-ratio active" id="btn-feed" onclick="setRatio('feed')">📷 Instagram Post (1:1)</button>
+        <button class="btn-ratio" id="btn-story" onclick="setRatio('story')">✨ Vertical Story (9:16)</button>
+      </div>
+
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <a id="btn-raw-download" href="assets/campaign1_dhanteras_1x1.jpg" download class="btn-download-img" style="background:#1E293B; color:#38BDF8; border:1px solid #38BDF8; text-decoration:none;">
+          🖼️ Download Raw AI Art (JPG)
+        </a>
+        <button class="btn-download-img" onclick="downloadImage()">
+          📥 Download Branded Poster (PNG)
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN STUDIO GRID -->
+    <div class="studio-grid">
+      <!-- COLUMN 1: LIVE CANVAS STAGE -->
+      <div class="stage-wrapper">
+        <div class="creative-canvas theme-dhanteras" id="active-creative">
+          <!-- Ambient Glow -->
+          <div class="ambient-glow"></div>
+
+          <!-- TOP BRAND BAR -->
+          <div class="card-top">
+            <div class="brand-pill">
+              <img src="assets/physioconnect_logo.jpg" alt="PhysioConnect">
+              <div class="b-text">Physio<span>Connect</span></div>
+            </div>
+            <div class="festive-tag-badge" id="c-badge">आरोग्यं धनसंपदा</div>
+          </div>
+
+          <!-- CENTER ARTWORK -->
+          <div class="card-center">
+            <div class="art-frame" id="c-art">
+              <!-- Dynamically populated per campaign -->
+            </div>
+
+            <!-- HEADLINE BLOCK -->
+            <div class="headline-container">
+              <div class="sub-eyebrow" id="c-eyebrow">DHANTERAS SPECIAL</div>
+              <h2 class="main-title" id="c-title">
+                Invest in the only gold that never tarnishes:<br>
+                <span style="color:#FFD54F;">Pain-Free Joints.</span>
+              </h2>
+              <p class="sub-title" id="c-subtitle">
+                This Dhanteras, welcome the true wealth of effortless mobility & active living at your doorstep.
+              </p>
+
+              <div class="chips-bar" id="c-chips">
+                <span class="c-chip">🛡️ Council Verified Doctors</span>
+                <span class="c-chip">🏠 Home Visits & Online</span>
+                <span class="c-chip">⚡ 100% Cashless</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BOTTOM ACTION FOOTER -->
+          <div class="card-bottom">
+            <div>
+              <div class="cta-pill-mock">
+                <span>📲 Book Home Physio</span>
+              </div>
+              <div class="url-mock">Web: <strong>physio-connect-app.web.app</strong></div>
+            </div>
+
+            <div>
+              <div class="store-mock">
+                <span>⚡ Available on Google Play</span>
+              </div>
+              <div class="email-mock">📩 PhysioConnect.app@gmail.com</div>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size:12px; color:#64748B; margin-top:14px; text-align:center;">
+          💡 Click <strong>"Download Graphic as Image (PNG)"</strong> to save this graphic directly for Instagram or WhatsApp!
+        </p>
+      </div>
+
+      <!-- COLUMN 2: COPYWRITING & BROADCAST SUITE -->
+      <div class="copy-column">
+        <!-- Social Caption -->
+        <div class="copy-block">
+          <div class="cb-header">
+            <div class="cb-title">
+              📸 Instagram & LinkedIn Caption
+              <span class="cb-pill">Ready to Post</span>
+            </div>
+            <button class="btn-copy-code" onclick="copySnippet('post-copy')">📋 Copy Caption</button>
+          </div>
+          <div class="copy-text-area" id="post-copy"></div>
+        </div>
+
+        <!-- WhatsApp Broadcast -->
+        <div class="copy-block">
+          <div class="cb-header">
+            <div class="cb-title">
+              💬 WhatsApp Broadcast Message
+              <span class="cb-pill">Patient Outreach</span>
+            </div>
+            <button class="btn-copy-code" onclick="copySnippet('wa-copy')">📋 Copy Message</button>
+          </div>
+          <div class="copy-text-area" id="wa-copy"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // CAMPAIGN DEFINITIONS
+    const campaigns = {
+      1: {
+        themeClass: 'theme-dhanteras',
+        badge: 'आरोग्यं धनसंपदा',
+        eyebrow: 'DHANTERAS SPECIAL',
+        title: 'Invest in the only gold that never tarnishes:<br><span style="color:#FFD54F;">Pain-Free Joints.</span>',
+        subtitle: 'This Dhanteras, welcome the true wealth of effortless mobility & active living at your doorstep.',
+        chips: ['🛡️ Council Verified Doctors', '🏠 Home Visits & Online', '⚡ 100% Cashless'],
+        artSvg: `
+          <svg viewBox="0 0 200 200" width="100%" height="100%">
+            <defs>
+              <radialGradient id="gCoin" cx="50%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#FFF9C4"/>
+                <stop offset="40%" stop-color="#FFD54F"/>
+                <stop offset="80%" stop-color="#FF8F00"/>
+              </radialGradient>
+              <radialGradient id="gFlame" cx="50%" cy="80%" r="70%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="30%" stop-color="#FFF176"/>
+                <stop offset="70%" stop-color="#FF9800"/>
+                <stop offset="100%" stop-color="#D84315"/>
+              </radialGradient>
+            </defs>
+            <circle cx="100" cy="90" r="72" fill="none" stroke="#FFD54F" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+            <circle cx="100" cy="90" r="65" fill="url(#gCoin)"/>
+            <circle cx="100" cy="90" r="57" fill="#0F172A" stroke="#FFD54F" stroke-width="2"/>
+            <!-- Morphed Golden Spine & Knee Joint -->
+            <path d="M100,46 C108,56 106,66 98,76 C90,86 92,96 100,106 C108,116 104,126 96,134" fill="none" stroke="url(#gCoin)" stroke-width="4.5" stroke-linecap="round"/>
+            <circle cx="100" cy="48" r="3" fill="#FFF9C4"/>
+            <circle cx="98" cy="76" r="3.5" fill="#FFF9C4"/>
+            <circle cx="100" cy="106" r="3.5" fill="#FFF9C4"/>
+            <circle cx="96" cy="134" r="3" fill="#FFF9C4"/>
+            <!-- Knee articulating condyles -->
+            <path d="M78,82 C82,70 95,70 98,78" fill="none" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/>
+            <path d="M76,92 C86,94 95,94 102,88" fill="none" stroke="#22C55E" stroke-width="3" stroke-linecap="round"/>
+            <!-- Left & Right Glowing Diyas -->
+            <g transform="translate(24, 130)">
+              <path d="M6,16 C12,24 28,24 34,16 C30,12 10,12 6,16 Z" fill="#D97706" stroke="#FFD54F" stroke-width="1"/>
+              <path d="M20,13 C23,8 24,3 20,-2 C16,3 17,8 20,13 Z" fill="url(#gFlame)"/>
+            </g>
+            <g transform="translate(142, 130)">
+              <path d="M6,16 C12,24 28,24 34,16 C30,12 10,12 6,16 Z" fill="#D97706" stroke="#FFD54F" stroke-width="1"/>
+              <path d="M20,13 C23,8 24,3 20,-2 C16,3 17,8 20,13 Z" fill="url(#gFlame)"/>
+            </g>
+          </svg>
+        `,
+        postCopy: `While you invest in gold and prosperity today, remember the foundation of every celebration: your health and mobility. 🏃‍♂️✨
+
+From carrying festive shopping bags to decorating every corner of your home, don’t let nagging joint, back, or neck pain slow you down.
+
+This Dhanteras, gift yourself and your loved ones the wealth of certified physiotherapy sessions right at your doorstep.
+
+✨ Why Choose PhysioConnect?
+• 100% Council-Verified Physiotherapists (BPT / MPT)
+• Bedside home visits or 1-tap Google Meet tele-rehab
+• Tailored rehab for Knee Arthritis, Cervical Spondylosis, Sciatica & Post-Op recovery
+• Transparent digital receipts & instant doctor prescriptions
+
+Invest in the gold that keeps you walking, dancing, and celebrating with loved ones for years to come! 💛
+
+📲 Book an expert home physiotherapist near you on PhysioConnect:
+👉 Android App: https://play.google.com/store/apps/details?id=com.physio.connect.physio_connect&hl=en_IN
+🌐 Web: https://physio-connect-app.web.app/
+
+📩 Inquiries: PhysioConnect.app@gmail.com
+
+#Dhanteras #RealWealthIsHealth #PhysioConnect #MobilityFirst #PainFreeLiving #HomePhysiotherapy #HealthTech`,
+        waCopy: `Happy Dhanteras to you and your family! 🪔✨
+
+"आरोग्यं धनसंपदा" — May this festive season bring you the true wealth of good health, vitality, and pain-free movement!
+
+Don't let back pain, knee stiffness, or cervical soreness interrupt your festive joy. Enjoy 1-on-1 personalized physiotherapy in the comfort of your home.
+
+🌟 Verified Doctors (BPT/MPT)
+🌟 Personalized manual therapy & exercise routines
+🌟 Transparent, cashless booking
+
+📲 Book your doorstep session in 2 minutes:
+https://physio-connect-app.web.app/
+
+Wishing you health, prosperity, and effortless mobility!
+— Team PhysioConnect 🩺`
+      },
+      2: {
+        themeClass: 'theme-diwali',
+        badge: 'SHUBH DEEPAVALI 🪔',
+        eyebrow: 'DIWALI RELIEF SPECIAL',
+        title: 'Cleaned the ceiling fans? Shifted the sofa?<br><span style="color:#FDA4AF;">Celebrate a Pain-Free Diwali.</span>',
+        subtitle: 'Mobility is the greatest gift. Don\'t let festive cleaning sprains and back spasms dim your celebrations.',
+        chips: ['🛋️ Posture Recovery', '🏠 Home Physiotherapy', '✨ Relief in 24 Hrs'],
+        artSvg: `
+          <svg viewBox="0 0 200 200" width="100%" height="100%">
+            <defs>
+              <radialGradient id="diwaliLamp" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#FFD54F"/>
+                <stop offset="100%" stop-color="#F43F5E"/>
+              </radialGradient>
+            </defs>
+            <!-- Rangoli Star Backdrop -->
+            <polygon points="100,20 120,65 170,70 130,105 145,155 100,125 55,155 70,105 30,70 80,65" fill="none" stroke="#FDA4AF" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.5"/>
+            <!-- Elegant Stretching Figure Silhouette (Pain-Free Spine Extension) -->
+            <circle cx="100" cy="55" r="10" fill="#FFF1F2"/>
+            <!-- Upward reaching arms & spine arch -->
+            <path d="M100,67 C100,85 96,105 98,135" fill="none" stroke="#38BDF8" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M100,75 C85,60 70,45 60,35" fill="none" stroke="#F43F5E" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M100,75 C115,60 130,45 140,35" fill="none" stroke="#F43F5E" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Lower limbs in stable stance -->
+            <path d="M98,135 C88,150 78,165 72,180" fill="none" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>
+            <path d="M98,135 C108,150 118,165 124,180" fill="none" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>
+            <!-- Sparkling Diyas at base -->
+            <circle cx="100" cy="182" r="6" fill="#FFD54F"/>
+            <path d="M100,176 C102,172 100,168 100,165 C100,168 98,172 100,176 Z" fill="#FF9800"/>
+          </svg>
+        `,
+        postCopy: `Shifting sofas, reaching ceiling corners, and hours of rangoli making can take a serious toll on your spine! 🪔✨
+
+Team PhysioConnect wishes you and your family a sparkling, joyful, and completely pain-free Diwali. Let your festive spirit shine bright — without post-cleaning sprains and joint aches.
+
+Our verified, caring physiotherapists are just a tap away, delivering personalized rehabilitation and relief at your doorstep.
+
+🌟 Celebrate with ease, move with confidence!
+• Immediate relief for acute lower back spasm & neck stiffness
+• Ergonomic guidance for elderly family members
+• Fast, professional doorstep care across your city
+
+📲 Download PhysioConnect & schedule your session today:
+👉 Android: https://play.google.com/store/apps/details?id=com.physio.connect.physio_connect&hl=en_IN
+🌐 Web: https://physio-connect-app.web.app/
+
+📩 Reach out: PhysioConnect.app@gmail.com
+
+#HappyDiwali #Diwali2026 #PainFreeDiwali #PostureCheck #PhysiotherapyAtHome #PhysioConnect #HealthyFestivals`,
+        waCopy: `✨ Shubh Deepavali from Team PhysioConnect! 🪔
+
+Cleaned the house, lifted heavy sweets, or stood for hours making rangolis? If back spasm or joint stiffness is troubling you, don't suffer in silence!
+
+Get a certified physiotherapist at your doorstep for quick pain relief and posture correction.
+
+📲 Book your visit today:
+https://physio-connect-app.web.app/
+
+May your Diwali be luminous, joyful, and 100% pain-free! 🌟`
+      },
+      3: {
+        themeClass: 'theme-newyear',
+        badge: 'SAAL MUBARAK 🌅',
+        eyebrow: 'NEW YEAR / BESTU VARAS',
+        title: 'Step into the New Year on your own two feet:<br><span style="color:#86EFAC;">Stronger, Steadier, Happier.</span>',
+        subtitle: 'Saal Mubarak & Happy New Year from Team PhysioConnect. Empowering healthy steps for every generation.',
+        chips: ['🌅 Active Aging', '🏃 Generational Health', '🏠 Doorstep Rehab'],
+        artSvg: `
+          <svg viewBox="0 0 200 200" width="100%" height="100%">
+            <defs>
+              <linearGradient id="sunGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stop-color="#FFD54F"/>
+                <stop offset="100%" stop-color="#22C55E"/>
+              </linearGradient>
+            </defs>
+            <!-- Rising Sun Aura Behind Horizon -->
+            <path d="M40,130 A60,60 0 0,1 160,130 Z" fill="url(#sunGrad)" opacity="0.35"/>
+            <line x1="20" y1="130" x2="180" y2="130" stroke="#86EFAC" stroke-width="2"/>
+            <!-- Sun rays -->
+            <line x1="100" y1="65" x2="100" y2="45" stroke="#FFD54F" stroke-width="2" stroke-linecap="round"/>
+            <line x1="60" y1="85" x2="45" y2="75" stroke="#FFD54F" stroke-width="2" stroke-linecap="round"/>
+            <line x1="140" y1="85" x2="155" y2="75" stroke="#FFD54F" stroke-width="2" stroke-linecap="round"/>
+            <!-- Elder and Younger Adult Walking in Sync (Confident Strides) -->
+            <!-- Elder Figure (with cane/steady posture) -->
+            <circle cx="80" cy="85" r="7" fill="#F8FAFC"/>
+            <path d="M80,94 L80,120 L72,142" fill="none" stroke="#38BDF8" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M80,120 L88,142" fill="none" stroke="#38BDF8" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M80,100 L90,122 L90,142" fill="none" stroke="#FFD54F" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Younger Adult Figure walking alongside -->
+            <circle cx="115" cy="80" r="7.5" fill="#F8FAFC"/>
+            <path d="M115,90 L115,118 L108,142" fill="none" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>
+            <path d="M115,118 L125,142" fill="none" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>
+            <path d="M115,98 L100,108" fill="none" stroke="#22C55E" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        `,
+        postCopy: `Saal Mubarak & a very Happy New Year from all of us at PhysioConnect! 🌅🙏
+
+A brand new chapter begins with every step you take. Whether you are recovering from surgery, managing chronic knee discomfort, or simply aiming to move better, we are here to support your journey every single day.
+
+Make this the year you prioritize your body, restore joint flexibility, and walk pain-free.
+
+🩺 100+ verified doctors across your city coming right to your home.
+• Personalized stroke, knee replacement & spine rehab packages
+• Daily & alternate-day treatment courses
+• 100% cashless, transparent medical invoicing
+
+Make every walk with loved ones steady, joyful, and confident!
+
+📲 Book your appointment on PhysioConnect:
+👉 Android: https://play.google.com/store/apps/details?id=com.physio.connect.physio_connect&hl=en_IN
+🌐 Web: https://physio-connect-app.web.app/
+
+📩 Contact: PhysioConnect.app@gmail.com
+
+#HappyNewYear #SaalMubarak #NewBeginnings #JointHealth #ActiveAging #PhysioConnect #DoorstepCare`,
+        waCopy: `🌅 Saal Mubarak & Happy New Year from PhysioConnect! 🙏✨
+
+Step into the New Year with vitality and pain-free joints! Whether you are visiting relatives or setting new fitness resolutions, let mobility be your superpower.
+
+Book trusted physiotherapists right at your doorstep:
+📲 https://physio-connect-app.web.app/
+
+Wishing you health, strength, and steady steps all year round! 🩺`
+      }
+    };
+
+    let activeCampaignId = 1;
+
+    function renderCampaign(id) {
+      activeCampaignId = id;
+      const data = campaigns[id];
+      const canvas = document.getElementById('active-creative');
+
+      // Update class theme
+      canvas.className = 'creative-canvas ' + data.themeClass;
+      if (document.getElementById('btn-story').classList.contains('active')) {
+        canvas.classList.add('story-mode');
+      }
+
+      // Update text
+      document.getElementById('c-badge').innerText = data.badge;
+      document.getElementById('c-eyebrow').innerText = data.eyebrow;
+      document.getElementById('c-title').innerHTML = data.title;
+      document.getElementById('c-subtitle').innerHTML = data.subtitle;
+      document.getElementById('c-art').innerHTML = data.artSvg;
+      document.getElementById('c-chips').innerHTML = data.chips.map(c => `<span class="c-chip">${c}</span>`).join('');
+
+      // Update Copy
+      document.getElementById('post-copy').innerText = data.postCopy;
+      document.getElementById('wa-copy').innerText = data.waCopy;
+
+      // Update Download link
+      const isStory = document.getElementById('btn-story').classList.contains('active');
+      const files = {
+        1: isStory ? 'assets/campaign1_dhanteras_9x16.jpg' : 'assets/campaign1_dhanteras_1x1.jpg',
+        2: isStory ? 'assets/campaign2_diwali_9x16.jpg' : 'assets/campaign2_diwali_1x1.jpg',
+        3: isStory ? 'assets/campaign3_newyear_9x16.jpg' : 'assets/campaign3_newyear_1x1.jpg'
+      };
+      const rawBtn = document.getElementById('btn-raw-download');
+      if (rawBtn) rawBtn.href = files[id];
+
+      // Update Tab Styles
+      document.querySelectorAll('.camp-tab').forEach((tab, idx) => {
+        if (idx + 1 === id) {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
+      });
+    }
+
+    function switchCampaign(id) {
+      renderCampaign(id);
+    }
+
+    function setRatio(ratio) {
+      const canvas = document.getElementById('active-creative');
+      const btnFeed = document.getElementById('btn-feed');
+      const btnStory = document.getElementById('btn-story');
+      const rawBtn = document.getElementById('btn-raw-download');
+
+      if (ratio === 'story') {
+        canvas.classList.add('story-mode');
+        btnStory.classList.add('active');
+        btnFeed.classList.remove('active');
+        if (rawBtn) {
+          const names = { 1: 'campaign1_dhanteras_9x16.jpg', 2: 'campaign2_diwali_9x16.jpg', 3: 'campaign3_newyear_9x16.jpg' };
+          rawBtn.href = 'assets/' + names[activeCampaignId];
+        }
+      } else {
+        canvas.classList.remove('story-mode');
+        btnFeed.classList.add('active');
+        btnStory.classList.remove('active');
+        if (rawBtn) {
+          const names = { 1: 'campaign1_dhanteras_1x1.jpg', 2: 'campaign2_diwali_1x1.jpg', 3: 'campaign3_newyear_1x1.jpg' };
+          rawBtn.href = 'assets/' + names[activeCampaignId];
+        }
+      }
+    }
+
+    function downloadImage() {
+      const element = document.getElementById('active-creative');
+      const isStory = element.classList.contains('story-mode');
+      const names = { 1: 'Dhanteras', 2: 'Diwali', 3: 'NewYear_BestuVaras' };
+      const filename = `PhysioConnect_${names[activeCampaignId]}_${isStory ? 'Story_9x16' : 'Post_1x1'}.png`;
+
+      html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#0B0F19',
+        logging: false
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }).catch(err => {
+        alert('Could not export automatically. Please right-click or take a screenshot.');
+        console.error(err);
+      });
+    }
+
+    function copySnippet(id) {
+      const text = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard successfully! 📋');
+      }).catch(() => {
+        alert('Failed to copy. Please manually select and copy.');
+      });
+    }
+
+    // Initialize with Campaign 1
+    renderCampaign(1);
+  </script>
+</body>
+</html>

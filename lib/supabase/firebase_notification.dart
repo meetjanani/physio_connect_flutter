@@ -1,6 +1,8 @@
 
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class FirebaseNotification {
@@ -16,6 +18,7 @@ class FirebaseNotification {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   void init() async {
+    if (kIsWeb) return; // Local notifications are mobile-only.
     final AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -26,6 +29,7 @@ class FirebaseNotification {
   }
 
   void createNotification(String title, String details) async {
+    if (kIsWeb) return;
     AndroidNotificationDetails androidPlatformChannelSpecifics =
     AndroidNotificationDetails(
         'local_notification',   // channelId:

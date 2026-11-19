@@ -9,6 +9,8 @@ class SessionTypeModel {
   String duration= "";
   int price = 0;
   String? imageUrl= null;
+  /// `Home Visit` or `Online`. Missing values are treated as home visit.
+  String? mode;
 
   SessionTypeModel({
     required this.id,
@@ -17,7 +19,13 @@ class SessionTypeModel {
     required this.duration,
     required this.price,
     required this.imageUrl,
+    this.mode,
   });
+
+  bool get isOnline {
+    final value = (mode ?? '').trim().toLowerCase();
+    return value.contains('online');
+  }
 
   static List<SessionTypeModel> fromJsonList(List<dynamic> dataList) {
     List<SessionTypeModel> record = [];

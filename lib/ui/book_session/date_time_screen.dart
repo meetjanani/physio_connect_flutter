@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -8,8 +9,10 @@ import 'package:physio_connect/utils/theme/app_colors.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 
+import '../../custom_widget/time_slot_chip_grid.dart';
 import '../../model/time_slots_model.dart';
 import '../../route/route_module.dart';
+import '../../utils/field_validations.dart';
 import '../../utils/view_extension.dart';
 import 'booking_controller.dart';
 
@@ -23,12 +26,16 @@ class DateTimeScreen extends StatefulWidget {
 class _DateTimeScreenState extends State<DateTimeScreen> {
   final BookingController controller = Get.find<BookingController>();
   final _addressFormKey = GlobalKey<FormState>();
+  final _emailFormKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
+    controller.initializeEmailFromProfile();
     _fetchTimeSlotAfterDateSelection(DateTime.now());
-    fetchAndSetCurrentLocation();
+    if (!controller.isSelectedOnline) {
+      fetchAndSetCurrentLocation();
+    }
   }
 
   @override
@@ -110,86 +117,149 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                       ),
                     );
                   }),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   Text(
-                    'Enter Address',
+                    'Add your email to receive appointment status updates, invoices, and online session invites (optional)',
                     style: GoogleFonts.inter(
-                      textStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Form(
+                    key: _emailFormKey,
+                    child: TextFormField(
+                      controller: controller.emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.done,
+                      validator: (value) {
+                        final email = value?.trim() ?? '';
+                        if (email.isEmpty ||
+                            RegExp(emailPattern).hasMatch(email)) {
+                          return null;
+                        }
+                        return 'Enter a valid email, or leave this blank';
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Email (optional)',
+                        hintText: 'name@example.com',
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Form(
-                    key: _addressFormKey,
-                    child: Column(
+                  if (controller.isSelectedOnline)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextFormField(
-                          controller:
-                              controller.houseNameBlockNumberController,
-                          maxLines: 3,
-                          minLines: 2,
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Apartment/House name & block number is required';
-                            }
-                            return null;
-                          },
-                          decoration: InputDecoration(
-                            labelText:
-                                'Apartment/House Name & Block number *',
-                            hintText: 'Apartment Name & Block number',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.medicalBlueLight,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.medicalBlue.withValues(
+                                alpha: 0.25,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'This is an online session. After payment we add a Google Meet link. You can optionally share an email so the calendar invite is sent to you.',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: AppColors.medicalBlueDark,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: controller.addressController,
-                                maxLines: 3,
-                                minLines: 2,
-                                textInputAction: TextInputAction.done,
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty) {
-                                    return 'Address is required';
-                                  }
-                                  return null;
-                                },
-                                decoration: InputDecoration(
-                                  labelText: 'Address *',
-                                  hintText: 'Enter your address',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                      ],
+                    )
+                  else ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      'Enter Address',
+                      style: GoogleFonts.inter(
+                        textStyle: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Form(
+                      key: _addressFormKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller:
+                                controller.houseNameBlockNumberController,
+                            maxLines: 3,
+                            minLines: 2,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Apartment/House name & block number is required';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                              labelText:
+                                  'Apartment/House Name & Block number *',
+                              hintText: 'Apartment Name & Block number',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: controller.addressController,
+                                  maxLines: 3,
+                                  minLines: 2,
+                                  textInputAction: TextInputAction.done,
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Address is required';
+                                    }
+                                    return null;
+                                  },
+                                  decoration: InputDecoration(
+                                    labelText: 'Address *',
+                                    hintText: 'Enter your address',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.my_location,
-                                color: AppColors.medicalBlue,
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.my_location,
+                                  color: AppColors.medicalBlue,
+                                ),
+                                tooltip: 'Use current location',
+                                onPressed: () async {
+                                  await fetchAndSetCurrentLocation();
+                                  _addressFormKey.currentState?.validate();
+                                },
                               ),
-                              tooltip: 'Use current location',
-                              onPressed: () async {
-                                await fetchAndSetCurrentLocation();
-                                _addressFormKey.currentState?.validate();
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 12),
                 ],
               ),
@@ -230,20 +300,32 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                       onPressed: !canContinue
                           ? null
                           : () {
-                              if (controller.selectedSessionType.value == null) {
+                              if (controller.selectedSessionType.value ==
+                                  null) {
                                 controller.showErrorSnackbar(
                                   'Please select a session type before proceeding.',
                                 );
                                 return;
                               }
-                              final formValid =
-                                  _addressFormKey.currentState?.validate() ??
-                                      false;
-                              if (!formValid) {
+                              final emailValid =
+                                  _emailFormKey.currentState?.validate() ??
+                                  true;
+                              if (!emailValid) {
                                 controller.showErrorSnackbar(
-                                  'Please fill in apartment/house details and address.',
+                                  'Please enter a valid email, or leave it blank.',
                                 );
                                 return;
+                              }
+                              if (!controller.isSelectedOnline) {
+                                final formValid =
+                                    _addressFormKey.currentState?.validate() ??
+                                    false;
+                                if (!formValid) {
+                                  controller.showErrorSnackbar(
+                                    'Please fill in apartment/house details and address.',
+                                  );
+                                  return;
+                                }
                               }
                               _confirmAppointments();
                             },
@@ -327,88 +409,10 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
       );
     }
 
-    return GridView.count(
-      key: ValueKey('slots_$selectedId'),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 3,
-      crossAxisSpacing: 8,
-      mainAxisSpacing: 8,
-      childAspectRatio: 2.35,
-      children: slots.map((slot) {
-        final isBooked = slot.isBooked ?? false;
-        final isSelected = selectedId != null && selectedId == slot.id;
-        return _buildTimeSlotChip(
-          slot: slot,
-          isBooked: isBooked,
-          isSelected: isSelected,
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildTimeSlotChip({
-    required TimeSlotModel slot,
-    required bool isBooked,
-    required bool isSelected,
-  }) {
-    final Color bg;
-    final Color border;
-    final Color text;
-
-    if (isBooked) {
-      bg = AppColors.errorLight;
-      border = AppColors.error.withValues(alpha: 0.45);
-      text = AppColors.errorDark;
-    } else if (isSelected) {
-      bg = AppColors.medicalBlue;
-      border = AppColors.medicalBlueDark;
-      text = AppColors.textOnDark;
-    } else {
-      bg = AppColors.surface;
-      border = AppColors.border;
-      text = AppColors.textPrimary;
-    }
-
-    return GestureDetector(
-      onTap: isBooked
-          ? null
-          : () => controller.selectPreferredTimeSlot(slot),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: border,
-            width: isSelected ? 1.5 : 1,
-          ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: AppColors.medicalBlue.withValues(alpha: 0.25),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-          ],
-        ),
-        child: Text(
-          slot.time,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-            height: 1.2,
-            color: text,
-            decoration: isBooked ? TextDecoration.lineThrough : null,
-            decorationColor: text,
-          ),
-        ),
-      ),
+    return TimeSlotChipGrid(
+      slots: slots,
+      selectedId: selectedId,
+      onSelect: controller.selectPreferredTimeSlot,
     );
   }
 
@@ -668,10 +672,7 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
     if (slot == null) {
       return Text(
         'Waiting for time',
-        style: GoogleFonts.inter(
-          fontSize: 11,
-          color: AppColors.textMuted,
-        ),
+        style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMuted),
       );
     }
     return Text(
@@ -705,8 +706,9 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                 final loading =
                     snapshot.connectionState != ConnectionState.done;
                 final daySlots = snapshot.data ?? const <TimeSlotModel>[];
-                final available =
-                    daySlots.where((s) => !(s.isBooked ?? false)).toList();
+                final available = daySlots
+                    .where((s) => !(s.isBooked ?? false))
+                    .toList();
 
                 return Column(
                   mainAxisSize: MainAxisSize.min,
@@ -790,8 +792,9 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
                               },
                               child: Container(
                                 alignment: Alignment.center,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(10),
@@ -916,6 +919,11 @@ class _DateTimeScreenState extends State<DateTimeScreen> {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+      controller.latitudeOfAddress.value = position.latitude.toString();
+      controller.longitudeOfAddress.value = position.longitude.toString();
+      // Reverse geocoding has no web implementation; web users type the
+      // address manually while still sharing their coordinates.
+      if (kIsWeb) return;
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,

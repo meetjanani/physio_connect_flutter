@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:physio_connect/firebase_web_options.dart';
 import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/supabase/firebase_notification.dart';
 import 'package:physio_connect/ui/splash_screen.dart';
@@ -18,12 +19,15 @@ import 'dart:io';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Only bypass TLS in debug — never in Play Store / release builds.
-  if (kDebugMode) {
+  // (dart:io HttpOverrides do not exist in the browser.)
+  if (kDebugMode && !kIsWeb) {
     HttpOverrides.global = MyHttpOverrides();
   }
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  await Firebase.initializeApp();
+  // Android/iOS read google-services.json / GoogleService-Info.plist;
+  // the web build needs its options passed explicitly.
+  await Firebase.initializeApp(options: kIsWeb ? firebaseWebOptions : null);
   await FirebaseAppCheck.instance.activate(
     providerWeb: ReCaptchaV3Provider(
       // '6LdG3acrAAAAALq9f54S9uWGrRZPyqVFVQCH0onf',
@@ -34,18 +38,14 @@ void main() async {
         ? const AndroidDebugProvider()
         : const AndroidPlayIntegrityProvider(),
   );
-  FirebaseNotification().init();
-  FirebaseMessaging.onBackgroundMessage((message) async {
-    if (kDebugMode) {
-      print("Handling a background message: ${message.messageId}");
-      print('Message data: ${message.data}');
-      print('Message notification: ${message.notification?.title}');
-      print('Message notification: ${message.notification?.body}');
-    }
-  });
-
-  await requestPermission();
-  requestLocationPermission();
+  if (!kIsWeb) {
+    // Local notifications, background FCM handlers and topic subscriptions
+    // are Android/iOS-only.
+    FirebaseNotification().init();
+    FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+    await requestPermission();
+    requestLocationPermission();
+  }
   await Supabase.initialize(
     url: 'https://cjnxrkzrmeetzragwrlm.supabase.co',
     anonKey:
@@ -61,6 +61,17 @@ void main() async {
 
   //await FirebaseApi().initNotification();
   runApp(const MyApp());
+}
+
+// Background FCM handler must be a top-level function.
+@pragma('vm:entry-point')
+Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
+  if (kDebugMode) {
+    print("Handling a background message: ${message.messageId}");
+    print('Message data: ${message.data}');
+    print('Message notification: ${message.notification?.title}');
+    print('Message notification: ${message.notification?.body}');
+  }
 }
 
 Future<void> requestLocationPermission() async {

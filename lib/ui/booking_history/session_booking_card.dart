@@ -10,6 +10,7 @@ import '../../route/route_module.dart';
 import '../../utils/constants.dart';
 import '../../utils/theme/app_colors.dart';
 import '../../utils/units_extensions.dart';
+import 'online_session_actions.dart';
 
 class SessionBookingCard extends StatefulWidget {
   final BookingsModel appointment;
@@ -226,6 +227,19 @@ class _SessionBookingCardState extends State<SessionBookingCard> {
               ],
             ),
           ),
+
+          if (widget.appointment.isOnlineSession)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: OnlineSessionActions(
+                booking: widget.appointment,
+                isDoctor: isDoctorTypeUser(controller.userModelSupabase),
+                compact: true,
+                onChanged: () {
+                  if (mounted) setState(() {});
+                },
+              ),
+            ),
 
           // Actions
           Container(

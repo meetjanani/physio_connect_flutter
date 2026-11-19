@@ -41,6 +41,9 @@ class BookingsModel {
   String? bulkAppointmentId;
   int? rating;
   String? ratingComment;
+  String? meetingUrl;
+  String? meetingProvider;
+  String? guestEmail;
   String bookingDate = DateTime.now().toString();
   String createdAt = DateTime.now().toString();
 
@@ -65,6 +68,7 @@ class BookingsModel {
     required this.doctorNotes,
     required this.address,
     required this.latLong,
+    required this.guestEmail,
     required this.bookingDate,
     required this.createdAt,
     this.isBulkAppointment = false,
@@ -91,4 +95,12 @@ class BookingsModel {
       TimeSlotModel.fromJson(jsonDecode(this.timeSlotJson));
   SessionTypeModel aSessionType() =>
       SessionTypeModel.fromJson(jsonDecode(this.sessionTypeJson));
+
+  bool get isOnlineSession {
+    try {
+      return aSessionType().isOnline;
+    } catch (_) {
+      return false;
+    }
+  }
 }

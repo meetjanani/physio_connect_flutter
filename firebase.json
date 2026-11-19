@@ -1,4 +1,163 @@
 {
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "pages/README.md"
+    ],
+    "cleanUrls": false,
+    "redirects": [
+      {
+        "source": "/doctor",
+        "destination": "/pages/doctor",
+        "type": 301
+      },
+      {
+        "source": "/patient",
+        "destination": "/pages/patient",
+        "type": 301
+      },
+      {
+        "source": "/hub",
+        "destination": "/pages/hub",
+        "type": 301
+      },
+      {
+        "source": "/festive",
+        "destination": "/pages/festive",
+        "type": 301
+      },
+      {
+        "source": "/diwali",
+        "destination": "/pages/diwali",
+        "type": 301
+      },
+      {
+        "source": "/dhanteras",
+        "destination": "/pages/dhanteras",
+        "type": 301
+      },
+      {
+        "source": "/dhanteras_campaign.html",
+        "destination": "/pages/dhanteras_campaign.html",
+        "type": 301
+      },
+      {
+        "source": "/dhanteras_campaign",
+        "destination": "/pages/dhanteras_campaign.html",
+        "type": 301
+      },
+      {
+        "source": "/festive_campaigns.html",
+        "destination": "/pages/festive_campaigns.html",
+        "type": 301
+      },
+      {
+        "source": "/festive_campaigns",
+        "destination": "/pages/festive_campaigns.html",
+        "type": 301
+      },
+      {
+        "source": "/physio_connect_doctor_onboarding_deck.html",
+        "destination": "/pages/physio_connect_doctor_onboarding_deck.html",
+        "type": 301
+      },
+      {
+        "source": "/physio_connect_doctor_onboarding_deck",
+        "destination": "/pages/physio_connect_doctor_onboarding_deck.html",
+        "type": 301
+      },
+      {
+        "source": "/physio_connect_marketing_hub.html",
+        "destination": "/pages/physio_connect_marketing_hub.html",
+        "type": 301
+      },
+      {
+        "source": "/physio_connect_marketing_hub",
+        "destination": "/pages/physio_connect_marketing_hub.html",
+        "type": 301
+      },
+      {
+        "source": "/physio_connect_patient_experience_deck.html",
+        "destination": "/pages/physio_connect_patient_experience_deck.html",
+        "type": 301
+      },
+      {
+        "source": "/physio_connect_patient_experience_deck",
+        "destination": "/pages/physio_connect_patient_experience_deck.html",
+        "type": 301
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/pages/doctor",
+        "destination": "/pages/physio_connect_doctor_onboarding_deck.html"
+      },
+      {
+        "source": "/pages/patient",
+        "destination": "/pages/physio_connect_patient_experience_deck.html"
+      },
+      {
+        "source": "/pages/hub",
+        "destination": "/pages/physio_connect_marketing_hub.html"
+      },
+      {
+        "source": "/pages/festive",
+        "destination": "/pages/festive_campaigns.html"
+      },
+      {
+        "source": "/pages/diwali",
+        "destination": "/pages/festive_campaigns.html"
+      },
+      {
+        "source": "/pages/dhanteras",
+        "destination": "/pages/dhanteras_campaign.html"
+      },
+      {
+        "source": "/pages/**",
+        "destination": "/pages/404.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(html|js|json|wasm|mjs)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(png|jpg|jpeg|gif|svg|webp|ico|ttf|otf|woff|woff2)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=604800"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          }
+        ]
+      }
+    ]
+  },
   "functions": [
     {
       "source": "functions",

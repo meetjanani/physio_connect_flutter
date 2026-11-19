@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:physio_connect/custom_widget/booking_reminder_opt_in_card.dart';
 import 'package:physio_connect/custom_widget/session_type_info.dart';
 import 'package:physio_connect/route/route_module.dart';
 import 'package:physio_connect/utils/theme/app_colors.dart';
@@ -175,7 +176,11 @@ class ConfirmationScreen extends StatelessWidget {
                           ),
                         ),
 
-                        SizedBox(height: 32),
+                        SizedBox(height: 24),
+                        BookingReminderOptInCard(
+                          onEnabled: controller.scheduleLocalRemindersIfAllowed,
+                        ),
+                        SizedBox(height: 16),
 
                         // Note
                         Container(
@@ -197,7 +202,9 @@ class ConfirmationScreen extends StatelessWidget {
                               SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Please get ready 10 minutes before your appointment time',
+                                  controller.isSelectedOnline
+                                      ? 'Join from the app when your session is due. A Google Meet link is added after payment.'
+                                      : 'Please get ready 10 minutes before your appointment time',
                                   style: GoogleFonts.inter(
                                     textStyle: TextStyle(
                                       fontSize: 14,

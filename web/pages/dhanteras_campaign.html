@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhysioConnect — Dhanteras Festive Campaign Creative Studio</title>
+  <!-- html2canvas for 1-click PNG image export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --primary: #0EA5E9;
+      --primary-dark: #0369A1;
+      --accent-green: #22C55E;
+      --gold-1: #FFE082;
+      --gold-2: #FFD54F;
+      --gold-3: #FFB300;
+      --gold-gradient: linear-gradient(135deg, #FFF8E1 0%, #FFD54F 40%, #FFB300 70%, #FF8F00 100%);
+      --festive-bg: radial-gradient(circle at 50% 25%, #1E1B4B 0%, #0F172A 50%, #030712 100%);
+      --brand-gradient: linear-gradient(135deg, #0EA5E9 0%, #22C55E 100%);
+      --text-dark: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif; }
+    body { background: #0B0F19; color: #F8FAFC; padding: 24px; min-height: 100vh; line-height: 1.5; }
+    .studio-container { max-width: 1240px; margin: 0 auto; }
+
+    /* HEADER */
+    header { text-align: center; margin-bottom: 28px; }
+    .campaign-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 213, 79, 0.12);
+      border: 1px solid rgba(255, 213, 79, 0.35);
+      color: #FFD54F;
+      padding: 6px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    header h1 { font-size: 34px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.5px; }
+    header h1 span { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    header p.subtitle { color: #94A3B8; font-size: 15.5px; margin-top: 6px; }
+
+    /* TOP ACTION BAR */
+    .top-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #151D2F;
+      padding: 14px 24px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .view-toggles { display: flex; gap: 8px; }
+    .btn-toggle {
+      background: #1E293B;
+      color: #94A3B8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-toggle:hover { color: #FFFFFF; border-color: #38BDF8; }
+    .btn-toggle.active { background: #0EA5E9; color: #FFFFFF; border-color: #0EA5E9; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35); }
+
+    .btn-download-master {
+      background: var(--gold-gradient);
+      color: #3E2723;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(255, 179, 0, 0.35);
+      transition: all 0.2s;
+    }
+    .btn-download-master:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255, 179, 0, 0.5); }
+
+    /* MAIN TWO-COLUMN STUDIO LAYOUT */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 580px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    @media (max-width: 1040px) {
+      .studio-grid { grid-template-columns: 1fr; }
+    }
+
+    /* CREATIVE STAGE WRAPPER */
+    .creative-stage-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    /* POST 1:1 CANVAS CONTAINER */
+    .creative-card {
+      width: 520px;
+      height: 520px;
+      background: var(--festive-bg);
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), inset 0 0 100px rgba(255, 179, 0, 0.05);
+      border: 1.5px solid rgba(255, 213, 79, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    /* STORY 9:16 VARIANT */
+    .creative-card.story-mode {
+      width: 420px;
+      height: 746px; /* 9:16 scale */
+      padding: 36px 28px;
+    }
+
+    /* BACKGROUND FESTIVE EFFECTS */
+    .diya-glow {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(255, 179, 0, 0.22) 0%, rgba(255, 179, 0, 0) 70%);
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .corner-rangoli-top-left, .corner-rangoli-top-right {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .corner-rangoli-top-left { top: -20px; left: -20px; }
+    .corner-rangoli-top-right { top: -20px; right: -20px; transform: scaleX(-1); }
+
+    /* CARD HEADER: SANSKRIT MOTTO & BRAND LOGO */
+    .creative-header {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 14px 6px 8px;
+      border-radius: 999px;
+    }
+    .brand-pill img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      object-fit: cover;
+      display: block;
+    }
+    .brand-pill .brand-text {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+      color: #FFFFFF;
+    }
+    .brand-pill .brand-text span {
+      color: #38BDF8;
+    }
+
+    .shloka-badge {
+      text-align: right;
+    }
+    .shloka-devanagari {
+      font-size: 11px;
+      font-weight: 700;
+      color: #FFD54F;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: rgba(255, 213, 79, 0.12);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 213, 79, 0.25);
+    }
+    .shloka-meaning {
+      font-size: 9.5px;
+      color: #94A3B8;
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    /* CENTER VISUAL: GOLD COIN MORPHED INTO JOINT & SPINE WITH DIYAS */
+    .creative-center-visual {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .coin-art-container {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      margin: 0 auto 12px;
+    }
+    .creative-card.story-mode .coin-art-container {
+      width: 210px;
+      height: 210px;
+      margin-bottom: 20px;
+    }
+
+    /* FESTIVE HEADLINES */
+    .creative-headline-block {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    .festive-tagline {
+      font-size: 11px;
+      font-weight: 800;
+      color: #FFD54F;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .festive-tagline::before, .festive-tagline::after {
+      content: "✦";
+      color: #FFB300;
+      font-size: 10px;
+    }
+
+    .main-hook {
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #FFFFFF;
+      letter-spacing: -0.3px;
+      margin-bottom: 8px;
+    }
+    .main-hook .gold-highlight {
+      background: var(--gold-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline;
+    }
+    .main-hook .cyan-highlight {
+      color: #38BDF8;
+      display: inline;
+    }
+
+    .creative-card.story-mode .main-hook {
+      font-size: 25px;
+      margin-bottom: 12px;
+    }
+
+    .sub-hook {
+      font-size: 13px;
+      color: #CBD5E1;
+      font-weight: 500;
+      line-height: 1.45;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+    .sub-hook strong {
+      color: #6EE7B7;
+    }
+
+    /* VALUE CHIPS BAR (STORY / FEED) */
+    .festive-chips-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .f-chip {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #E2E8F0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* CARD FOOTER: CTA & CREDENTIALS */
+    .creative-footer {
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-left {
+      text-align: left;
+    }
+    .cta-button-mock {
+      background: var(--brand-gradient);
+      color: #FFFFFF;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    }
+    .web-url-text {
+      font-size: 10.5px;
+      color: #94A3B8;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .web-url-text strong {
+      color: #38BDF8;
+    }
+
+    .footer-right {
+      text-align: right;
+    }
+    .store-badge-mock {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #FFD54F;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    .contact-email-mock {
+      font-size: 10px;
+      color: #94A3B8;
+      margin-top: 3px;
+    }
+
+    /* RIGHT COLUMN: MARKETING COPY & READY-TO-POST SUITE */
+    .copy-suite {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .copy-card {
+      background: #151D2F;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .copy-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .copy-card-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .copy-card-title span.tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(14, 165, 233, 0.15);
+      color: #38BDF8;
+      font-weight: 700;
+    }
+    .btn-copy {
+      background: #0284C7;
+      color: white;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-copy:hover { background: #0369A1; }
+
+    .copy-box {
+      background: #0B0F19;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13.5px;
+      color: #CBD5E1;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    /* HASHTAG PILLS */
+    .hashtag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .hashtag-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #38BDF8;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    /* REEL / VIDEO SCRIPT ACCORDION */
+    .video-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .timeline-step {
+      background: #0B0F19;
+      border-left: 3px solid #FFB300;
+      padding: 12px 14px;
+      border-radius: 8px;
+    }
+    .step-time {
+      font-size: 11px;
+      font-weight: 800;
+      color: #FFD54F;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: #CBD5E1;
+      line-height: 1.45;
+    }
+    .step-desc strong { color: #FFFFFF; }
+  </style>
+</head>
+<body>
+  <div class="studio-container">
+    <!-- MASTER HEADER -->
+    <header>
+      <div class="campaign-badge">
+        ✨ DHANTERAS & DIWALI FESTIVE CAMPAIGN STUDIO
+      </div>
+      <h1>The Wealth of <span>Pain-Free Movement</span></h1>
+      <p class="subtitle">Complete Graphic Creative Studio & Multi-Channel Marketing Suite for PhysioConnect</p>
+    </header>
+
+    <!-- TOP TOOLBAR -->
+    <div class="top-controls">
+      <div class="view-toggles">
+        <button class="btn-toggle active" id="btn-feed" onclick="switchGraphicView('feed')">📷 Instagram Post (1:1)</button>
+        <button class="btn-toggle" id="btn-story" onclick="switchGraphicView('story')">✨ Vertical Story (9:16)</button>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span style="font-size:12px; color:#94A3B8; font-weight:600;">Format: High-Res 2X Canvas</span>
+        <button class="btn-download-master" onclick="downloadCreativeImage()">
+          📥 Download Graphic (PNG)
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN STUDIO LAYOUT -->
+    <div class="studio-grid">
+      <!-- COLUMN 1: INTERACTIVE LIVE GRAPHIC STAGE -->
+      <div class="creative-stage-wrapper">
+        <div class="creative-card" id="creative-capture">
+          <!-- Ambient Diya & Festive Glow -->
+          <div class="diya-glow"></div>
+
+          <!-- Ornate Corner Motifs (SVG Rangoli) -->
+          <svg class="corner-rangoli-top-left" viewBox="0 0 100 100">
+            <path d="M0,0 Q50,0 50,50 Q0,50 0,0" fill="none" stroke="#FFD54F" stroke-width="2"/>
+            <circle cx="25" cy="25" r="8" fill="none" stroke="#FFB300" stroke-width="1.5"/>
+            <path d="M0,35 Q35,35 35,0" fill="none" stroke="#FFD54F" stroke-width="1" stroke-dasharray="2,2"/>
+          </svg>
+          <svg class="corner-rangoli-top-right" viewBox="0 0 100 100">
+            <path d="M0,0 Q50,0 50,50 Q0,50 0,0" fill="none" stroke="#FFD54F" stroke-width="2"/>
+            <circle cx="25" cy="25" r="8" fill="none" stroke="#FFB300" stroke-width="1.5"/>
+            <path d="M0,35 Q35,35 35,0" fill="none" stroke="#FFD54F" stroke-width="1" stroke-dasharray="2,2"/>
+          </svg>
+
+          <!-- HEADER: BRAND PILL + DHANTERAS SHLOKA -->
+          <div class="creative-header">
+            <div class="brand-pill">
+              <img src="assets/physioconnect_logo.jpg" alt="PhysioConnect">
+              <div class="brand-text">Physio<span>Connect</span></div>
+            </div>
+
+            <div class="shloka-badge">
+              <div class="shloka-devanagari">आरोग्यं धनसंपदा</div>
+              <div class="shloka-meaning">Health is Supreme Wealth</div>
+            </div>
+          </div>
+
+          <!-- CENTER VISUAL: THE GOLD COIN MORPHED INTO HEALTHY JOINT & SPINE WITH RADIANT DIYAS -->
+          <div class="creative-center-visual">
+            <div class="coin-art-container">
+              <svg viewBox="0 0 200 200" width="100%" height="100%">
+                <defs>
+                  <!-- Gold Radial Gradients -->
+                  <radialGradient id="goldCoinGrad" cx="50%" cy="40%" r="60%">
+                    <stop offset="0%" stop-color="#FFF9C4"/>
+                    <stop offset="40%" stop-color="#FFD54F"/>
+                    <stop offset="75%" stop-color="#FFB300"/>
+                    <stop offset="100%" stop-color="#FF8F00"/>
+                  </radialGradient>
+                  
+                  <radialGradient id="diyaFlameGrad" cx="50%" cy="80%" r="70%">
+                    <stop offset="0%" stop-color="#FFFFFF"/>
+                    <stop offset="30%" stop-color="#FFF176"/>
+                    <stop offset="70%" stop-color="#FF9800"/>
+                    <stop offset="100%" stop-color="#D84315"/>
+                  </radialGradient>
+
+                  <linearGradient id="cyanGreenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#0EA5E9"/>
+                    <stop offset="100%" stop-color="#22C55E"/>
+                  </linearGradient>
+
+                  <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+
+                <!-- Outer Auspicious Golden Aura -->
+                <circle cx="100" cy="90" r="76" fill="none" stroke="#FFD54F" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+                <circle cx="100" cy="90" r="72" fill="none" stroke="#FFB300" stroke-width="1" opacity="0.8"/>
+
+                <!-- The Primary Gold Coin / Medallion -->
+                <circle cx="100" cy="90" r="66" fill="url(#goldCoinGrad)" filter="url(#goldGlow)"/>
+                <!-- Embossed Inner Coin Border -->
+                <circle cx="100" cy="90" r="58" fill="#0F172A" stroke="#FFD54F" stroke-width="2.5"/>
+
+                <!-- Morphed Anatomy: Healthy Spinal Column & Articulating Knee Joint Vector -->
+                <!-- Spinal S-Curve Column in Pure Gold -->
+                <path d="M100,45 C108,55 106,65 98,75 C90,85 92,95 100,105 C108,115 104,125 96,132" 
+                      fill="none" stroke="url(#goldCoinGrad)" stroke-width="4.5" stroke-linecap="round"/>
+                
+                <!-- Vertebrae / Segment Nodes (Radiating Health) -->
+                <circle cx="100" cy="46" r="3" fill="#FFF9C4"/>
+                <circle cx="106" cy="60" r="3" fill="#FFD54F"/>
+                <circle cx="98" cy="75" r="3.5" fill="#FFF9C4"/>
+                <circle cx="93" cy="90" r="3" fill="#FFD54F"/>
+                <circle cx="100" cy="105" r="3.5" fill="#FFF9C4"/>
+                <circle cx="103" cy="118" r="3" fill="#FFD54F"/>
+                <circle cx="96" cy="132" r="3" fill="#FFF9C4"/>
+
+                <!-- Articulating Knee Joint Condyles (Left & Right Arc) -->
+                <!-- Femoral condyle -->
+                <path d="M80,82 C82,70 95,70 98,78" fill="none" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/>
+                <!-- Tibial plateau -->
+                <path d="M78,92 C86,94 95,94 102,88" fill="none" stroke="#22C55E" stroke-width="3" stroke-linecap="round"/>
+                <!-- Joint Space Sparkle -->
+                <circle cx="89" cy="85" r="2.5" fill="#FFFFFF"/>
+
+                <!-- Prana / Mobility Energy Rings (Cyan & Emerald) -->
+                <ellipse cx="100" cy="90" rx="46" ry="24" fill="none" stroke="url(#cyanGreenGrad)" stroke-width="2" stroke-dasharray="6,4" transform="rotate(-20 100 90)"/>
+
+                <!-- Festive Traditional Brass Diyas on Left and Right -->
+                <!-- Left Diya -->
+                <g transform="translate(24, 130)">
+                  <!-- Diya Clay Base -->
+                  <path d="M6,16 C12,24 28,24 34,16 C30,12 10,12 6,16 Z" fill="#D97706" stroke="#FFD54F" stroke-width="1"/>
+                  <ellipse cx="20" cy="15" rx="13" ry="3.5" fill="#B45309"/>
+                  <!-- Diya Flame -->
+                  <path d="M20,13 C23,8 24,3 20,-2 C16,3 17,8 20,13 Z" fill="url(#diyaFlameGrad)" filter="url(#goldGlow)"/>
+                  <circle cx="20" cy="6" r="2" fill="#FFFFFF"/>
+                </g>
+
+                <!-- Right Diya -->
+                <g transform="translate(142, 130)">
+                  <path d="M6,16 C12,24 28,24 34,16 C30,12 10,12 6,16 Z" fill="#D97706" stroke="#FFD54F" stroke-width="1"/>
+                  <ellipse cx="20" cy="15" rx="13" ry="3.5" fill="#B45309"/>
+                  <path d="M20,13 C23,8 24,3 20,-2 C16,3 17,8 20,13 Z" fill="url(#diyaFlameGrad)" filter="url(#goldGlow)"/>
+                  <circle cx="20" cy="6" r="2" fill="#FFFFFF"/>
+                </g>
+              </svg>
+            </div>
+
+            <!-- HEADLINE & VALUE PROPOSITION -->
+            <div class="creative-headline-block">
+              <div class="festive-tagline">DHANTERAS SPECIAL</div>
+              <h2 class="main-hook">
+                Invest in the only gold that never tarnishes:<br>
+                <span class="gold-highlight">Pain-Free Joints.</span>
+              </h2>
+              <p class="sub-hook">
+                This Dhanteras, welcome the true wealth of <strong>effortless mobility & active living</strong> at your doorstep.
+              </p>
+
+              <div class="festive-chips-row">
+                <span class="f-chip">🛡️ Council Verified Doctors</span>
+                <span class="f-chip">🏠 Home Visits & Online</span>
+                <span class="f-chip">⚡ 100% Cashless</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- FOOTER: CALL TO ACTION + APP CREDENTIALS -->
+          <div class="creative-footer">
+            <div class="footer-left">
+              <div class="cta-button-mock">
+                <span>📲 Book Home Physio</span>
+              </div>
+              <div class="web-url-text">Web: <strong>physio-connect-app.web.app</strong></div>
+            </div>
+
+            <div class="footer-right">
+              <div class="store-badge-mock">
+                <span>⚡ Available on Google Play</span>
+              </div>
+              <div class="contact-email-mock">📩 PhysioConnect.app@gmail.com</div>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size:12px; color:#64748B; margin-top:14px; text-align:center;">
+          💡 Tip: Click <strong>"Download Graphic (PNG)"</strong> to save this high-resolution post directly to your device.
+        </p>
+      </div>
+
+      <!-- COLUMN 2: COMPLETE COPYWRITING & MULTI-CHANNEL SUITE -->
+      <div class="copy-suite">
+        <!-- Post 1: Instagram & Facebook Caption -->
+        <div class="copy-card">
+          <div class="copy-card-header">
+            <div class="copy-card-title">
+              📸 Instagram & Facebook Caption
+              <span class="tag">High Engagement</span>
+            </div>
+            <button class="btn-copy" onclick="copySnippet('insta-copy')">📋 Copy Caption</button>
+          </div>
+
+          <div class="copy-box" id="insta-copy">While you invest in gold and prosperity today, remember the foundation of every celebration: your health and mobility. 🏃‍♂️✨
+
+From carrying festive shopping bags to decorating every corner of your home, don’t let nagging joint, back, or neck pain slow you down.
+
+This Dhanteras, gift yourself and your loved ones the wealth of certified physiotherapy sessions right at your doorstep.
+
+✨ Why Choose PhysioConnect?
+• 100% Council-Verified Physiotherapists (BPT / MPT)
+• Bedside home visits or 1-tap Google Meet tele-rehab
+• Tailored rehab for Knee Arthritis, Cervical Spondylosis, Sciatica & Post-Op recovery
+• Transparent digital receipts & instant doctor prescriptions
+
+Invest in the gold that keeps you walking, dancing, and celebrating with loved ones for years to come! 💛
+
+📲 Book an expert home physiotherapist near you on PhysioConnect:
+👉 App Link: https://play.google.com/store/apps/details?id=com.physio.connect.physio_connect&hl=en_IN
+🌐 Web: https://physio-connect-app.web.app/
+
+📩 Inquiries & Corporate Care: PhysioConnect.app@gmail.com</div>
+
+          <div class="hashtag-cloud">
+            <span class="hashtag-pill">#Dhanteras</span>
+            <span class="hashtag-pill">#RealWealthIsHealth</span>
+            <span class="hashtag-pill">#PhysioConnect</span>
+            <span class="hashtag-pill">#MobilityFirst</span>
+            <span class="hashtag-pill">#PainFreeLiving</span>
+            <span class="hashtag-pill">#HomePhysiotherapy</span>
+            <span class="hashtag-pill">#ArogyamDhanaSampada</span>
+            <span class="hashtag-pill">#HealthTech</span>
+          </div>
+        </div>
+
+        <!-- Post 2: LinkedIn Thought Leadership Post -->
+        <div class="copy-card">
+          <div class="copy-card-header">
+            <div class="copy-card-title">
+              💼 LinkedIn Corporate & Thought Leadership Post
+              <span class="tag">B2B / Professionals</span>
+            </div>
+            <button class="btn-copy" onclick="copySnippet('linkedin-copy')">📋 Copy Post</button>
+          </div>
+
+          <div class="copy-box" id="linkedin-copy">Invest in the only asset that yields infinite returns: Your Physical Health. 🌟
+
+On Dhanteras, corporate calendars and portfolios celebrate silver and gold. Yet, ask any leader who has navigated a high-stakes quarter while battling chronic cervical strain or lumbar pain: Pain-free mobility is the ultimate wealth.
+
+As the ancient Sanskrit adage proclaims:
+"आरोग्यं धनसंपदा" — Health itself is the highest fortune.
+
+Whether it’s the physical strain of festive travel, long desk hours, or caring for elderly parents recovering from joint stiffness, quality physical therapy shouldn’t mean waiting in congested clinic lobbies.
+
+At PhysioConnect, we are transforming physical rehabilitation:
+✅ Verified Council-Registered Physiotherapists arriving right at your doorstep
+✅ Evidence-based manual therapy, ergonomic correction, and continuous recovery packages
+✅ Seamless cashless digital healthcare infrastructure with instant GST invoices
+
+This festive season, consider investing in the health and mobility of your team, your parents, and yourself.
+
+📲 Explore PhysioConnect: https://physio-connect-app.web.app/
+📩 Direct Partnerships: PhysioConnect.app@gmail.com
+
+#Dhanteras #RealWealthIsHealth #PhysioConnect #PreventiveHealthcare #CorporateWellness #DigitalHealth #PhysicalTherapy #HealthTechIndia</div>
+        </div>
+
+        <!-- Post 3: WhatsApp Patient Broadcast -->
+        <div class="copy-card">
+          <div class="copy-card-header">
+            <div class="copy-card-title">
+              💬 WhatsApp Broadcast (Patient Outreach)
+              <span class="tag">High Conversion</span>
+            </div>
+            <button class="btn-copy" onclick="copySnippet('wa-copy')">📋 Copy Broadcast</button>
+          </div>
+
+          <div class="copy-box" id="wa-copy">Happy Dhanteras to you and your family! 🪔✨
+
+"आरोग्यं धनसंपदा" — May this festive season bring you the true wealth of good health, vitality, and pain-free movement!
+
+Don't let back pain, knee stiffness, or cervical soreness interrupt your festive joy. Enjoy 1-on-1 personalized physiotherapy in the comfort of your home.
+
+🌟 Verified Doctors (BPT/MPT)
+🌟 Personalized manual therapy & exercise routines
+🌟 Transparent, cashless booking
+
+📲 Book your doorstep session in 2 minutes:
+https://physio-connect-app.web.app/
+
+Wishing you health, prosperity, and effortless mobility!
+— Team PhysioConnect 🩺</div>
+        </div>
+
+        <!-- Post 4: 15-Second Short Video / Reel Script -->
+        <div class="copy-card">
+          <div class="copy-card-header">
+            <div class="copy-card-title">
+              🎬 15-Second Festive Reel / Short Script
+              <span class="tag">Viral Hook</span>
+            </div>
+          </div>
+
+          <div class="video-timeline">
+            <div class="timeline-step">
+              <div class="step-time">0:00 - 0:04 (The Hook)</div>
+              <div class="step-desc"><strong>Visual:</strong> Close-up shot of gold jewelry / coins glistening near a diya.<br><strong>Voiceover:</strong> "Everyone is buying gold for Dhanteras today... but what good is wealth if moving hurts?"</div>
+            </div>
+            <div class="timeline-step">
+              <div class="step-time">0:04 - 0:10 (The Transition)</div>
+              <div class="step-desc"><strong>Visual:</strong> Smooth transition to a person happily bending, playing with family without knee or back pain. The PhysioConnect gold-morphed joint graphic animates.<br><strong>Voiceover:</strong> "Invest in the only gold that never tarnishes: Pain-Free Joints."</div>
+            </div>
+            <div class="timeline-step">
+              <div class="step-time">0:10 - 0:15 (Call To Action)</div>
+              <div class="step-desc"><strong>Visual:</strong> PhysioConnect verified doctor arrives at doorstep with smile; download badge pops up.<br><strong>Voiceover:</strong> "Book certified physiotherapists at home on PhysioConnect. Link in bio!"</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchGraphicView(mode) {
+      const card = document.getElementById('creative-capture');
+      const btnFeed = document.getElementById('btn-feed');
+      const btnStory = document.getElementById('btn-story');
+
+      if (mode === 'story') {
+        card.classList.add('story-mode');
+        btnStory.classList.add('active');
+        btnFeed.classList.remove('active');
+      } else {
+        card.classList.remove('story-mode');
+        btnFeed.classList.add('active');
+        btnStory.classList.remove('active');
+      }
+    }
+
+    function downloadCreativeImage() {
+      const element = document.getElementById('creative-capture');
+      const isStory = element.classList.contains('story-mode');
+      const filename = isStory ? 'PhysioConnect_Dhanteras_Story_9x16.png' : 'PhysioConnect_Dhanteras_Post_1x1.png';
+
+      // Use html2canvas with scale 2 for retina / high-resolution crisp output
+      html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#0F172A',
+        logging: false
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }).catch(err => {
+        alert('Could not generate image automatically. Please take a screenshot or right click to save.');
+        console.error(err);
+      });
+    }
+
+    function copySnippet(id) {
+      const text = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard successfully! 📋');
+      }).catch(() => {
+        alert('Failed to copy. Please manually select and copy text.');
+      });
+    }
+  </script>
+</body>
+</html>

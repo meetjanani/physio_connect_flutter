@@ -1,11 +1,9 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:physio_connect/model/bookings_model.dart';
@@ -17,7 +15,7 @@ import '../utils/units_extensions.dart';
 
 class InvoiceService {
   /// Generate a PDF invoice for one appointment or a bulk appointment group.
-  static Future<File> generateInvoice(
+  static Future<Uint8List> generateInvoice(
     BookingsModel appointment, {
     List<BookingsModel>? appointments,
   }) async {
@@ -586,12 +584,8 @@ class InvoiceService {
       ),
     );
 
-    // Save the PDF
-    final output = await getTemporaryDirectory();
-    final file = File('${output.path}/invoice_${appointment.id}.pdf');
-    await file.writeAsBytes(await pdf.save());
-
-    return file;
+    // Return the PDF bytes (works on Android, iOS and Web).
+    return pdf.save();
   }
 
   /// Helper method to build a key-value row for appointment details
@@ -680,9 +674,10 @@ class InvoiceService {
   }
 
   /// Open the PDF for viewing, printing, or sharing
-  static Future<void> openPdf(File file) async {
+  static Future<void> openPdf(Uint8List bytes, {String name = 'document.pdf'}) async {
     await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => file.readAsBytes(),
+      name: name,
+      onLayout: (PdfPageFormat format) async => bytes,
     );
   }
 

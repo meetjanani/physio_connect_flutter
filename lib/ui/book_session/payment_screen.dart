@@ -66,7 +66,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ..signature = paid.signature;
       controller.bookingsModel.refresh();
     }
-    controller.pendingBookingIds.clear();
     if (mounted) {
       Get.toNamed(
         AppPage.bookingConfirmation,
@@ -260,6 +259,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                           child: Image.network(
                             'https://razorpay.com/assets/razorpay-logo.png',
+                            // <img> element on web: no CORS needed for remote images.
+                            webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
                             height: 24,
                             width: 24,
                             errorBuilder: (context, error, stackTrace) => Icon(

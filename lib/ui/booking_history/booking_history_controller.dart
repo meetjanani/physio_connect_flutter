@@ -1,10 +1,13 @@
 // lib/ui/booking/history/booking_history_controller.dart
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:physio_connect/utils/view_extension.dart';
 
 import '../../model/bookings_model.dart';
 import '../../model/refund_response_model.dart';
+import '../../model/time_slots_model.dart';
 import '../../model/user_model_supabase.dart';
 import '../../supabase/supabase_controller.dart';
 import '../../utils/constants.dart';
@@ -26,7 +29,8 @@ class BookingHistoryController extends GetxController {
   UserModelSupabase? userModelSupabase;
   RxList<BookingsModel> upComingBookings = RxList();
   RxBool isDoctor = false.obs;
-  final therapistsImage = "https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9";
+  final therapistsImage =
+      "https://firebasestorage.googleapis.com/v0/b/physio-connect-app.firebasestorage.app/o/Doctor_Profile_Photos%2Fpatient_common_profile_picture.jpg?alt=media&token=0c67dc67-9f2b-401a-86f3-91ff07f5c3d9";
 
   @override
   Future<void> onInit() async {
@@ -62,56 +66,69 @@ class BookingHistoryController extends GetxController {
     }
   }
 
-  Future<void> updateAppointmentStatus(BookingsModel bookingModel) async {
+  Future<void> updateAppointmentStatus(BookingsModel bookingModel, String? oldStatus) async {
     if (userModelSupabase?.id != null) {
-      isLoading.value = true;
-      try {
-        final isRefunded =
-            bookingModel.razorpayRefundId?.trim().isNotEmpty == true ||
-                bookingModel.paymentStatus.toLowerCase() == 'refunded' ||
-                bookingModel.bookingStatus.toLowerCase() == 'refunded';
-        if (isRefunded) {
-          bookingModel.bookingStatus = 'refunded';
+      final isRefunded =
+          bookingModel.razorpayRefundId?.trim().isNotEmpty == true ||
+          bookingModel.paymentStatus.toLowerCase() == 'refunded' ||
+          bookingModel.bookingStatus.toLowerCase() == 'refunded';
+      if (isRefunded) {
+        bookingModel.bookingStatus = 'refunded';
+      }
+      await supabaseController.updateBookingStatus(
+        bookingModel.id,
+        bookingModel,
+      );
+      final doctor = bookingModel.aDoctor();
+      final patient = bookingModel.aPatient();
+      final sessionType = bookingModel.aSessionType();
+      final timeSlot = bookingModel.aTimeslot();
+      final parsedDate = DateTime.tryParse(bookingModel.bookingDate);
+      final appointmentDate = parsedDate == null
+          ? bookingModel.bookingDate
+          : DateFormat('MMM d, yyyy').format(parsedDate);
+      final appointmentDetails =
+          '${sessionType.name} session on $appointmentDate at ${timeSlot.time}';
+      final currentStatus = bookingModel.bookingStatus.trim().toLowerCase();
+      final guestEmail = bookingModel.guestEmail?.trim() ?? '';
+      if (oldStatus != null &&
+          oldStatus != currentStatus &&
+          guestEmail.isNotEmpty) {
+        try {
+          await supabaseController.sendAppointmentEmail(
+            toEmail: guestEmail,
+            patientName: patient.name ?? 'Patient',
+            status: bookingModel.bookingStatus,
+            appointmentDate: '$appointmentDate, ${timeSlot.time}',
+          );
+        } on Exception catch (error) {
+          showErrorSnackbar(
+            'Status updated, but the email could not be sent: $error',
+          );
         }
-        await supabaseController.updateBookingStatus(
-          bookingModel.id,
-          bookingModel,
-        );
-        final doctor = bookingModel.aDoctor();
-        final patient = bookingModel.aPatient();
-        final sessionType = bookingModel.aSessionType();
-        final timeSlot = bookingModel.aTimeslot();
-        final parsedDate = DateTime.tryParse(bookingModel.bookingDate);
-        final appointmentDate = parsedDate == null
-            ? bookingModel.bookingDate
-            : DateFormat('MMM d, yyyy').format(parsedDate);
-        final appointmentDetails =
-            '${sessionType.name} session on $appointmentDate at ${timeSlot.time}';
-        final notification = _bookingStatusNotification(
-          bookingModel.bookingStatus,
-          patient.name ?? 'The patient',
-          doctor.name ?? 'your doctor',
-          appointmentDetails,
-        );
-        final doctorUserId = doctor.userId ?? 0;
-        final patientUserId = bookingModel.userId;
+      }
+      final notification = _bookingStatusNotification(
+        bookingModel.bookingStatus,
+        patient.name ?? 'The patient',
+        doctor.name ?? 'your doctor',
+        appointmentDetails,
+      );
+      final doctorUserId = doctor.userId ?? 0;
+      final patientUserId = bookingModel.userId;
 
-        if (patientUserId > 0) {
-          await supabaseController.sentNotification(
-            patientUserId,
-            notification.$1,
-            notification.$2,
-          );
-        }
-        if (doctorUserId > 0) {
-          await supabaseController.sentNotification(
-            doctorUserId,
-            notification.$1,
-            notification.$3,
-          );
-        }
-      } finally {
-        isLoading.value = false;
+      if (patientUserId > 0) {
+        await supabaseController.sentNotification(
+          patientUserId,
+          notification.$1,
+          notification.$2,
+        );
+      }
+      if (doctorUserId > 0) {
+        await supabaseController.sentNotification(
+          doctorUserId,
+          notification.$1,
+          notification.$3,
+        );
       }
     }
   }
@@ -122,7 +139,10 @@ class BookingHistoryController extends GetxController {
     String doctorName,
     String appointmentDetails,
   ) {
-    final status = bookingStatus.toLowerCase().replaceAll(RegExp(r'[-_\s]'), '');
+    final status = bookingStatus.toLowerCase().replaceAll(
+      RegExp(r'[-_\s]'),
+      '',
+    );
     final title = switch (status) {
       'pending' => 'Booking awaiting confirmation',
       'confirmed' => 'Booking confirmed',
@@ -135,8 +155,7 @@ class BookingHistoryController extends GetxController {
     final patientMessage = switch (status) {
       'pending' =>
         'Your $appointmentDetails with $doctorName is awaiting confirmation.',
-      'confirmed' =>
-        'Your $appointmentDetails with $doctorName is confirmed.',
+      'confirmed' => 'Your $appointmentDetails with $doctorName is confirmed.',
       'completed' =>
         'Your $appointmentDetails with $doctorName has been completed.',
       'cancelled' || 'canceled' =>
@@ -153,12 +172,10 @@ class BookingHistoryController extends GetxController {
         '$patientName has a $appointmentDetails booking awaiting confirmation.',
       'confirmed' =>
         '$patientName has a confirmed $appointmentDetails booking.',
-      'completed' =>
-        '$patientName\'s $appointmentDetails has been completed.',
+      'completed' => '$patientName\'s $appointmentDetails has been completed.',
       'cancelled' || 'canceled' =>
         '$patientName\'s $appointmentDetails booking has been cancelled.',
-      'noshow' =>
-        '$patientName did not attend their $appointmentDetails.',
+      'noshow' => '$patientName did not attend their $appointmentDetails.',
       'refunded' =>
         'The refund for $patientName\'s $appointmentDetails booking has been processed.',
       _ =>
@@ -192,15 +209,51 @@ class BookingHistoryController extends GetxController {
     }
   }
 
+  Future<List<TimeSlotModel>> loadRescheduleSlots({
+    required BookingsModel appointment,
+    required DateTime date,
+  }) async {
+    List<int>? configuredIds;
+    try {
+      configuredIds = appointment.aDoctor().timeSlotId
+          ?.split(',')
+          .map((value) => int.tryParse(value.trim()))
+          .whereType<int>()
+          .where((id) => id > 0)
+          .toSet()
+          .toList();
+      if (configuredIds != null && configuredIds.isEmpty) {
+        configuredIds = null;
+      }
+    } catch (_) {
+      configuredIds = null;
+    }
+
+    return supabaseController.getTimeSlotsMaster(
+      date,
+      appointment.doctorId,
+      timeSlotIds: configuredIds,
+      excludeBookingId: appointment.id,
+    );
+  }
+
   Future<void> rescheduleAppointment(
     BookingsModel appointment,
     DateTime newDate,
+    TimeSlotModel newSlot,
   ) async {
     isLoading.value = true;
     try {
       final bookingDate = DateFormat('yyyy-MM-dd').format(newDate);
-      await supabaseController.updateBookingDate(appointment.id, bookingDate);
+      await supabaseController.updateBookingDate(
+        appointment.id,
+        bookingDate,
+        timeSlotId: newSlot.id,
+        timeSlotJson: jsonEncode(newSlot.toJson()),
+      );
       appointment.bookingDate = bookingDate;
+      appointment.timeSlotId = newSlot.id;
+      appointment.timeSlotJson = jsonEncode(newSlot.toJson());
       selectedAppointment.value = appointment;
 
       final index = upComingBookings.indexWhere((booking) {
@@ -210,8 +263,10 @@ class BookingHistoryController extends GetxController {
         upComingBookings[index] = appointment;
       }
 
-      showSuccessSnackbar('Appointment Rescheduled' + "\n" +
-        'The appointment was moved to $bookingDate.',);
+      showSuccessSnackbar(
+        'Appointment rescheduled\n'
+        'Moved to $bookingDate at ${newSlot.time}.',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -253,16 +308,23 @@ class BookingHistoryController extends GetxController {
         'Patient callback request',
       );
     } else {
+      final isOnline = appointment?.isOnlineSession == true;
       await supabaseController.sentNotification(
         userId,
-        'Your appointment with ${doctor?.name ?? 'your doctor'} is scheduled '
-            'for $appointmentDate at '
-            '${timeSlot?.time ?? 'the scheduled time'}. This is a reminder from '
-            'your doctor.',
-        'Appointment reminder',
+        isOnline
+            ? 'Your online session with ${doctor?.name ?? 'your doctor'} is on '
+                  '$appointmentDate at ${timeSlot?.time ?? 'the scheduled time'}. '
+                  'Open PhysioConnect and tap Join Google Meet.'
+            : 'Your appointment with ${doctor?.name ?? 'your doctor'} is scheduled '
+                  'for $appointmentDate at '
+                  '${timeSlot?.time ?? 'the scheduled time'}. This is a reminder from '
+                  'your doctor.',
+        isOnline ? 'Join your online session' : 'Appointment reminder',
       );
     }
-    final recipient = isDoctorTypeUser(userModelSupabase) ? 'patient' : 'doctor';
+    final recipient = isDoctorTypeUser(userModelSupabase)
+        ? 'patient'
+        : 'doctor';
     Get.showSuccessSnackbar(
       'Your notification has been sent to the $recipient.',
     );
@@ -282,8 +344,9 @@ class BookingHistoryController extends GetxController {
       bookingId: bookingId,
       doctorId: doctorId,
     );
-    selectedAppointment.value = await supabaseController.getBookingById(bookingId);
-
+    selectedAppointment.value = await supabaseController.getBookingById(
+      bookingId,
+    );
 
     // 3. Hide Loading State
     isLoading.value = false;

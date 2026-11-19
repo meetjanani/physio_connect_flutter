@@ -15,6 +15,7 @@ import '../../model/area_model.dart';
 import '../../model/session_type_model.dart';
 import '../../model/time_slots_model.dart';
 import '../../model/user_model_supabase.dart';
+import '../../services/appointment_reminder_service.dart';
 import '../../supabase/supabase_controller.dart';
 import '../../utils/constants.dart';
 
@@ -35,12 +36,15 @@ class BookingController extends GetxController {
   void onClose() {
     addressController.dispose();
     houseNameBlockNumberController.dispose();
+    emailController.dispose();
     super.onClose();
   }
+
   // Add a TextEditingController for address if not present in controller
   final TextEditingController addressController = TextEditingController();
   final TextEditingController houseNameBlockNumberController =
       TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final RxString latitudeOfAddress = ''.obs;
   final RxString longitudeOfAddress = ''.obs;
   SupabaseController supabaseController = SupabaseController.to;
@@ -49,6 +53,7 @@ class BookingController extends GetxController {
 
   // Session Type
   final selectedSessionType = Rx<SessionTypeModel?>(null);
+  bool get isSelectedOnline => selectedSessionType.value?.isOnline == true;
   final sessionTypes = <SessionTypeModel>[].obs;
   // Time slots data
   final selectedTimeSlot = Rx<TimeSlotModel?>(null);
@@ -63,7 +68,7 @@ class BookingController extends GetxController {
 
   final isCheckingConflicts = false.obs;
 
-  final selectedDate = DateTime.now().obs;
+  final selectedDate = DateTime.now().add(const Duration(days: 1)).obs;
   final isBulkAppointment = false.obs;
   final bulkAppointmentCount = 1.obs;
   final recurrence = 'every_day'.obs;
@@ -122,10 +127,7 @@ class BookingController extends GetxController {
       selectedDate.value.day,
     );
     appointmentDates.assignAll(
-      List.generate(
-        count,
-        (index) => start.add(Duration(days: index * step)),
-      ),
+      List.generate(count, (index) => start.add(Duration(days: index * step))),
     );
     // Re-check preferred time across the new date set.
     if (selectedTimeSlot.value != null) {
@@ -139,8 +141,8 @@ class BookingController extends GetxController {
     return recurrence.value == 'alternative_day'
         ? 2
         : recurrence.value == 'every_2_day'
-            ? 3
-            : 1;
+        ? 3
+        : 1;
   }
 
   void setBulkAppointmentCountValue(int count) {
@@ -183,8 +185,11 @@ class BookingController extends GetxController {
 
     if (index > 0) {
       final previous = appointmentDates[index - 1];
-      final previousDate =
-          DateTime(previous.year, previous.month, previous.day);
+      final previousDate = DateTime(
+        previous.year,
+        previous.month,
+        previous.day,
+      );
       if (!normalized.isAfter(previousDate)) return false;
     }
 
@@ -241,9 +246,9 @@ class BookingController extends GetxController {
         final key = dateKey(dates[i]);
         final daySlots = results[i];
         final match = daySlots.cast<TimeSlotModel?>().firstWhere(
-              (s) => s?.id == preferred.id,
-              orElse: () => null,
-            );
+          (s) => s?.id == preferred.id,
+          orElse: () => null,
+        );
         final isBooked = match == null || (match.isBooked ?? false);
         if (isBooked) {
           nextConflicts.add(key);
@@ -294,7 +299,19 @@ class BookingController extends GetxController {
     super.onInit();
     isLoading.value = true;
     userModelSupabase = await UserModelSupabase.getFromSecureStorage();
+    prefillEmailFromProfile();
     isLoading.value = false;
+  }
+
+  Future<void> initializeEmailFromProfile() async {
+    userModelSupabase ??= await UserModelSupabase.getFromSecureStorage();
+    prefillEmailFromProfile();
+  }
+
+  void prefillEmailFromProfile() {
+    if (emailController.text.trim().isEmpty) {
+      emailController.text = userModelSupabase?.guestEmail?.trim() ?? '';
+    }
   }
 
   // Load master data
@@ -336,9 +353,9 @@ class BookingController extends GetxController {
       timeSlots.addAll(response);
       if (previousPreferredId != null) {
         final stillAvailable = timeSlots.cast<TimeSlotModel?>().firstWhere(
-              (s) => s?.id == previousPreferredId && !(s?.isBooked ?? true),
-              orElse: () => null,
-            );
+          (s) => s?.id == previousPreferredId && !(s?.isBooked ?? true),
+          orElse: () => null,
+        );
         if (stillAvailable != null) {
           await selectPreferredTimeSlot(stillAvailable);
         }
@@ -354,6 +371,21 @@ class BookingController extends GetxController {
     isLoading.value = true;
 
     try {
+      await initializeEmailFromProfile();
+      final bookingEmail = emailController.text.trim();
+      final profileEmail = userModelSupabase?.guestEmail?.trim() ?? '';
+      if (bookingEmail.isNotEmpty && bookingEmail != profileEmail) {
+        final user = userModelSupabase;
+        if (user == null || user.id <= 0) {
+          throw StateError(
+            'Could not identify your profile to save the email.',
+          );
+        }
+        await supabaseController.updateUserEmail(user.id, bookingEmail);
+        user.guestEmail = bookingEmail;
+        await user.saveToSecureStorage();
+      }
+
       final doctorModel =
           selectedDoctor.value ?? await DoctorModel.getFromSecureStorage();
       final doctorJson = jsonEncode(doctorModel?.toJson() ?? {});
@@ -400,10 +432,13 @@ class BookingController extends GetxController {
           orderId: null,
           signature: null,
           doctorNotes: 'No additional notes provided.',
-          address:
-              "${houseNameBlockNumberController.text}\n${addressController.text}",
-          latLong:
-              "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
+          address: sessionType.isOnline
+              ? 'Online session'
+              : "${houseNameBlockNumberController.text}\n${addressController.text}",
+          latLong: sessionType.isOnline
+              ? ''
+              : "${latitudeOfAddress.value}${LAT_LONG_SEPRATOR}${longitudeOfAddress.value}",
+          guestEmail: bookingEmail.isEmpty ? null : bookingEmail,
           bookingDate: dateKey(date),
           createdAt: DateTime.now().toString(),
           isBulkAppointment: groupId != null,
@@ -444,6 +479,7 @@ class BookingController extends GetxController {
   final serviceCities = <CityStateModel>[].obs;
   final serviceAreas = <AreaModel>[].obs;
   final areaDoctors = <DoctorModel>[].obs;
+
   /// areaId -> assigned doctor (one doctor per area for list UI).
   final areaDoctorByAreaId = <int, DoctorModel>{}.obs;
   final selectedCity = Rx<CityStateModel?>(null);
@@ -502,7 +538,6 @@ class BookingController extends GetxController {
     }
   }
 
-
   /// Not In Use
   Future<void> loadDoctorsForSelectedArea() async {
     if (selectedArea.value == null) {
@@ -534,4 +569,42 @@ class BookingController extends GetxController {
     areaDoctors.clear();
   }
 
+  /// Schedules local alarms only if reminder permission is already granted.
+  Future<void> scheduleLocalRemindersIfAllowed() async {
+    final dates = appointmentDates.isEmpty
+        ? [selectedDate.value]
+        : appointmentDates.toList();
+    final ids = pendingBookingIds.toList();
+    final sessionName = selectedSessionType.value?.name ?? 'Physio session';
+    final online = isSelectedOnline;
+    for (var i = 0; i < dates.length; i++) {
+      final date = dates[i];
+      final slot = timeSlotForDate(date) ?? selectedTimeSlot.value;
+      final bookingId = i < ids.length
+          ? ids[i]
+          : (bookingsModel.value?.id ?? 0);
+      if (bookingId <= 0) continue;
+      await AppointmentReminderService.instance.scheduleSessionReminders(
+        bookingId: bookingId,
+        sessionStart: AppointmentReminderService.combineDateAndSlot(
+          date,
+          slot?.time ?? '09:00',
+        ),
+        sessionLabel: online ? '$sessionName — join from the app' : sessionName,
+        includeJoinSoon: online,
+      );
+    }
+  }
+
+  /// Sets city / area / assigned doctor and loads that doctor's session types.
+  Future<void> startSessionBookingForDoctor({
+    required DoctorModel doctor,
+    required AreaModel area,
+    required CityStateModel city,
+  }) async {
+    selectedCity.value = city;
+    selectedArea.value = area;
+    selectedDoctor.value = doctor;
+    await getSessionTypesMaster();
+  }
 }
