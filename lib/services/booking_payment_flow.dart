@@ -319,6 +319,19 @@ class BookingPaymentFlow {
         if (booking != null) bookings.add(booking);
       } catch (_) {}
     }
+    // Website (Payment Link / UPI QR): the payment id is only known to the
+    // server, which saved it on the booking. Take it from there so the
+    // confirmation screen shows the transaction id.
+    if ((paid.paymentId ?? '').isEmpty && bookings.isNotEmpty) {
+      final saved = bookings.first;
+      paid = PaidPaymentResult(
+        bookingIds: paid.bookingIds,
+        paymentId: saved.paymentId,
+        orderId: (saved.orderId ?? '').isNotEmpty ? saved.orderId : paid.orderId,
+        signature: paid.signature,
+        alreadyPaid: paid.alreadyPaid,
+      );
+    }
     if (!paid.alreadyPaid) {
       await _notifyDoctor(bookings);
     }

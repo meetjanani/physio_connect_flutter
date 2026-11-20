@@ -362,8 +362,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               ),*/
               if (appointment.transferStatus?.isNotEmpty == true)
                 _buildInfoRow(
-                  'Transfer Status',
-                  _getPaymentStatusText(appointment.transferStatus!),
+                  'Doctor Payout',
+                  _getTransferStatusText(appointment.transferStatus!),
                   () {},
                   Icons.event_available,
                 ),
@@ -1140,6 +1140,27 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         return 'Payment Failed';
       case 'pending':
         return 'Payment Pending';
+      default:
+        return status.capitalize ?? status;
+    }
+  }
+
+  /// Razorpay Route transfer to the doctor. It is created on hold at payment
+  /// time and released by the doctor after the session.
+  String _getTransferStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'created':
+      case 'pending':
+        return 'On hold until the session is completed';
+      case 'processed':
+        return 'Processing';
+      case 'released':
+        return 'Released to doctor';
+      case 'failed':
+        return 'Transfer failed';
+      case 'reversed':
+      case 'partially_reversed':
+        return 'Reversed';
       default:
         return status.capitalize ?? status;
     }
