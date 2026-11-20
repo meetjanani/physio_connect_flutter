@@ -15,38 +15,40 @@ ever shown.
 
 1. The website calls `create-razorpay-order` with `"channel": "web"`. After the
    normal order, the function creates (or reuses, if still open and the same
-   amount) a Payment Link and a UPI QR, saves their ids on the bookings
-   (`webPaymentLinkId`, `webQrCodeId`) and returns `paymentLinkUrl` /
-   `qrCodeUrl`.
+   amount) a Payment Link and a UPI QR, the same way GIFT City Carpool does
+   (UPI link first, standard link if Razorpay refuses UPI links, e.g. in test
+   mode). It saves their ids in the **Razorpay order's notes** (no database
+   change) and returns `paymentLinkUrl` / `qrCodeUrl`. If neither can be made,
+   it returns Razorpay's reason as `webPaymentError` and the website shows it.
 2. The website shows a dialog: **Pay on this device** opens the link in a new
    tab; **Scan QR** shows the UPI QR (Razorpay's QR image, or a QR of the
    payment link if the QR could not be created).
 3. The website polls `verify-razorpay-payment` with `checkStatusOnly: true`
-   every 3 s. The function asks Razorpay whether the link / QR has a captured
-   payment for the right amount and, if so, marks the bookings paid with the
-   same code the Android flow uses. It never records a failure.
+   every 3 s. The function reads the ids from the order notes and checks, in
+   order: the order's own payments, the link, the QR, and recent payments whose
+   notes carry this order. On a captured payment for the right amount it marks
+   the bookings paid with the same code the Android flow uses. It never records
+   a failure.
 4. `razorpay-webhook` confirms the bookings even if the patient closes the tab
    right after paying.
 
-**Doctor payouts (Route):** the Payment Link carries the same held transfer as
-the Android order (`options.order.transfers`, `on_hold`). QR payments can't
-carry transfers, so the held transfer is created right after capture.
-`release-doctor-payment` works the same for all three.
+**Doctor payouts (Route):** link and QR payments can't carry the order's
+transfer, so the doctor's held transfer (`on_hold`) is created right after
+capture with the same split. `release-doctor-payment` works the same for all.
 
 ## Deploy (one time)
 
-```bash
-# 1. DB columns
-supabase db push        # or run migrations/20261119150000_web_payment_link_qr.sql in the SQL editor
+No database migration is needed.
 
-# 2. Functions
+```bash
+# 1. Functions (the website keeps saying "not set up yet" until these are deployed)
 supabase functions deploy create-razorpay-order
 supabase functions deploy verify-razorpay-payment
 supabase functions deploy razorpay-webhook --no-verify-jwt
 supabase secrets set RAZORPAY_WEBHOOK_SECRET=<any long random string>
 ```
 
-3. Razorpay Dashboard → Settings → Webhooks → Add:
+2. Razorpay Dashboard → Settings → Webhooks → Add:
    URL `https://cjnxrkzrmeetzragwrlm.supabase.co/functions/v1/razorpay-webhook`,
    secret = the value above, events `payment_link.paid` and `qr_code.credited`.
    Do this in **test mode** and again in **live mode** (they are separate).

@@ -127,9 +127,13 @@ class BookingPaymentFlow {
     if (!order.hasWebPaymentOption) {
       if (deleteDraftsIfNoPaymentId) await _deleteUnpaidDrafts(ids);
       await onCheckoutFailed(
-        const RazorpayFailureDetails(
-          message: 'Online payment on the website is not available yet. '
-              'Please complete this booking in the PhysioConnect Android app.',
+        RazorpayFailureDetails(
+          // The server explains why (e.g. Razorpay rejected the link) when it
+          // was updated; an older deployment sends no link and no reason.
+          message: order.webPaymentError != null
+              ? 'Online payment could not be started: ${order.webPaymentError}'
+              : 'Online payment on the website is not set up yet. '
+                    'Please complete this booking in the PhysioConnect Android app.',
           reason: 'web_payment_unavailable',
         ),
       );

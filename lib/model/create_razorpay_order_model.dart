@@ -20,6 +20,9 @@ class CreateRazorPayOrderModel {
   String? paymentLinkUrl;
   String? qrCodeUrl;
 
+  /// Web only: Razorpay's reason when neither a link nor a QR could be made.
+  String? webPaymentError;
+
   CreateRazorPayOrderModel({
     required this.success,
     required this.orderId,
@@ -31,6 +34,7 @@ class CreateRazorPayOrderModel {
     required this.message,
     this.paymentLinkUrl,
     this.qrCodeUrl,
+    this.webPaymentError,
   });
 
   factory CreateRazorPayOrderModel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +49,7 @@ class CreateRazorPayOrderModel {
       message: json['message']?.toString() ?? "",
       paymentLinkUrl: _nonEmpty(json['paymentLinkUrl'] ?? json['payment_link_url']),
       qrCodeUrl: _nonEmpty(json['qrCodeUrl'] ?? json['qr_code_url']),
+      webPaymentError: _nonEmpty(json['webPaymentError']),
     );
   }
 
