@@ -77,9 +77,7 @@ Deno.serve(async (req) => {
         paymentStatus,
         orderId,
         paymentId,
-        signature,
-        "webPaymentLinkId",
-        "webQrCodeId"
+        signature
       `)
       .in("id", bookingIds);
 
@@ -174,12 +172,10 @@ Deno.serve(async (req) => {
     // Moved down so we can return the calculated amounts and keyId
     if (bookings[0].orderId) {
       const web = isWeb
-        ? await webPaymentOptions(supabase, {
-            basicAuth, bookingIds, userId, amountPaise, doctorAmountPaise,
-            doctorAccountId: doctor.razorpayAccountId,
+        ? await webPaymentOptions({
+            basicAuth, bookingIds, userId, amountPaise,
             orderId: bookings[0].orderId,
-            existingLinkId: bookings[0].webPaymentLinkId,
-            existingQrId: bookings[0].webQrCodeId,
+            contact: body.contact,
           })
         : {};
       return jsonResponse({
@@ -256,10 +252,10 @@ Deno.serve(async (req) => {
     // 12. Return order to Flutter
     // -----------------------------------------
     const web = isWeb
-      ? await webPaymentOptions(supabase, {
-          basicAuth, bookingIds, userId, amountPaise, doctorAmountPaise,
-          doctorAccountId: doctor.razorpayAccountId,
+      ? await webPaymentOptions({
+          basicAuth, bookingIds, userId, amountPaise,
           orderId: razorpayData.id,
+          contact: body.contact,
         })
       : {};
     return jsonResponse({
@@ -278,82 +274,118 @@ Deno.serve(async (req) => {
 });
 
 // -----------------------------------------
-// Website: Payment Link + UPI QR
+// Website: Payment Link + UPI QR (same approach as GIFT City Carpool)
 // -----------------------------------------
-// Razorpay has not approved the website domain for embedded Checkout yet, so
-// the website pays on a Razorpay-hosted Payment Link page, or by scanning a
-// UPI QR. Both work without website approval (Payment Links also work in test
-// mode). Payment is confirmed server-side by verify-razorpay-payment
-// (checkStatusOnly) and razorpay-webhook, using the ids saved here.
-// Failures here never block the response: the app falls back to a QR of the
-// link, or tells the user to pay in the Android app if neither exists.
+// Razorpay has not approved the website domain for embedded Checkout, so the
+// website pays on a Razorpay-hosted Payment Link, or by scanning a UPI QR.
+// Neither needs website approval.
+//
+// No database columns are needed: the link / QR ids are stored in the
+// Razorpay order's notes, where verify-razorpay-payment (checkStatusOnly)
+// reads them back. The doctor's held transfer is created after capture.
+//
+// Failures never block the order. If neither can be created the Razorpay
+// reason is returned as `webPaymentError` so the website can show it.
 async function webPaymentOptions(
-  supabase: any,
-  { basicAuth, bookingIds, userId, amountPaise, doctorAmountPaise, doctorAccountId, orderId, existingLinkId = null, existingQrId = null }: any,
-): Promise<{ paymentLinkUrl: string | null; qrCodeUrl: string | null }> {
+  { basicAuth, bookingIds, userId, amountPaise, orderId, contact = null }: any,
+): Promise<{ paymentLinkUrl: string | null; qrCodeUrl: string | null; webPaymentError?: string }> {
   const headers = { Authorization: `Basic ${basicAuth}`, "Content-Type": "application/json" };
   const notes = { order_id: String(orderId), booking_ids: bookingIds.join(","), user_id: String(userId) };
-  const closeBy = Math.floor(Date.now() / 1000) + 30 * 60;
+  const description = bookingIds.length > 1
+    ? `PhysioConnect - ${bookingIds.length} sessions`
+    : "PhysioConnect session booking";
+  const errors: string[] = [];
 
-  const getJson = async (url: string) => {
+  const call = async (method: string, url: string, payload?: unknown) => {
     try {
-      const r = await fetch(url, { headers });
-      return r.ok ? await r.json() : null;
-    } catch (_) {
-      return null;
-    }
-  };
-  const postJson = async (url: string, payload: unknown) => {
-    try {
-      const r = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+      const r = await fetch(url, { method, headers, body: payload ? JSON.stringify(payload) : undefined });
       const data = await r.json().catch(() => null);
-      if (!r.ok) console.error("razorpay", url, r.status, JSON.stringify(data));
-      return r.ok ? data : null;
-    } catch (_) {
-      return null;
+      if (!r.ok) {
+        const reason = data?.error?.description ?? data?.error?.reason ?? `HTTP ${r.status}`;
+        console.warn("razorpay", method, url, r.status, JSON.stringify(data));
+        return { ok: false, data: null, reason: String(reason) };
+      }
+      return { ok: true, data, reason: null };
+    } catch (e) {
+      return { ok: false, data: null, reason: e instanceof Error ? e.message : String(e) };
     }
   };
 
-  // Reuse a still-open link / QR for the same amount (retry, page refresh).
-  let link: any = existingLinkId ? await getJson(`https://api.razorpay.com/v1/payment_links/${existingLinkId}`) : null;
-  if (!link || link.status !== "created" || Number(link.amount) !== amountPaise) {
-    link = await postJson("https://api.razorpay.com/v1/payment_links", {
+  // Reuse a still-open link / QR for this order (retry, page refresh).
+  const order = (await call("GET", `https://api.razorpay.com/v1/orders/${orderId}`)).data;
+  const orderNotes = (order?.notes && !Array.isArray(order.notes)) ? order.notes : {};
+
+  let link: any = null;
+  if (orderNotes.web_payment_link_id) {
+    const existing = (await call("GET", `https://api.razorpay.com/v1/payment_links/${orderNotes.web_payment_link_id}`)).data;
+    if (existing?.status === "created" && Number(existing.amount) === amountPaise) link = existing;
+  }
+  if (!link) {
+    const linkBody = (upiLink: boolean) => ({
       amount: amountPaise,
       currency: "INR",
       accept_partial: false,
-      description: "PhysioConnect session booking",
+      description,
+      customer: contact ? { contact: String(contact) } : undefined,
       notify: { sms: false, email: false },
       reminder_enable: false,
-      expire_by: closeBy,
       notes,
-      // Same doctor split as the Android order; held until release-doctor-payment.
-      options: doctorAccountId
-        ? { order: { transfers: [{ account: doctorAccountId, amount: doctorAmountPaise, currency: "INR", on_hold: 1 }] } }
-        : undefined,
+      upi_link: upiLink,
     });
+    // UPI link opens the UPI app straight away (as in GIFT City Carpool).
+    // Razorpay doesn't offer UPI links in test mode or on some accounts, so
+    // fall back to the standard link (UPI, cards, wallets on one page).
+    const upi = await call("POST", "https://api.razorpay.com/v1/payment_links", linkBody(true));
+    if (upi.ok) {
+      link = upi.data;
+    } else {
+      const standard = await call("POST", "https://api.razorpay.com/v1/payment_links", linkBody(false));
+      if (standard.ok) link = standard.data;
+      else errors.push(`Payment link: ${standard.reason}`);
+    }
   }
 
-  let qr: any = existingQrId ? await getJson(`https://api.razorpay.com/v1/payments/qr_codes/${existingQrId}`) : null;
-  if (!qr || qr.status !== "active" || Number(qr.payment_amount) !== amountPaise) {
-    // Needs the QR Codes feature on the Razorpay account; null if unavailable.
-    qr = await postJson("https://api.razorpay.com/v1/payments/qr_codes", {
+  let qr: any = null;
+  if (orderNotes.web_qr_code_id) {
+    const existing = (await call("GET", `https://api.razorpay.com/v1/payments/qr_codes/${orderNotes.web_qr_code_id}`)).data;
+    if (existing?.status === "active" && Number(existing.payment_amount) === amountPaise) qr = existing;
+  }
+  if (!qr) {
+    // Needs the QR Codes feature on the Razorpay account; the website shows a
+    // QR of the payment link when this isn't available.
+    const created = await call("POST", "https://api.razorpay.com/v1/payments/qr_codes", {
       type: "upi_qr",
       name: "PhysioConnect",
       usage: "single_use",
       fixed_amount: true,
       payment_amount: amountPaise,
-      description: "PhysioConnect session booking",
-      close_by: closeBy,
+      description,
       notes,
     });
+    if (created.ok) qr = created.data;
+    else errors.push(`QR code: ${created.reason}`);
   }
 
-  await supabase
-    .from("bookings")
-    .update({ webPaymentLinkId: link?.id ?? null, webQrCodeId: qr?.id ?? null })
-    .in("id", bookingIds);
+  // Remember the ids on the order for verify-razorpay-payment.
+  if ((link?.id ?? "") !== (orderNotes.web_payment_link_id ?? "") || (qr?.id ?? "") !== (orderNotes.web_qr_code_id ?? "")) {
+    const patched = await call("PATCH", `https://api.razorpay.com/v1/orders/${orderId}`, {
+      notes: {
+        ...orderNotes,
+        booking_ids: bookingIds.join(","),
+        user_id: String(userId),
+        web_payment_link_id: link?.id ?? "",
+        web_qr_code_id: qr?.id ?? "",
+      },
+    });
+    if (!patched.ok) errors.push(`Saving link on order: ${patched.reason}`);
+  }
 
-  return { paymentLinkUrl: link?.short_url ?? null, qrCodeUrl: qr?.image_url ?? null };
+  const result: { paymentLinkUrl: string | null; qrCodeUrl: string | null; webPaymentError?: string } = {
+    paymentLinkUrl: link?.short_url ?? null,
+    qrCodeUrl: qr?.image_url ?? null,
+  };
+  if (!result.paymentLinkUrl && !result.qrCodeUrl) result.webPaymentError = errors.join("; ");
+  return result;
 }
 
 // -----------------------------------------

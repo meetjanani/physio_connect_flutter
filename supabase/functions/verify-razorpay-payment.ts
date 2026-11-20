@@ -188,32 +188,49 @@ async function checkWebPaymentStatus(supabase: any, { bookingIds, userId }: any)
   const expectedAmountPaise = Math.round(
     loaded.bookings.reduce((sum: number, b: any) => sum + (Number(b.price) || 0), 0) * 100,
   );
-  const linkId = loaded.bookings.find((b: any) => b.webPaymentLinkId)?.webPaymentLinkId;
-  const qrId = loaded.bookings.find((b: any) => b.webQrCodeId)?.webQrCodeId;
-  if (!linkId && !qrId) return jsonResponse({ success: false, status: "PENDING" });
+  // Link / QR ids were saved in the Razorpay order notes by create-razorpay-order.
+  const orderId = loaded.bookings.find((b: any) => b.orderId)?.orderId;
+  if (!orderId) return jsonResponse({ success: false, status: "PENDING" });
+  const order = await get(`https://api.razorpay.com/v1/orders/${orderId}`);
+  const notes = (order?.notes && !Array.isArray(order.notes)) ? order.notes : {};
+  const linkId = notes.web_payment_link_id || null;
+  const qrId = notes.web_qr_code_id || null;
+  const isCaptured = (p: any) => p?.status === "captured";
 
   let paymentId: string | null = null;
-  let viaQr = false;
   let linkClosed = !linkId;
   let qrClosed = !qrId;
 
-  if (linkId) {
+  // 1. Paid on the order itself (embedded checkout, or an earlier attempt).
+  const orderPayments = await get(`https://api.razorpay.com/v1/orders/${orderId}/payments`);
+  paymentId = (orderPayments?.items ?? []).find(isCaptured)?.id ?? null;
+
+  // 2. Payment Link.
+  if (!paymentId && linkId) {
     const link = await get(`https://api.razorpay.com/v1/payment_links/${linkId}`);
     if (link?.status === "paid") {
-      paymentId = (link.payments ?? []).find((p: any) => p.status === "captured")?.payment_id ?? null;
+      paymentId = (link.payments ?? []).find(isCaptured)?.payment_id ?? link.payments?.[0]?.payment_id ?? null;
     }
     linkClosed = link?.status === "expired" || link?.status === "cancelled";
   }
+
+  // 3. UPI QR.
   if (!paymentId && qrId) {
     const list = await get(`https://api.razorpay.com/v1/payments/qr_codes/${qrId}/payments`);
-    const captured = (list?.items ?? []).find((p: any) => p.status === "captured");
-    if (captured) {
-      paymentId = captured.id;
-      viaQr = true;
-    } else {
+    paymentId = (list?.items ?? []).find(isCaptured)?.id ?? null;
+    if (!paymentId) {
       const qr = await get(`https://api.razorpay.com/v1/payments/qr_codes/${qrId}`);
       qrClosed = qr?.status === "closed";
     }
+  }
+
+  // 4. Recent payments carrying this order in their notes (as GIFT City
+  //    Carpool does), in case the ids couldn't be saved on the order.
+  if (!paymentId) {
+    const recent = await get("https://api.razorpay.com/v1/payments?count=25");
+    paymentId = (recent?.items ?? []).find(
+      (p: any) => isCaptured(p) && p.notes?.order_id === String(orderId),
+    )?.id ?? null;
   }
 
   if (!paymentId) {
@@ -227,15 +244,16 @@ async function checkWebPaymentStatus(supabase: any, { bookingIds, userId }: any)
     return jsonResponse({ success: false, status: "PENDING", error: "Payment could not be matched" });
   }
 
-  // QR payments can't carry Route transfers, so create the doctor's held
-  // transfer after capture (same split as the original order).
-  if (viaQr) await ensureDoctorTransfer(supabase, { bookingIds, paymentId, basicAuth });
+  // Link / QR payments have no Route transfer, so create the doctor's held
+  // transfer after capture (same split as the original order). No-op when
+  // the payment already has one.
+  await ensureDoctorTransfer(supabase, { bookingIds, paymentId, basicAuth });
 
   const marked = await markBookingsPaid(supabase, {
     bookingIds,
     userId,
     razorpayPaymentId: paymentId,
-    razorpayOrderId: payment.order_id ?? null,
+    razorpayOrderId: orderId,
     razorpaySignature: null,
     basicAuth,
     amount: payment.amount,
@@ -335,7 +353,7 @@ async function recordPaymentFailure(supabase: any, { bookingIds, userId, razorpa
 async function loadOwnedBookings(supabase: any, bookingIds: any, userId: any) {
   const { data: bookings, error: bookingsError } = await supabase
     .from("bookings")
-    .select(`id, "userId", price, "paymentStatus", "bookingStatus", "orderId", "webPaymentLinkId", "webQrCodeId"`)
+    .select(`id, "userId", price, "paymentStatus", "bookingStatus", "orderId"`)
     .in("id", bookingIds);
 
   if (bookingsError || !bookings || bookings.length === 0) return { bookings: [], response: jsonResponse({ error: "Bookings not found" }, 404) };

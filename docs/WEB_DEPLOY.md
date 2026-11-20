@@ -26,7 +26,7 @@ The same Flutter code base now builds for the browser. The site layout is:
    registered under Console → App Check with that key. Otherwise Firebase
    calls from the website will be rejected if enforcement is on.
 5. **Payments** — until Razorpay approves the website domain, the website
-   pays via Payment Link + UPI QR. Deploy the migration, functions and webhook
+   pays via Payment Link + UPI QR. Deploy the functions and webhook
    listed in [WEB_PAYMENTS_SERVER.md](WEB_PAYMENTS_SERVER.md); before that the
    website asks users to pay in the Android app.
 6. **Firebase CLI account** — sign in with the Google account that owns
