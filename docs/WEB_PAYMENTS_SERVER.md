@@ -30,7 +30,7 @@ ever shown.
    the bookings paid with the same code the Android flow uses. It never records
    a failure.
 4. `razorpay-webhook` confirms the bookings even if the patient closes the tab
-   right after paying.
+   right after paying (see "Payment status safety nets" below).
 
 **Doctor payouts (Route):** link and QR payments can't carry the order's
 transfer, so the doctor's held transfer (`on_hold`) is created right after
@@ -50,8 +50,26 @@ supabase secrets set RAZORPAY_WEBHOOK_SECRET=<any long random string>
 
 2. Razorpay Dashboard → Settings → Webhooks → Add:
    URL `https://cjnxrkzrmeetzragwrlm.supabase.co/functions/v1/razorpay-webhook`,
-   secret = the value above, events `payment_link.paid` and `qr_code.credited`.
+   secret = the value above, events:
+   `payment.captured`, `payment.failed`, `order.paid`, `payment_link.paid`,
+   `qr_code.credited`.
    Do this in **test mode** and again in **live mode** (they are separate).
+
+## Payment status safety nets (Android + website)
+
+| What happened | How the booking gets the right status |
+|---|---|
+| Paid, app verifies normally | Android: signature check in `verify-razorpay-payment`. Website: 3 s polling of the link / QR. |
+| Paid, then app / tab closed or network lost before verifying | **Webhook** (`payment.captured` / `order.paid` / `payment_link.paid` / `qr_code.credited`) marks it paid within seconds. Without the webhook: the next time the patient opens **My Bookings**, the app re-checks every unpaid booking that has an order. |
+| Payment failed | Android: the app records the reason (and deletes the draft when no payment was made). **Webhook** `payment.failed` also records the reason, without cancelling: the patient can retry, and a later success on the same order still confirms the booking. |
+| Patient cancelled checkout | Android: draft deleted. Website: drafts kept, the link stays payable for its lifetime and a later payment is still confirmed. |
+
+The webhook finds bookings by our Razorpay order id (`bookings.orderId`), so it
+also covers orders created before it was deployed. "Paid" is always re-read
+from Razorpay, never taken from the webhook payload.
+
+Not done by the webhook: the doctor's in-app notification and the patient's
+reminders, which the app sends when it sees the payment itself.
 
 ## Testing in Razorpay test mode
 

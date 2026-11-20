@@ -52,7 +52,46 @@ class BookingHistoryController extends GetxController {
       );
       upComingBookings.addAll(response);
       isLoading.value = false;
+      _reconcileUnpaidBookings(response);
     }
+  }
+
+  /// Safety net for payments whose result never reached the app: the app or
+  /// browser tab was closed after paying, or the network dropped before the
+  /// payment was verified. Asks the server to re-check Razorpay for bookings
+  /// that have an order but aren't marked paid, and refreshes if any were.
+  /// (The Razorpay webhook does the same server-side without the app.)
+  bool _reconciling = false;
+  Future<void> _reconcileUnpaidBookings(List<BookingsModel> bookings) async {
+    if (_reconciling || isDoctor.value) return;
+    final groups = <String, List<BookingsModel>>{};
+    for (final booking in bookings) {
+      final orderId = booking.orderId?.trim() ?? '';
+      final payment = booking.paymentStatus.toLowerCase();
+      final status = booking.bookingStatus.toLowerCase();
+      if (orderId.isEmpty) continue;
+      if (payment == 'paid' || payment == 'refunded') continue;
+      if (status == 'cancelled' || status == 'refunded') continue;
+      groups.putIfAbsent(orderId, () => []).add(booking);
+    }
+    if (groups.isEmpty) return;
+    _reconciling = true;
+    var changed = false;
+    try {
+      // A handful at most; each is one server call.
+      for (final entry in groups.entries.take(5)) {
+        final status = await supabaseController.checkWebPaymentStatus(
+          bookingIds: entry.value.map((b) => b.id).toList(),
+          userId: entry.value.first.userId,
+          razorpayOrderId: entry.key,
+        );
+        if (status == 'SUCCESS') changed = true;
+      }
+    } catch (_) {
+    } finally {
+      _reconciling = false;
+    }
+    if (changed) await getFilteredBookings();
   }
 
   Future<void> updateDoctorNote(BookingsModel bookingModel) async {

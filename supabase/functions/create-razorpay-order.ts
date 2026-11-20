@@ -209,6 +209,8 @@ Deno.serve(async (req) => {
         currency: "INR",
         receipt: receiptString,
         partial_payment: false,
+        // Lets the webhook / support trace a payment back to its bookings.
+        notes: { booking_ids: bookingIds.join(","), user_id: String(userId) },
         transfers: [
           {
             account: doctor.razorpayAccountId,
