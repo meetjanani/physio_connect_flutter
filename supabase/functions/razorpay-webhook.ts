@@ -1,13 +1,21 @@
-// Razorpay webhook for website payments (Payment Link + UPI QR).
+// Razorpay webhook: the server-side safety net for payment status.
 //
-// Confirms the booking even if the patient closes the browser tab right after
-// paying. Subscribe the webhook to `payment_link.paid` and `qr_code.credited`
+// Confirms or fails bookings even when the patient closes the app / browser
+// tab right after paying, loses network before the app verifies, or pays a
+// website link later. Works for every channel:
+//   - Android app (native Checkout on our order)
+//   - Website Payment Link / UPI QR
+//
+// Subscribe (Razorpay Dashboard -> Settings -> Webhooks, test AND live mode):
+//   payment.captured, payment.failed, order.paid,
+//   payment_link.paid, qr_code.credited
 // with secret RAZORPAY_WEBHOOK_SECRET. Deploy with `--no-verify-jwt`
-// (Razorpay doesn't send a Supabase JWT); the signature check below is the auth.
+// (Razorpay doesn't send a Supabase JWT); the signature check is the auth.
 //
-// The bookings come from the link / QR `notes` set by create-razorpay-order;
-// confirmation reuses verify-razorpay-payment (checkStatusOnly), which looks
-// the payment up on Razorpay again, so this function never trusts the payload.
+// Bookings are found by our Razorpay order id (bookings.orderId), which works
+// for orders created before this function existed. Success is confirmed via
+// verify-razorpay-payment (checkStatusOnly), which re-reads the payment from
+// Razorpay, so the webhook payload itself is never trusted for "paid".
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
@@ -28,31 +36,82 @@ Deno.serve(async (req) => {
 
   const event = JSON.parse(raw);
   const type = String(event?.event ?? "");
-  if (type !== "payment_link.paid" && type !== "qr_code.credited") {
-    return json({ ignored: type });
+  const payload = event?.payload ?? {};
+  const payment = payload?.payment?.entity ?? null;
+
+  // Our order id: the payment's own order (app checkout), or the order we
+  // wrote into the link / QR notes (website).
+  let orderId: string | null = null;
+  let failureMessage: string | null = null;
+  switch (type) {
+    case "payment.captured":
+    case "order.paid":
+      orderId = payload?.order?.entity?.id ?? payment?.order_id ?? null;
+      if (!orderId || !(await hasBookings(orderId))) orderId = payment?.notes?.order_id ?? orderId;
+      break;
+    case "payment_link.paid":
+      orderId = payload?.payment_link?.entity?.notes?.order_id ?? payment?.notes?.order_id ?? null;
+      break;
+    case "qr_code.credited":
+      orderId = payload?.qr_code?.entity?.notes?.order_id ?? payment?.notes?.order_id ?? null;
+      break;
+    case "payment.failed":
+      orderId = payment?.order_id ?? null;
+      if (!orderId || !(await hasBookings(orderId))) orderId = payment?.notes?.order_id ?? orderId;
+      failureMessage = String(
+        payment?.error_description ?? payment?.error_reason ?? "Payment failed",
+      ).slice(0, 300);
+      break;
+    default:
+      return json({ ignored: type });
+  }
+  if (!orderId) return json({ ignored: "no order id" });
+
+  const supabase = client();
+  const { data: bookings, error } = await supabase
+    .from("bookings")
+    .select(`id, "userId", "paymentStatus"`)
+    .eq("orderId", orderId);
+  if (error) return json({ error: "Booking lookup failed" }, 500); // Razorpay retries
+  if (!bookings?.length) return json({ ignored: "no bookings for order" });
+
+  const bookingIds = bookings.map((row: any) => row.id);
+  const userId = bookings[0].userId;
+
+  if (type === "payment.failed") {
+    // A failed attempt doesn't end the booking: the patient can retry, and a
+    // later capture on the same order still confirms it. Record the reason
+    // only while the booking is unpaid.
+    await supabase
+      .from("bookings")
+      .update({ paymentFailureReason: failureMessage })
+      .in("id", bookingIds)
+      .neq("paymentStatus", "paid")
+      .neq("paymentStatus", "refunded");
+    return json({ ok: true, status: "FAILED_ATTEMPT_RECORDED" });
   }
 
-  const entity = type === "payment_link.paid"
-    ? event?.payload?.payment_link?.entity
-    : event?.payload?.qr_code?.entity;
-  const notes = entity?.notes ?? {};
-  const bookingIds = String(notes.booking_ids ?? "")
-    .split(",")
-    .map((id) => Number(id.trim()))
-    .filter((id) => Number.isInteger(id) && id > 0);
-  const userId = notes.user_id;
-  if (!bookingIds.length || !userId) return json({ ignored: "no booking notes" });
+  if (bookings.every((row: any) => row.paymentStatus === "paid")) {
+    return json({ ok: true, status: "SUCCESS", alreadyPaid: true });
+  }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const secretKeys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS")!);
-  const supabase = createClient(supabaseUrl, secretKeys["default"]);
-
-  const { data, error } = await supabase.functions.invoke("verify-razorpay-payment", {
+  const { data, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
     body: { bookingIds, userId, checkStatusOnly: true },
   });
-  if (error) return json({ error: "Confirmation failed" }, 500); // Razorpay retries
+  if (verifyError) return json({ error: "Confirmation failed" }, 500); // Razorpay retries
   return json({ ok: true, status: data?.status ?? null });
 });
+
+function client() {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const secretKeys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS")!);
+  return createClient(supabaseUrl, secretKeys["default"]);
+}
+
+async function hasBookings(orderId: string): Promise<boolean> {
+  const { data } = await client().from("bookings").select("id").eq("orderId", orderId).limit(1);
+  return (data?.length ?? 0) > 0;
+}
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });

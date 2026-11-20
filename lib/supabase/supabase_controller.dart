@@ -579,8 +579,9 @@ class SupabaseController {
     }
   }
 
-  /// Website payment-link flow: asks the server whether the Payment Link / QR
-  /// for these bookings has been paid. Read-only — never records a failure.
+  /// Asks the server to re-check Razorpay for these bookings (Android order,
+  /// website Payment Link or UPI QR) and mark them paid if a captured payment
+  /// exists. Read-only otherwise: never records a failure.
   /// Returns 'SUCCESS', 'FAILED' or 'PENDING'.
   Future<String> checkWebPaymentStatus({
     required List<int> bookingIds,
